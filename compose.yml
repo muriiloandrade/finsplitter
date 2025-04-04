@@ -1,0 +1,24 @@
+services:
+  api:
+    image: finsplitter:dev
+    container_name: finsplitter
+    profiles:
+      - backend
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: setup
+    ports:
+      - 3033:3033
+    command: go run cmd/main.go
+    develop:
+      watch:
+        - path: ./
+          target: /app
+          action: sync+restart
+    networks:
+      - finsplitter
+
+networks:
+  finsplitter:
+    name: finsplitter-net

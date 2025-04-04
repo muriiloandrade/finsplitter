@@ -1,0 +1,21 @@
+{
+    "go.formatTool": "goimports",
+    "go.inlayHints.compositeLiteralFields": true,
+    "go.inlayHints.assignVariableTypes": true,
+    "go.inlayHints.functionTypeParameters": true,
+    "go.inlayHints.parameterNames": true,
+    "go.inlayHints.rangeVariableTypes": true,
+    "go.lintTool": "golangci-lint",
+    "go.testOnSave": true,
+    "go.useLanguageServer": true,
+    "go.languageServerFlags": ["-rpc.trace"],
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "golang.go",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "always",
+            "source.fixAll": "always"
+        }
+    },
+    "makefile.configureOnOpen": false
+}
