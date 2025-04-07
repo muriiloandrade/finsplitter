@@ -1,3 +1,5 @@
+include .env
+
 .PHONY: *
 
 NAME=finsplitter
@@ -5,19 +7,19 @@ VERSION=prod
 
 start-infra:
 	@echo "==> Running infra containers"
-	@docker compose --profile infra up -d
+	@docker compose --profile infra --env-file .env up -d
 
 stop-infra:
 	@echo "==> Stopping infra containers"
-	@docker compose --profile infra down -v --remove-orphans
+	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
-start-dev: # start-infra
+start-dev: start-infra
 	@echo "==> Running development containers"
-	@docker compose --profile backend up
+	@docker compose --profile backend --env-file .env up
 
-stop-dev:
+stop-dev: stop-infra
 	@echo "==> Stopping development containers"
-	@docker compose --profile backend down --rmi local -v --remove-orphans
+	@docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans
 
 build:
 	@echo "==> Building Docker API image"
@@ -29,11 +31,11 @@ clean:
 
 run-network-host: build
 	@echo "==> Running Docker API image"
-	@docker run --rm --network host --name ${NAME} -t ${NAME}:${VERSION}
+	@docker run --rm --network host --env-file .env --name ${NAME} -t ${NAME}:${VERSION}
 
 run-network-compose: build start-infra
 	@echo "==> Running Docker API image"
-	@docker run --rm --network finsplitter-net -p ${PORT}:${PORT} --name ${NAME} -t ${NAME}:${VERSION}
+	@docker run --rm --network finsplitter-net --env-file .env -p ${PORT}:${PORT} --name ${NAME} -t ${NAME}:${VERSION}
 
 code-check:
 	@echo "==> Linting..."
