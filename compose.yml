@@ -14,7 +14,7 @@ services:
       target: setup
     ports:
       - "${PORT}:${PORT}"
-    command: go run cmd/main.go
+    command: go run cmd/api/main.go
     develop:
       watch:
         - path: ./
