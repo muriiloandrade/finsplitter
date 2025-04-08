@@ -7,7 +7,10 @@ require (
 	github.com/veqryn/slog-context v0.8.0
 )
 
+require golang.org/x/text v0.23.0 // indirect
+
 require (
+	github.com/ardanlabs/conf/v3 v3.7.1
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

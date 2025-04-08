@@ -15,7 +15,7 @@ stop-infra:
 
 start-dev: start-infra
 	@echo "==> Running development containers"
-	@docker compose --profile backend --env-file .env up
+	@docker compose --profile backend --env-file .env up --build
 
 stop-dev: stop-infra
 	@echo "==> Stopping development containers"

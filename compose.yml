@@ -12,8 +12,10 @@ services:
       context: .
       dockerfile: ./Dockerfile
       target: setup
+    env_file:
+      - .env
     ports:
-      - "${PORT}:${PORT}"
+      - "${APP_PORT}:${APP_PORT}"
     command: go run cmd/api/main.go
     develop:
       watch:
