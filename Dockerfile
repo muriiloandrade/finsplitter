@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24.1 AS setup
+FROM golang:1.24.2 AS setup
 
 WORKDIR /app
 
@@ -11,10 +11,16 @@ COPY . .
 
 FROM setup AS builder
 
-RUN CGO_ENABLED=0 go build -o bin/finsplitter cmd/api/main.go
+ARG GIT_COMMIT
+ARG GIT_BUILD_TAG
+ARG BUILD_TIME
+
+RUN CGO_ENABLED=0 go build \ 
+    -ldflags "-X main.BuildCommit=${GIT_COMMIT} -X main.BuildTime=${BUILD_TIME} -X main.BuildTag=${GIT_BUILD_TAG}" \
+    -o bin/finsplitter cmd/api/main.go
 
 # Execution stage
-FROM gcr.io/distroless/base-debian10 AS production
+FROM gcr.io/distroless/static-debian12:nonroot AS production
 
 # Copy the built binary
 COPY --from=builder /app/bin/finsplitter /
