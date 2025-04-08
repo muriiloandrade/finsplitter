@@ -4,6 +4,9 @@ include .env
 
 NAME=finsplitter
 VERSION=prod
+GIT_BUILD_TAG=localtag
+GIT_COMMIT=$(shell git rev-parse HEAD)
+BUILD_TIME=$(shell date -u +%Y-%m-%dT%H:%M:%S%Z)
 
 start-infra:
 	@echo "==> Running infra containers"
@@ -23,7 +26,10 @@ stop-dev: stop-infra
 
 build:
 	@echo "==> Building Docker API image"
-	@docker build --target production --rm --compress -t ${NAME}:${VERSION} .
+	@docker build --build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg GIT_BUILD_TAG=$(GIT_BUILD_TAG) \
+		--build-arg BUILD_TIME=$(BUILD_TIME) \
+		--target production --rm --compress -t ${NAME}:${VERSION} .
 
 clean:
 	@echo "==> Deleting Docker image"
