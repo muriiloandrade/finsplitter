@@ -1,3 +1,7 @@
+---
+include:
+  - compose.infra.yml
+
 services:
   api:
     image: finsplitter:dev
@@ -9,8 +13,8 @@ services:
       dockerfile: ./Dockerfile
       target: setup
     ports:
-      - 3033:3033
-    command: go run cmd/main.go
+      - "${PORT}:${PORT}"
+    command: go run cmd/api/main.go
     develop:
       watch:
         - path: ./

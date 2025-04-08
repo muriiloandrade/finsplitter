@@ -1,0 +1,28 @@
+---
+services:
+  postgresql:
+    profiles:
+      - infra
+    image: postgres:17.4-alpine3.20
+    container_name: finsplitter-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-finsplitter}
+      POSTGRES_DB: ${PG_DB:-finsplitter}
+    env_file:
+      - .env
+    networks:
+      - finsplitter
+
+volumes:
+  database:
+    driver: local

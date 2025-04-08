@@ -11,7 +11,7 @@ COPY . .
 
 FROM setup AS builder
 
-RUN CGO_ENABLED=0 go build -o bin/finsplitter cmd/main.go
+RUN CGO_ENABLED=0 go build -o bin/finsplitter cmd/api/main.go
 
 # Execution stage
 FROM gcr.io/distroless/base-debian10 AS production
