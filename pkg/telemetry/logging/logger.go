@@ -15,8 +15,15 @@ func NewContextWithLogger(ctx context.Context, cfg config.Config, w io.Writer) c
 		slog.Group(
 			"application",
 			slog.String("service", cfg.App.Name),
+			slog.Int("port", cfg.App.Port),
 			slog.String("version", cfg.App.Version),
 			slog.String("environment", cfg.Env.Name),
+		),
+		slog.Group(
+			"build",
+			slog.String("buildTime", cfg.App.BuildTime),
+			slog.String("buildTag", cfg.App.BuildTag),
+			slog.String("buildCommit", cfg.App.BuildCommit),
 		),
 	}
 

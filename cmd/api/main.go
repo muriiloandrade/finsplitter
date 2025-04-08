@@ -16,23 +16,19 @@ import (
 )
 
 // CLIOptions for the CLI.
-type CLIOptions struct {
-	Port int `help:"Port to listen on" short:"p" default:"3033"`
-}
+type CLIOptions struct{}
+
+var (
+	BuildCommit = "undefined"
+	BuildTag    = "undefined"
+	BuildTime   = "undefined"
+)
 
 func main() {
 	// Create a CLI app
 	cli := humacli.New(func(hooks humacli.Hooks, options *CLIOptions) {
-		ctx := logging.NewContextWithLogger(context.Background(), config.Config{
-			App: config.Application{
-				Name:    "finsplitter",
-				Version: "0.0.1",
-			},
-			Env: config.Environment{
-				Name:      "local",
-				LogFormat: "text",
-			},
-		}, os.Stdout)
+		cfg := config.LoadEnv(BuildTag, BuildCommit, BuildTime)
+		ctx := logging.NewContextWithLogger(context.Background(), *cfg, os.Stdout)
 		logger := slogctx.FromCtx(ctx)
 
 		router := _http.NewRouter(logger)
@@ -47,7 +43,7 @@ func main() {
 
 		// Create the HTTP server.
 		server := http.Server{
-			Addr:    fmt.Sprintf(":%d", options.Port),
+			Addr:    fmt.Sprintf(":%d", cfg.App.Port),
 			Handler: router,
 		}
 
