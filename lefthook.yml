@@ -1,0 +1,15 @@
+#   Refer for explanation to following link:
+#   https://lefthook.dev/configuration/
+#
+output:
+  - summary        # Print summary block (successful and failed steps)
+  - failure        # Print failed steps printing
+  - execution      # Print any execution logs (but prints if the execution failed)
+
+pre-commit:
+  parallel: true
+  commands:
+    lint-and-format:
+      run: make code-check
+      interactive: false
+      stage_fixed: true
