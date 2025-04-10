@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/humacli"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/muriiloandrade/finsplitter/app/config"
 	_http "github.com/muriiloandrade/finsplitter/app/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/app/gateways/http/v1"
+	"github.com/muriiloandrade/finsplitter/app/gateways/postgres"
+	"github.com/muriiloandrade/finsplitter/app/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
 	slogctx "github.com/veqryn/slog-context"
 )
@@ -28,8 +31,26 @@ func main() {
 	// Create a CLI app
 	cli := humacli.New(func(hooks humacli.Hooks, options *CLIOptions) {
 		cfg := config.LoadEnv(BuildTag, BuildCommit, BuildTime)
+		if cfg == nil {
+			panic("failed to load config")
+		}
+
 		ctx := logging.NewContextWithLogger(context.Background(), *cfg, os.Stdout)
 		logger := slogctx.FromCtx(ctx)
+
+		poolCfg, err := postgres.NewPoolConfig(cfg.DB)
+		if err != nil {
+			panic(fmt.Errorf("failed to create pool config: %w", err)) // Exit if pool config fails
+		}
+
+		dbPool, err := pgxpool.NewWithConfig(
+			ctx,
+			poolCfg,
+		)
+		if err != nil {
+			panic(fmt.Errorf("failed to connect to database: %w", err)) // Exit if database connection fails
+		}
+		defer dbPool.Close()
 
 		router := _http.NewRouter(logger)
 

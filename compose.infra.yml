@@ -14,6 +14,8 @@ services:
       timeout: 5s
     volumes:
       - database:/var/lib/postgresql/data
+    ports:
+      - ${PG_PORT:-5432}:5432
     environment:
       POSTGRES_PASSWORD: ${PG_PASS:?database password required}
       POSTGRES_USER: ${PG_USER:-finsplitter}
