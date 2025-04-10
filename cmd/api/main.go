@@ -52,6 +52,16 @@ func main() {
 		}
 		defer dbPool.Close()
 
+		// Run database migrations
+		err = migrations.RunMigrations(ctx, migrations.MigrationOptions{
+			MigrationsPath: "./app/gateways/postgres/migrations",
+			DbInstance:     dbPool,
+			DbCfg:          cfg.DB,
+		})
+		if err != nil {
+			panic(fmt.Errorf("failed to run database migrations: %w", err)) // Exit if migrations fail
+		}
+
 		router := _http.NewRouter(logger)
 
 		apiV1 := v1.API{
