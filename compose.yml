@@ -14,6 +14,8 @@ services:
       target: setup
     env_file:
       - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${APP_PORT}:${APP_PORT}"
     command: go run cmd/api/main.go
@@ -22,6 +24,10 @@ services:
         - path: ./
           target: /app
           action: sync+restart
+        - path: go.mod
+          action: rebuild
+        - path: go.sum
+          action: rebuild
     networks:
       - finsplitter
 
