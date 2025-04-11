@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.32.0
+	github.com/dusted-go/logging v1.3.0
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/veqryn/slog-context v0.8.0
