@@ -5,7 +5,10 @@ include .env
 # Migrations Config
 MIGRATIONS_PATH ?= ./app/gateways/postgres/migrations
 DATABASE_URL ?= $(PG_URL)
-MIGRATE_CMD = docker run --rm -u $(shell id -u):$(shell id -g) \
+
+UID=$(shell id -u)
+GID=$(shell id -g)
+MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
  	--add-host host.docker.internal:host-gateway \
  	-v $(MIGRATIONS_PATH):/migrations \
  	-w /migrations \
@@ -104,6 +107,11 @@ migrate-up: migrate-check-vars
 	@$(MIGRATE_CMD) up $(n)
 
 migrate-down: migrate-check-vars
+	@echo "==> Reverting all migrations down"
+	@$(MIGRATE_CMD) down --all
+
+migrate-down-%: n=$*
+migrate-down-%: migrate-check-vars
 	@echo "==> Reverting migrations down $(if $(n),for $(n) steps...)"
 	@$(MIGRATE_CMD) down $(n)
 
@@ -116,8 +124,8 @@ help:
 	@echo "Migration Targets:"
 	@echo "  new-migration name=<name>  Create a new SQL migration file."
 	@echo "  migrate-up [n=<steps>]     Apply migrations up (optionally specific number of steps)."
-	@echo "  migrate-down [n=<steps>]   Revert migrations down (optionally specific number of steps)."
-	@echo ""
+	@echo "  migrate-down-<steps>       Revert migrations down a specific amount of steps."
+	@echo "  migrate-down-all           Revert all migrations down."
 	@echo "Variables for migrations:"
 	@echo "  MIGRATIONS_PATH            Path to migration files (default: $(MIGRATIONS_PATH))"
 	@echo "  DATABASE_URL               Database connection string (must be set in .env or passed)"
