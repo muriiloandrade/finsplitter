@@ -16,6 +16,12 @@ MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
  	migrate/migrate:v4.18.2 \
  	-path /migrations/ \
  	-database "$(DATABASE_URL)"
+SQLC_CMD = docker run --rm -u $(UID):$(GID) \
+ 	--add-host host.docker.internal:host-gateway \
+ 	-v .:/src \
+ 	-w /src \
+ 	--network finsplitter-net \
+ 	sqlc/sqlc:latest
 
 # Default target
 default: help
@@ -87,6 +93,13 @@ install-golangci-lint:
 docker-scout: build
 	@echo "==> Search for vulnerabilities on prod image"
 	@docker scout cves -e --only-fixed ${NAME}:${VERSION}
+
+# === Generation Targets ===
+generate: generate-sqlc
+
+generate-sqlc:
+	@echo "==> Generating SQLC code"
+	@$(SQLC_CMD) generate
 
 # === Migration Targets ===
 

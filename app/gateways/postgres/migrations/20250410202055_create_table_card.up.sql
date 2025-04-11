@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "card" (
     "brand_id" uuid, -- FK para 'card_brand' será adicionada posteriormente
     "user_id" uuid NOT NULL, -- FK para 'user' será adicionada posteriormente
     "name" varchar NOT NULL,
-    "4ld" smallint,
+    "l4d" smallint,
     "due_date" smallint NOT NULL,
     "closing_date" smallint,
     "tier" varchar,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "card" (
 );
 
 -- Comentários...
-COMMENT ON COLUMN "card"."4ld" IS '4ld = 4 last digits, corresponde aos 4 últimos dígitos do cartão';
+COMMENT ON COLUMN "card"."l4d" IS 'Last 4 digits, corresponde aos 4 últimos dígitos do número docartão';
 COMMENT ON COLUMN "card"."due_date" IS 'O dia do mês que a fatura vence';
 COMMENT ON COLUMN "card"."closing_date" IS 'O dia do mês que a fatura fecha';
 COMMENT ON COLUMN "card"."tier" IS 'Exemplos: Black, Platinum, entre outros';
