@@ -25,6 +25,7 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	logger := slogctx.FromCtx(ctx)
 
 	logger.Info("Starting database migrations...")
+	logger.Debug("Database connection string", slog.String("conn_string", opts.DbInstance.Config().ConnString()))
 
 	db, err := sql.Open("pgx", opts.DbInstance.Config().ConnString())
 	if err != nil {
@@ -34,8 +35,7 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 
 	// Setup database driver instance
 	dbDriver, err := migratePgx.WithInstance(db, &migratePgx.Config{
-		SchemaName:            opts.DbCfg.Schema,
-		MigrationsTableQuoted: true,
+		SchemaName: opts.DbCfg.Schema,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create migrate pgx database driver instance: %w", err)

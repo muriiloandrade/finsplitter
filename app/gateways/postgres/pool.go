@@ -9,7 +9,7 @@ import (
 
 func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {
 	dbConfig, err := pgxpool.ParseConfig(fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%t&application_name=finsplitter",
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s&application_name=finsplitter",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DbName, cfg.SSLMode,
 	))
 	if err != nil {
