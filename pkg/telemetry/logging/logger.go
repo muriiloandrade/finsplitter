@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/dusted-go/logging/prettylog"
 	"github.com/muriiloandrade/finsplitter/app/config"
 	slogctx "github.com/veqryn/slog-context"
 )
@@ -19,22 +20,27 @@ func NewContextWithLogger(ctx context.Context, cfg config.Config, w io.Writer) c
 			slog.String("version", cfg.App.Version),
 			slog.String("environment", cfg.Env.Name),
 		),
-		slog.Group(
+	}
+
+	if cfg.App.BuildCommit != "undefined" || cfg.App.BuildTag != "undefined" || cfg.App.BuildTime != "undefined" {
+		defaultAttrs = append(defaultAttrs, slog.Group(
 			"build",
 			slog.String("buildTime", cfg.App.BuildTime),
 			slog.String("buildTag", cfg.App.BuildTag),
 			slog.String("buildCommit", cfg.App.BuildCommit),
-		),
+		))
 	}
 
 	var logHandler slog.Handler
 	switch cfg.Env.LogFormat {
 	case "text":
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			AddSource: true,
-			Level:     slog.LevelDebug,
+		logHandler = prettylog.NewHandler(&slog.HandlerOptions{
+			Level:       slog.LevelDebug,
+			AddSource:   false,
+			ReplaceAttr: nil,
 		}).WithAttrs(defaultAttrs)
 	case "json":
+	default:
 		logHandler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			AddSource: true,
 			Level:     slog.LevelDebug,

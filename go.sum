@@ -51,6 +51,8 @@ github.com/docker/go-connections v0.5.0 h1:USnMq7hx7gwdVZq1L49hLXaFtUdTADjXGp+uj
 github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6GLaXnqyDdmEXc=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
+github.com/dusted-go/logging v1.3.0 h1:SL/EH1Rp27oJQIte+LjWvWACSnYDTqNx5gZULin0XRY=
+github.com/dusted-go/logging v1.3.0/go.mod h1:s58+s64zE5fxSWWZfp+b8ZV0CHyKHjamITGyuY1wzGg=
 github.com/evilmartians/lefthook v1.11.8 h1:BnSw6lxQ2SC1kQInjwapm+8qQGqEDQkXlj+OW8ycNQM=
 github.com/evilmartians/lefthook v1.11.8/go.mod h1:e8Ic4u+M/RDEtHy+nXCjbekDSz7CQvLpVjVDuXNr9CY=
 github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
