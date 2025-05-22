@@ -10,8 +10,10 @@ import (
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/muriiloandrade/finsplitter/app/config"
+	"github.com/muriiloandrade/finsplitter/app/domain/usecases"
 	_http "github.com/muriiloandrade/finsplitter/app/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/app/gateways/http/v1"
+	cardbrand "github.com/muriiloandrade/finsplitter/app/gateways/http/v1/card-brand"
 	"github.com/muriiloandrade/finsplitter/app/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/app/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
@@ -50,7 +52,6 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("failed to connect to database: %w", err)) // Exit if database connection fails
 		}
-		defer dbPool.Close()
 
 		// Run database migrations
 		err = migrations.RunMigrations(ctx, migrations.MigrationOptions{
@@ -62,11 +63,23 @@ func main() {
 			panic(fmt.Errorf("failed to run database migrations: %w", err)) // Exit if migrations fail
 		}
 
+		pgTxManager := &postgres.TxManager{
+			ConnPool: dbPool,
+		}
+
+		// Initialize the repositories
+		cardBrandRepo := postgres.NewCardBrandRepository(pgTxManager)
+		cardBrandUC := usecases.NewListCardBrandUC(cardBrandRepo)
+		cardBrandAPI := cardbrand.API{
+			ListCardBrandsHandler: cardbrand.NewListCardBrandsHandler(cardBrandUC).ListCardBrands,
+		}
+
 		router := _http.NewRouter(logger)
 
 		apiV1 := v1.API{
 			LivenessHandler:  v1.LivenessHandler(),
 			ReadinessHandler: v1.ReadinessHandler(),
+			CardBrandAPI:     cardBrandAPI,
 			Logger:           logger,
 		}
 
@@ -89,6 +102,7 @@ func main() {
 			// Give the server 5 seconds to gracefully shut down, then give up.
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
+			defer dbPool.Close()
 			server.Shutdown(ctx)
 		})
 	})

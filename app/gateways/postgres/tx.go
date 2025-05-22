@@ -1,0 +1,88 @@
+package postgres
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/muriiloandrade/finsplitter/app/domain"
+)
+
+type txKey struct{}
+
+type TxManager struct {
+	ConnPool *pgxpool.Pool
+}
+
+func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) (err error) {
+	if domain.HasTX(ctx) {
+		return &domain.TransactionError{Cause: errors.New("already in transaction")}
+	}
+
+	var tx pgx.Tx
+	if tx, err = b.ConnPool.Begin(ctx); err != nil {
+		return &domain.TransactionError{Cause: fmt.Errorf("cannot begin a transaction: %w", err)}
+	}
+
+	ctxWithTx := context.WithValue(domain.WithTx(ctx), txKey{}, tx)
+
+	defer func() {
+		if p := recover(); p != nil {
+			// ensure a rollback attempt and panic again
+			_ = tx.Rollback(ctx)
+
+			panic(p)
+		}
+	}()
+
+	if err = f(ctxWithTx); err != nil {
+		if rollBackErr := tx.Rollback(ctx); rollBackErr != nil {
+			err = rollBackErr
+		}
+		return
+	}
+	err = tx.Commit(ctx)
+	return
+}
+
+// querier should be used when either a transaction or a common connection could be used.
+type querier interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+}
+
+func (b TxManager) querier(ctx context.Context) querier {
+	if btx, ok := ctx.Value(txKey{}).(*pgxpool.Tx); ok {
+		return btx
+	}
+
+	return b.ConnPool
+}
+
+func (b TxManager) Exec(ctx context.Context, query string, args ...any) (cmd pgconn.CommandTag, err error) {
+	cmd, err = b.querier(ctx).Exec(ctx, query, args...)
+	return
+}
+
+func (b TxManager) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
+	rows, err = b.querier(ctx).Query(ctx, query, args...)
+	return
+}
+
+func (b TxManager) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+	return b.querier(ctx).QueryRow(ctx, query, args...)
+}
+
+func (b TxManager) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults {
+	return b.querier(ctx).SendBatch(ctx, batch)
+}
+
+func (b TxManager) Close() {
+	b.ConnPool.Close()
+}

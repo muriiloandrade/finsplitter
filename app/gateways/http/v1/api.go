@@ -16,6 +16,7 @@ type interfaceAPI interface {
 type API struct {
 	LivenessHandler  http.HandlerFunc
 	ReadinessHandler http.HandlerFunc
+	CardBrandAPI     interfaceAPI
 	Logger           *slog.Logger
 }
 
@@ -26,6 +27,8 @@ func (a API) Routes(r *chi.Mux) huma.API {
 	r.Get("/health/readiness", a.ReadinessHandler)
 
 	api = humachi.New(r, NewOpenAPIConfig())
+
+	a.CardBrandAPI.RegisterRoutes(r, api, a.Logger)
 
 	return api
 }

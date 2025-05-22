@@ -5,8 +5,10 @@ go 1.24.1
 require (
 	github.com/danielgtaylor/huma/v2 v2.32.0
 	github.com/dusted-go/logging v1.3.0
+	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/jackc/pgx/v5 v5.7.4
+	github.com/shopspring/decimal v1.4.0
 	github.com/veqryn/slog-context v0.8.0
 )
 
