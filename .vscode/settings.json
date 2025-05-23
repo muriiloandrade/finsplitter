@@ -17,5 +17,17 @@
             "source.fixAll": "always"
         }
     },
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "chat.instructionsFilesLocations": {
+        ".github/instructions": true
+    },
+    "cSpell.words": [
+        "cardbrand",
+        "danielgtaylor",
+        "finsplitter",
+        "huma",
+        "slogctx",
+        "sqlc",
+        "veqryn"
+    ]
 }
