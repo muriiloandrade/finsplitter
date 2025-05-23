@@ -7,6 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
+	openapi "github.com/muriiloandrade/finsplitter/api"
 )
 
 type interfaceAPI interface {
@@ -26,7 +27,7 @@ func (a API) Routes(r *chi.Mux) huma.API {
 	r.Get("/health/liveness", a.LivenessHandler)
 	r.Get("/health/readiness", a.ReadinessHandler)
 
-	api = humachi.New(r, NewOpenAPIConfig())
+	api = humachi.New(r, openapi.NewOpenAPIConfig())
 
 	a.CardBrandAPI.RegisterRoutes(r, api, a.Logger)
 

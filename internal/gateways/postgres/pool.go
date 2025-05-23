@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/muriiloandrade/finsplitter/app/config"
+	"github.com/muriiloandrade/finsplitter/internal/config"
 )
 
 func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {

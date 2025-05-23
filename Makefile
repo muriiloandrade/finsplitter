@@ -3,7 +3,7 @@ include .env
 .PHONY: *
 
 # Migrations Config
-MIGRATIONS_PATH ?= ./app/gateways/postgres/migrations
+MIGRATIONS_PATH ?= ./internal/gateways/postgres/migrations
 DATABASE_URL ?= $(PG_URL)
 
 UID=$(shell id -u)
@@ -156,3 +156,6 @@ help:
 	@echo "  test                       Run unit tests."
 	@echo "  tools                      Install necessary development tools."
 	@echo "  docker-scout               Scan the production image for vulnerabilities."
+	@echo "Generation Targets:"
+	@echo "  generate                   Generate code (e.g., SQLC)."
+	@echo "  generate-sqlc              Generate SQLC code only."

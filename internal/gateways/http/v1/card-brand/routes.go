@@ -12,7 +12,7 @@ import (
 type Handler[I, O any] func(context.Context, *I) (*O, error)
 
 type API struct {
-	// GetCardBrandHandler    Handler/[GetCardBrandRequest, GetCardBrandResponse]
+	// GetCardBrandHandler    Handler[GetCardBrandRequest, GetCardBrandResponse]
 	ListCardBrandsHandler Handler[ListCardBrandsRequest, ListCardBrandsResponse]
 	// CreateCardBrandHandler Handler[CreateCardBrandRequest, CreateCardBrandResponse]
 	// UpdateCardBrandHandler Handler[UpdateCardBrandRequest, UpdateCardBrandResponse]

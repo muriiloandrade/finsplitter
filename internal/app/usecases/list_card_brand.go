@@ -4,7 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/muriiloandrade/finsplitter/app/domain/entity"
+	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	slogctx "github.com/veqryn/slog-context"
 )
 
@@ -14,15 +15,11 @@ type ListCardBrandUC interface {
 	ListCardBrands(ctx context.Context) ([]entity.CardBrand, error)
 }
 
-type ListCardBrandRepository interface {
-	ListCardBrands(ctx context.Context) ([]entity.CardBrand, error)
-}
-
 type ListCardBrandsUseCase struct {
-	repo ListCardBrandRepository
+	repo ports.ListCardBrandRepository
 }
 
-func NewListCardBrandUC(repo ListCardBrandRepository) *ListCardBrandsUseCase {
+func NewListCardBrandUC(repo ports.ListCardBrandRepository) *ListCardBrandsUseCase {
 	return &ListCardBrandsUseCase{
 		repo: repo,
 	}
