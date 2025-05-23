@@ -13,10 +13,10 @@ type Handler[I, O any] func(context.Context, *I) (*O, error)
 
 type API struct {
 	// GetCardBrandHandler    Handler[GetCardBrandRequest, GetCardBrandResponse]
-	ListCardBrandsHandler Handler[ListCardBrandsRequest, ListCardBrandsResponse]
-	// CreateCardBrandHandler Handler[CreateCardBrandRequest, CreateCardBrandResponse]
-	// UpdateCardBrandHandler Handler[UpdateCardBrandRequest, UpdateCardBrandResponse]
-	// DeleteCardBrandHandler Handler[DeleteCardBrandRequest, DeleteCardBrandResponse]
+	ListCardBrandsHandler  Handler[ListCardBrandsRequest, ListCardBrandsResponse]
+	CreateCardBrandHandler Handler[CreateCardBrandRequest, CreateCardBrandResponse]
+	UpdateCardBrandHandler Handler[UpdateCardBrandRequest, UpdateCardBrandResponse]
+	DeleteCardBrandHandler Handler[DeleteCardBrandRequest, DeleteCardBrandResponse]
 }
 
 func (a API) RegisterRoutes(r *chi.Mux, api huma.API, logger *slog.Logger) {
@@ -30,4 +30,44 @@ func (a API) RegisterRoutes(r *chi.Mux, api huma.API, logger *slog.Logger) {
 			http.StatusInternalServerError,
 		},
 	}, a.ListCardBrandsHandler)
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		Path:        "/card-brands",
+		Description: "Create card brand",
+		Tags:        []string{"Card Brand"},
+		Errors: []int{
+			http.StatusBadRequest,
+			http.StatusConflict,
+			http.StatusUnauthorized,
+			http.StatusInternalServerError,
+		},
+	}, a.CreateCardBrandHandler)
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPut,
+		Path:        "/card-brands/{id}",
+		Description: "Update card brand",
+		Tags:        []string{"Card Brand"},
+		Errors: []int{
+			http.StatusBadRequest,
+			http.StatusNotFound,
+			http.StatusConflict,
+			http.StatusUnauthorized,
+			http.StatusInternalServerError,
+		},
+	}, a.UpdateCardBrandHandler)
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodDelete,
+		Path:        "/card-brands/{id}",
+		Description: "Delete card brand",
+		Tags:        []string{"Card Brand"},
+		Errors: []int{
+			http.StatusBadRequest,
+			http.StatusNotFound,
+			http.StatusUnauthorized,
+			http.StatusInternalServerError,
+		},
+	}, a.DeleteCardBrandHandler)
 }
