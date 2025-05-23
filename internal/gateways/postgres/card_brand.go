@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/sqlc"
 	slogctx "github.com/veqryn/slog-context"
@@ -12,12 +13,15 @@ import (
 const listCardBrandsOp = "postgres.CardBrandRepository.ListCardBrands"
 
 type CardBrandRepository struct {
+	domain.Transactioner
+
 	DB *sqlc.Queries
 }
 
 func NewCardBrandRepository(db *TxManager) *CardBrandRepository {
 	return &CardBrandRepository{
-		DB: sqlc.New(db),
+		DB:            sqlc.New(db),
+		Transactioner: db,
 	}
 }
 
