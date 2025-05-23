@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/muriiloandrade/finsplitter/app/domain"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 )
 
 type txKey struct{}

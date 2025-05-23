@@ -10,7 +10,7 @@ import (
 	migratePgx "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file" // Import file source driver
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/muriiloandrade/finsplitter/app/config"
+	"github.com/muriiloandrade/finsplitter/internal/config"
 	slogctx "github.com/veqryn/slog-context"
 )
 

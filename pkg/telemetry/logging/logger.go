@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/dusted-go/logging/prettylog"
-	"github.com/muriiloandrade/finsplitter/app/config"
+	"github.com/muriiloandrade/finsplitter/internal/config"
 	slogctx "github.com/veqryn/slog-context"
 )
 

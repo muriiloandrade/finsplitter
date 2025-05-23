@@ -9,13 +9,13 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/muriiloandrade/finsplitter/app/config"
-	"github.com/muriiloandrade/finsplitter/app/domain/usecases"
-	_http "github.com/muriiloandrade/finsplitter/app/gateways/http"
-	v1 "github.com/muriiloandrade/finsplitter/app/gateways/http/v1"
-	cardbrand "github.com/muriiloandrade/finsplitter/app/gateways/http/v1/card-brand"
-	"github.com/muriiloandrade/finsplitter/app/gateways/postgres"
-	"github.com/muriiloandrade/finsplitter/app/gateways/postgres/migrations"
+	"github.com/muriiloandrade/finsplitter/internal/app/usecases"
+	"github.com/muriiloandrade/finsplitter/internal/config"
+	_http "github.com/muriiloandrade/finsplitter/internal/gateways/http"
+	v1 "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1"
+	cardbrand "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
 	slogctx "github.com/veqryn/slog-context"
 )
@@ -55,7 +55,7 @@ func main() {
 
 		// Run database migrations
 		err = migrations.RunMigrations(ctx, migrations.MigrationOptions{
-			MigrationsPath: "./app/gateways/postgres/migrations",
+			MigrationsPath: "./internal/gateways/postgres/migrations",
 			DbInstance:     dbPool,
 			DbCfg:          cfg.DB,
 		})

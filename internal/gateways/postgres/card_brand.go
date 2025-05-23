@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/muriiloandrade/finsplitter/app/domain/entity"
-	"github.com/muriiloandrade/finsplitter/app/gateways/postgres/sqlc"
+	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/sqlc"
 	slogctx "github.com/veqryn/slog-context"
 )
 
