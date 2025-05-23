@@ -1,0 +1,39 @@
+---
+include:
+  - compose.infra.yml
+
+services:
+  api:
+    image: finsplitter:debug
+    container_name: finsplitter-debug
+    profiles:
+      - backend
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: development
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+      - "2345:2345"  # Delve debugger port
+    security_opt:
+      - "seccomp:unconfined"  # Required for delve
+    command: ["dlv", "debug", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "./cmd/api/main.go"]
+    develop:
+      watch:
+        - path: ./
+          target: /app
+          action: sync+restart
+        - path: go.mod
+          action: rebuild
+        - path: go.sum
+          action: rebuild
+    networks:
+      - finsplitter
+
+networks:
+  finsplitter:
+    name: finsplitter-net
