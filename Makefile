@@ -40,13 +40,23 @@ stop-infra:
 	@echo "==> Stopping infra containers"
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
-start-dev: start-infra
-	@echo "==> Running development containers"
-	@docker compose --profile backend --env-file .env up --build
+start-%: start-infra
+start-dev start-debug: start-%
+	@echo "==> Running containers in $* mode"
+	@if [ "$*" = "debug" ]; then \
+		docker compose --profile backend --env-file .env -f compose.debug.yml up --build; \
+	else \
+		docker compose --profile backend --env-file .env up --build; \
+	fi
 
-stop-dev: stop-infra
-	@echo "==> Stopping development containers"
-	@docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans
+stop-%: stop-infra
+stop-dev stop-debug: stop-%
+	@echo "==> Stopping containers in $* mode"
+	@if [ "$*" = "debug" ]; then \
+		docker compose --profile backend --env-file .env -f compose.debug.yml down --rmi local -v --remove-orphans; \
+	else \
+		docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans; \
+	fi
 
 build:
 	@echo "==> Building Docker API image"
@@ -83,12 +93,16 @@ test-watch:
 test-cov:
 	@echo "==> Running test coverage report - IMPLEMENT ME"
 
-tools: install-golangci-lint
+tools: install-golangci-lint install-delve
 	@echo "==> Dealt with tools used on project"
 
 install-golangci-lint:
 	@echo "==> Intalling golangci-lint"
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
+
+install-delve:
+	@echo "==> Installing delve"
+	@go install github.com/go-delve/delve/cmd/dlv@latest
 
 docker-scout: build
 	@echo "==> Search for vulnerabilities on prod image"
@@ -143,10 +157,15 @@ help:
 	@echo "  MIGRATIONS_PATH            Path to migration files (default: $(MIGRATIONS_PATH))"
 	@echo "  DATABASE_URL               Database connection string (must be set in .env or passed)"
 	@echo ""
+	@echo "Generation Targets:"
+	@echo "  generate                   Generate code (e.g., SQLC)."
+	@echo "  generate-sqlc              Generate SQLC code only."
+	@echo ""
 	@echo "Other Targets:"
 	@echo "  start-infra                Start infrastructure containers (e.g., database)."
 	@echo "  stop-infra                 Stop infrastructure containers."
 	@echo "  start-dev                  Start development environment (infra + app)."
+	@echo "  start-debug                Start development environment in debug mode (infra + app)."
 	@echo "  stop-dev                   Stop development environment."
 	@echo "  build                      Build the production Docker image."
 	@echo "  clean                      Remove the production Docker image."
@@ -156,6 +175,3 @@ help:
 	@echo "  test                       Run unit tests."
 	@echo "  tools                      Install necessary development tools."
 	@echo "  docker-scout               Scan the production image for vulnerabilities."
-	@echo "Generation Targets:"
-	@echo "  generate                   Generate code (e.g., SQLC)."
-	@echo "  generate-sqlc              Generate SQLC code only."
