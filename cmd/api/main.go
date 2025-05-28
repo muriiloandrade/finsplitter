@@ -9,11 +9,11 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/muriiloandrade/finsplitter/internal/app/usecases"
+	cbUCs "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/config"
 	_http "github.com/muriiloandrade/finsplitter/internal/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1"
-	cardbrand "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	cbHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
@@ -69,9 +69,9 @@ func main() {
 
 		// Initialize the repositories
 		cardBrandRepo := postgres.NewCardBrandRepository(pgTxManager)
-		cardBrandUC := usecases.NewListCardBrandUC(cardBrandRepo)
-		cardBrandAPI := cardbrand.API{
-			ListCardBrandsHandler: cardbrand.NewListCardBrandsHandler(cardBrandUC).ListCardBrands,
+		cardBrandUC := cbUCs.NewListCardBrandUC(cardBrandRepo)
+		cardBrandAPI := cbHandler.API{
+			ListCardBrandsHandler: cbHandler.NewListCardBrandsHandler(cardBrandUC).ListCardBrands,
 		}
 
 		router := _http.NewRouter(logger)

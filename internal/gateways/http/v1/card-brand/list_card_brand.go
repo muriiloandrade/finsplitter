@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/muriiloandrade/finsplitter/internal/app/usecases"
+	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 
 	slogctx "github.com/veqryn/slog-context"
