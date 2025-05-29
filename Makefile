@@ -40,20 +40,20 @@ stop-infra:
 	@echo "==> Stopping infra containers"
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
+start-dev start-debug: start-%:
 start-%: start-infra
-start-dev start-debug: start-%
 	@echo "==> Running containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile backend --env-file .env -f compose.debug.yml up --build; \
+		docker compose --profile debug --env-file .env up --build; \
 	else \
 		docker compose --profile backend --env-file .env up --build; \
 	fi
 
+stop-dev stop-debug: stop-%:
 stop-%: stop-infra
-stop-dev stop-debug: stop-%
 	@echo "==> Stopping containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile backend --env-file .env -f compose.debug.yml down --rmi local -v --remove-orphans; \
+		docker compose --profile debug --env-file .env down --rmi local -v --remove-orphans; \
 	else \
 		docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans; \
 	fi
