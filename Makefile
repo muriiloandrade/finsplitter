@@ -93,16 +93,12 @@ test-watch:
 test-cov:
 	@echo "==> Running test coverage report - IMPLEMENT ME"
 
-tools: install-golangci-lint install-delve
+tools: install-golangci-lint
 	@echo "==> Dealt with tools used on project"
 
 install-golangci-lint:
 	@echo "==> Intalling golangci-lint"
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
-
-install-delve:
-	@echo "==> Installing delve"
-	@go install github.com/go-delve/delve/cmd/dlv@latest
 
 docker-scout: build
 	@echo "==> Search for vulnerabilities on prod image"
