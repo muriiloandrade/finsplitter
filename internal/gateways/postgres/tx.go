@@ -66,13 +66,11 @@ func (b TxManager) querier(ctx context.Context) querier {
 }
 
 func (b TxManager) Exec(ctx context.Context, query string, args ...any) (cmd pgconn.CommandTag, err error) {
-	cmd, err = b.querier(ctx).Exec(ctx, query, args...)
-	return
+	return b.querier(ctx).Exec(ctx, query, args...)
 }
 
 func (b TxManager) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
-	rows, err = b.querier(ctx).Query(ctx, query, args...)
-	return
+	return b.querier(ctx).Query(ctx, query, args...)
 }
 
 func (b TxManager) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {

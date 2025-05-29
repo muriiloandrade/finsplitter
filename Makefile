@@ -40,20 +40,20 @@ stop-infra:
 	@echo "==> Stopping infra containers"
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
+start-dev start-debug: start-%:
 start-%: start-infra
-start-dev start-debug: start-%
 	@echo "==> Running containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile backend --env-file .env -f compose.debug.yml up --build; \
+		docker compose --profile debug --env-file .env up --build; \
 	else \
 		docker compose --profile backend --env-file .env up --build; \
 	fi
 
+stop-dev stop-debug: stop-%:
 stop-%: stop-infra
-stop-dev stop-debug: stop-%
 	@echo "==> Stopping containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile backend --env-file .env -f compose.debug.yml down --rmi local -v --remove-orphans; \
+		docker compose --profile debug --env-file .env down --rmi local -v --remove-orphans; \
 	else \
 		docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans; \
 	fi
@@ -93,16 +93,16 @@ test-watch:
 test-cov:
 	@echo "==> Running test coverage report - IMPLEMENT ME"
 
-tools: install-golangci-lint install-delve
+tools: install-golangci-lint install-lefthook
 	@echo "==> Dealt with tools used on project"
 
 install-golangci-lint:
 	@echo "==> Intalling golangci-lint"
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
 
-install-delve:
-	@echo "==> Installing delve"
-	@go install github.com/go-delve/delve/cmd/dlv@latest
+install-lefthook:
+	@echo "==> Intalling lefthook"
+	@go tool lefthook install
 
 docker-scout: build
 	@echo "==> Search for vulnerabilities on prod image"
@@ -173,5 +173,7 @@ help:
 	@echo "  run-network-compose        Run the app using docker compose network."
 	@echo "  code-check                 Run linters and formatters."
 	@echo "  test                       Run unit tests."
+	@echo "  test-watch                 Run unit tests in watch mode (not implemented)."
+	@echo "  test-cov                   Run test coverage report (not implemented)."
 	@echo "  tools                      Install necessary development tools."
 	@echo "  docker-scout               Scan the production image for vulnerabilities."

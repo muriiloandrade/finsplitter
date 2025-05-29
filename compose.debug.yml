@@ -3,11 +3,11 @@ include:
   - compose.infra.yml
 
 services:
-  api:
+  debug-api:
     image: finsplitter:debug
     container_name: finsplitter-debug
     profiles:
-      - backend
+      - debug
     build:
       context: .
       dockerfile: ./Dockerfile

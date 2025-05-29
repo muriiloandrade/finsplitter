@@ -9,11 +9,11 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/muriiloandrade/finsplitter/internal/app/usecases"
+	cbUCs "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/config"
 	_http "github.com/muriiloandrade/finsplitter/internal/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1"
-	cardbrand "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	cbHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
@@ -69,9 +69,20 @@ func main() {
 
 		// Initialize the repositories
 		cardBrandRepo := postgres.NewCardBrandRepository(pgTxManager)
-		cardBrandUC := usecases.NewListCardBrandUC(cardBrandRepo)
-		cardBrandAPI := cardbrand.API{
-			ListCardBrandsHandler: cardbrand.NewListCardBrandsHandler(cardBrandUC).ListCardBrands,
+
+		// Initialize the use cases
+		getCardBrandUC := cbUCs.NewGetCardBrandByIDUC(cardBrandRepo)
+		listCardBrandUC := cbUCs.NewListCardBrandUC(cardBrandRepo)
+		createCardBrandUC := cbUCs.NewCreateCardBrandUC(cardBrandRepo, pgTxManager)
+		updateCardBrandUC := cbUCs.NewUpdateCardBrandUC(cardBrandRepo, pgTxManager)
+		deleteCardBrandUC := cbUCs.NewDeleteCardBrandUC(cardBrandRepo, pgTxManager)
+
+		cardBrandAPI := cbHandler.API{
+			GetCardBrandHandler:    cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
+			ListCardBrandsHandler:  cbHandler.NewListCardBrandsHandler(listCardBrandUC).ListCardBrands,
+			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(createCardBrandUC).CreateCardBrand,
+			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(updateCardBrandUC).UpdateCardBrand,
+			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(deleteCardBrandUC).DeleteCardBrand,
 		}
 
 		router := _http.NewRouter(logger)
