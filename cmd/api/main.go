@@ -69,9 +69,20 @@ func main() {
 
 		// Initialize the repositories
 		cardBrandRepo := postgres.NewCardBrandRepository(pgTxManager)
-		cardBrandUC := cbUCs.NewListCardBrandUC(cardBrandRepo)
+
+		// Initialize the use cases
+		getCardBrandUC := cbUCs.NewGetCardBrandByIDUC(cardBrandRepo)
+		listCardBrandUC := cbUCs.NewListCardBrandUC(cardBrandRepo)
+		createCardBrandUC := cbUCs.NewCreateCardBrandUC(cardBrandRepo, pgTxManager)
+		updateCardBrandUC := cbUCs.NewUpdateCardBrandUC(cardBrandRepo, pgTxManager)
+		deleteCardBrandUC := cbUCs.NewDeleteCardBrandUC(cardBrandRepo, pgTxManager)
+
 		cardBrandAPI := cbHandler.API{
-			ListCardBrandsHandler: cbHandler.NewListCardBrandsHandler(cardBrandUC).ListCardBrands,
+			GetCardBrandHandler:    cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
+			ListCardBrandsHandler:  cbHandler.NewListCardBrandsHandler(listCardBrandUC).ListCardBrands,
+			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(createCardBrandUC).CreateCardBrand,
+			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(updateCardBrandUC).UpdateCardBrand,
+			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(deleteCardBrandUC).DeleteCardBrand,
 		}
 
 		router := _http.NewRouter(logger)

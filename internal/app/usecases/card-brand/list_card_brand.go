@@ -11,24 +11,18 @@ import (
 
 const operation = "usecases.ListCardBrands"
 
-type ListCardBrandUC interface {
-	ListCardBrands(ctx context.Context) ([]entity.CardBrand, error)
-}
-
-type ListCardBrandsUseCase struct {
+type ListCardBrandsUC struct {
 	repo ports.ListCardBrandRepository
 }
 
-func NewListCardBrandUC(repo ports.ListCardBrandRepository) *ListCardBrandsUseCase {
-	return &ListCardBrandsUseCase{
-		repo: repo,
-	}
+func NewListCardBrandUC(repo ports.ListCardBrandRepository) ListCardBrandsUC {
+	return ListCardBrandsUC{repo: repo}
 }
 
-func (uc *ListCardBrandsUseCase) ListCardBrands(ctx context.Context) ([]entity.CardBrand, error) {
+func (uc *ListCardBrandsUC) ListCardBrands(ctx context.Context, opts ports.ListCardBrandFilterOptions) ([]entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
-	cardBrands, err := uc.repo.ListCardBrands(ctx)
+	cardBrands, err := uc.repo.ListCardBrands(ctx, opts)
 	if err != nil {
 		logger.Error("Failed to list card brands", slog.String("operation", operation), slog.Any("error", err))
 		return nil, err
