@@ -26,7 +26,7 @@ func (uc *UpdateCardBrandUC) UpdateCardBrand(ctx context.Context, opts ports.Upd
 		return nil, errors.New("name and id are required")
 	}
 
-	if err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
+	err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
 		brand, err := uc.repo.UpdateCardBrand(ctx, opts)
 
 		if err != nil {
@@ -41,7 +41,8 @@ func (uc *UpdateCardBrandUC) UpdateCardBrand(ctx context.Context, opts ports.Upd
 
 		cardBrand = brand
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 

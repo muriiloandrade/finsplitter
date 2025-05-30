@@ -26,13 +26,10 @@ func (uc *CreateCardBrandUC) CreateCardBrand(ctx context.Context, name string) (
 		return nil, errors.New("name is required")
 	}
 
-	if err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
+	err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
 		cb, err := uc.repo.CreateCardBrand(ctx, name)
 
 		if err != nil {
-			if errors.Is(err, errs.ErrCardBrandNotFound) {
-				return errs.ErrCardBrandNotFound
-			}
 			if errors.Is(err, errs.ErrCardBrandAlreadyExists) {
 				return errs.ErrCardBrandAlreadyExists
 			}
@@ -40,7 +37,8 @@ func (uc *CreateCardBrandUC) CreateCardBrand(ctx context.Context, name string) (
 
 		insertedCardBrand = cb
 		return err
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
