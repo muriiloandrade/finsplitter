@@ -11,7 +11,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-      target: development
+      target: setup
     env_file:
       - .env
     extra_hosts:
@@ -21,7 +21,7 @@ services:
       - "2345:2345"  # Delve debugger port
     security_opt:
       - "seccomp:unconfined"  # Required for delve
-    command: ["dlv", "debug", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "./cmd/api/main.go"]
+    command: ["go", "tool", "dlv", "debug", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "./cmd/api/main.go"]
     develop:
       watch:
         - path: ./

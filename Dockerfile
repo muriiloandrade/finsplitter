@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24.2 AS setup
+FROM golang:1.24.3 AS setup
 
 WORKDIR /app
 
@@ -8,11 +8,6 @@ COPY go.* .
 RUN go mod download
 
 COPY . .
-
-# Development stage with Delve debugger
-FROM setup AS development
-
-RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 # Build the application
 FROM setup AS builder

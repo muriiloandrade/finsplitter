@@ -43,3 +43,4 @@ go.work
 .env*
 !.env.example
 *.sql
+!internal/gateways/postgres/**/*.sql
