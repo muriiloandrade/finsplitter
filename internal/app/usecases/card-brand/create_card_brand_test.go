@@ -32,11 +32,10 @@ func TestCreateCardBrandUC_CreateCardBrandSuccess(t *testing.T) {
 		input         string
 		repoSetup     func(repo *ports.MockCreateCardBrandRepository)
 		txSetup       func(tx *domain.MockTransactioner)
-		expectedError error
 		wantCardBrand *entity.CardBrand
 	}{
 		{
-			name:  "success - creates card brand",
+			name:  "creates card brand",
 			input: "Visa",
 			repoSetup: func(repo *ports.MockCreateCardBrandRepository) {
 				repo.EXPECT().CreateCardBrand(mock.Anything, "Visa").Return(validCardBrand, nil)
@@ -47,7 +46,6 @@ func TestCreateCardBrandUC_CreateCardBrandSuccess(t *testing.T) {
 						fn(ctx)
 					}).Return(nil)
 			},
-			expectedError: nil,
 			wantCardBrand: validCardBrand,
 		},
 	}
@@ -63,14 +61,8 @@ func TestCreateCardBrandUC_CreateCardBrandSuccess(t *testing.T) {
 
 			got, err := uc.CreateCardBrand(context.Background(), tt.input)
 
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-				assert.Nil(t, got)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantCardBrand, got)
-			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantCardBrand, got)
 
 			repo.AssertExpectations(t)
 			tx.AssertExpectations(t)
@@ -85,18 +77,16 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 		repoSetup     func(repo *ports.MockCreateCardBrandRepository)
 		txSetup       func(tx *domain.MockTransactioner)
 		expectedError error
-		wantCardBrand *entity.CardBrand
 	}{
 		{
-			name:          "empty name",
+			name:          "returns error on empty name",
 			input:         "",
 			repoSetup:     func(repo *ports.MockCreateCardBrandRepository) {},
 			txSetup:       func(tx *domain.MockTransactioner) {},
 			expectedError: errors.New("name is required"),
-			wantCardBrand: nil,
 		},
 		{
-			name:  "card brand already exists",
+			name:  "returns error on card brand already exists",
 			input: "Visa",
 			repoSetup: func(repo *ports.MockCreateCardBrandRepository) {
 				repo.EXPECT().CreateCardBrand(mock.Anything, "Visa").Return(nil, errs.ErrCardBrandAlreadyExists)
@@ -108,10 +98,9 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 					}).Return(errs.ErrCardBrandAlreadyExists)
 			},
 			expectedError: errs.ErrCardBrandAlreadyExists,
-			wantCardBrand: nil,
 		},
 		{
-			name:  "database generic error",
+			name:  "returns error on database generic error",
 			input: "Visa",
 			repoSetup: func(repo *ports.MockCreateCardBrandRepository) {
 				repo.EXPECT().CreateCardBrand(mock.Anything, "Visa").Return(nil, errs.ErrDatabaseGeneric)
@@ -123,10 +112,9 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 					}).Return(errs.ErrDatabaseGeneric)
 			},
 			expectedError: errs.ErrDatabaseGeneric,
-			wantCardBrand: nil,
 		},
 		{
-			name:      "transaction failed",
+			name:      "returns error on transaction failed",
 			input:     "Visa",
 			repoSetup: func(repo *ports.MockCreateCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
@@ -134,7 +122,6 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 					Return(errors.New("transaction failed"))
 			},
 			expectedError: errors.New("transaction failed"),
-			wantCardBrand: nil,
 		},
 	}
 
@@ -149,14 +136,9 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 
 			got, err := uc.CreateCardBrand(context.Background(), tt.input)
 
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-				assert.Nil(t, got)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantCardBrand, got)
-			}
+			assert.Error(t, err)
+			assert.Equal(t, tt.expectedError, err)
+			assert.Nil(t, got)
 
 			repo.AssertExpectations(t)
 			tx.AssertExpectations(t)
