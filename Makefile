@@ -21,7 +21,7 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	-v .:/src \
  	-w /src \
  	--network finsplitter-net \
- 	sqlc/sqlc:latest
+ 	sqlc/sqlc:1.29.0
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
