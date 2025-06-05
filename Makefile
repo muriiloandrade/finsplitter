@@ -22,6 +22,10 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	-w /src \
  	--network finsplitter-net \
  	sqlc/sqlc:latest
+MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
+	-v .:/src \
+	-w /src \
+	vektra/mockery:3
 
 # Default target
 default: help
@@ -117,7 +121,7 @@ generate-sqlc:
 
 generate-mocks:
 	@echo "==> Running mockery"
-	@docker run -u $(UID):$(GID) -v .:/src -w /src vektra/mockery:3
+	@$(MOCKERY_CMD)
 
 # === Migration Targets ===
 
