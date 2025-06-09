@@ -1,0 +1,19 @@
+all: false
+dir: '{{.InterfaceDir}}'
+filename: mocks.gen.go
+force-file-write: true
+formatter: goimports
+log-level: info
+structname: '{{.Mock}}{{.InterfaceName}}'
+pkgname: '{{.SrcPackageName}}'
+recursive: false
+require-template-schema-exists: true
+template: testify
+template-schema: '{{.Template}}.schema.json'
+packages:
+  github.com/muriiloandrade/finsplitter/internal/domain:
+    config:
+      all: true
+  github.com/muriiloandrade/finsplitter/internal/app/ports:
+    config:
+      all: true

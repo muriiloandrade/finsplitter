@@ -21,7 +21,11 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	-v .:/src \
  	-w /src \
  	--network finsplitter-net \
- 	sqlc/sqlc:latest
+ 	sqlc/sqlc:1.29.0
+MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
+	-v .:/src \
+	-w /src \
+	vektra/mockery:3
 
 # Default target
 default: help
@@ -97,11 +101,11 @@ tools: install-golangci-lint install-lefthook
 	@echo "==> Dealt with tools used on project"
 
 install-golangci-lint:
-	@echo "==> Intalling golangci-lint"
+	@echo "==> Installing golangci-lint"
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
 
 install-lefthook:
-	@echo "==> Intalling lefthook"
+	@echo "==> Installing lefthook"
 	@go tool lefthook install
 
 docker-scout: build
@@ -109,11 +113,15 @@ docker-scout: build
 	@docker scout cves -e --only-fixed ${NAME}:${VERSION}
 
 # === Generation Targets ===
-generate: generate-sqlc
+generate: generate-sqlc generate-mocks
 
 generate-sqlc:
 	@echo "==> Generating SQLC code"
 	@$(SQLC_CMD) generate
+
+generate-mocks:
+	@echo "==> Running mockery"
+	@$(MOCKERY_CMD)
 
 # === Migration Targets ===
 
