@@ -7,8 +7,6 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 )
 
-const operation = "usecases.ListCardBrands"
-
 type ListCardBrandsUC struct {
 	repo ports.ListCardBrandRepository
 }
