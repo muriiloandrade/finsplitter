@@ -16,7 +16,7 @@ import (
 const operation = "handler.ListCardBrands"
 
 type ListCardBrandsRequest struct {
-	Id         uuid.UUID `query:"id" doc:"Card brand ID" format:"uuid" nullable:"true" format:"uuid"`
+	Id         uuid.UUID `query:"id" doc:"Card brand ID" nullable:"true" format:"uuid"`
 	Name       string    `query:"name" doc:"Card brand name" nullable:"true" example:"Visa" pattern:"^[a-zA-Z ]{1,50}$"`
 	PageSize   int       `query:"page_size" doc:"Number of items per page" default:"10" minimum:"1" maximum:"100"`
 	PageNumber int       `query:"page_number" doc:"Page number for pagination" default:"1" minimum:"1"`
