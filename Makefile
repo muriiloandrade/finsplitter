@@ -13,7 +13,7 @@ MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
  	-v $(MIGRATIONS_PATH):/migrations \
  	-w /migrations \
  	--network finsplitter-net \
- 	migrate/migrate:v4.18.2 \
+ 	migrate/migrate:v4.18.3 \
  	-path /migrations/ \
  	-database "$(DATABASE_URL)"
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
@@ -25,7 +25,7 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
-	vektra/mockery:3
+	vektra/mockery:v3.5.3
 
 # Default target
 default: help
