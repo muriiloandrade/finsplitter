@@ -102,7 +102,7 @@ tools: install-golangci-lint install-lefthook
 
 install-golangci-lint:
 	@echo "==> Installing golangci-lint"
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.4.0
 
 install-lefthook:
 	@echo "==> Installing lefthook"
