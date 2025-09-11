@@ -2,7 +2,6 @@ package cardbrand
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -19,7 +18,7 @@ type API struct {
 	DeleteCardBrandHandler Handler[DeleteCardBrandRequest, DeleteCardBrandResponse]
 }
 
-func (a API) RegisterRoutes(r *chi.Mux, api huma.API, logger *slog.Logger) {
+func (a API) RegisterRoutes(r *chi.Mux, api huma.API) {
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		Path:        "/card-brands",
