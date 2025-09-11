@@ -11,7 +11,7 @@ import (
 )
 
 type interfaceAPI interface {
-	RegisterRoutes(r *chi.Mux, api huma.API, logger *slog.Logger)
+	RegisterRoutes(r *chi.Mux, api huma.API)
 }
 
 type API struct {
@@ -29,7 +29,7 @@ func (a API) Routes(r *chi.Mux) huma.API {
 
 	api = humachi.New(r, openapi.NewOpenAPIConfig())
 
-	a.CardBrandAPI.RegisterRoutes(r, api, a.Logger)
+	a.CardBrandAPI.RegisterRoutes(r, api)
 
 	return api
 }
