@@ -2,6 +2,7 @@ package cardbrand
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -29,12 +30,15 @@ func NewCreateCardBrandHandler(uc usecases.CreateCardBrandUC) CreateCardBrandHan
 	return CreateCardBrandHandler{UseCase: uc}
 }
 
-func (h CreateCardBrandHandler) CreateCardBrand(ctx context.Context, input *CreateCardBrandRequest) (*CreateCardBrandResponse, error) {
+func (h CreateCardBrandHandler) CreateCardBrand(
+	ctx context.Context,
+	input *CreateCardBrandRequest,
+) (*CreateCardBrandResponse, error) {
 	logger := slogctx.FromCtx(ctx)
 	brand, err := h.UseCase.CreateCardBrand(ctx, input.Body.Name)
 	if err != nil {
 		logger.Error("Failed to create card brand", slog.Any("error", err))
-		if err == errs.ErrCardBrandAlreadyExists {
+		if errors.Is(err, errs.ErrCardBrandAlreadyExists) {
 			return nil, huma.Error409Conflict(err.Error())
 		}
 		return nil, huma.Error500InternalServerError(err.Error())

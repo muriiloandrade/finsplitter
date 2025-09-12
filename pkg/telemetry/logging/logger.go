@@ -22,7 +22,8 @@ func NewContextWithLogger(ctx context.Context, cfg config.Config, w io.Writer) c
 		),
 	}
 
-	if cfg.App.BuildCommit != "undefined" || cfg.App.BuildTag != "undefined" || cfg.App.BuildTime != "undefined" {
+	if cfg.App.BuildCommit != "undefined" || cfg.App.BuildTag != "undefined" ||
+		cfg.App.BuildTime != "undefined" {
 		defaultAttrs = append(defaultAttrs, slog.Group(
 			"build",
 			slog.String("buildTime", cfg.App.BuildTime),

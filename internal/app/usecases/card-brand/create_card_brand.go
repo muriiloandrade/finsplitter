@@ -15,11 +15,17 @@ type CreateCardBrandUC struct {
 	repo ports.CreateCardBrandRepository
 }
 
-func NewCreateCardBrandUC(repo ports.CreateCardBrandRepository, tx domain.Transactioner) CreateCardBrandUC {
+func NewCreateCardBrandUC(
+	repo ports.CreateCardBrandRepository,
+	tx domain.Transactioner,
+) CreateCardBrandUC {
 	return CreateCardBrandUC{repo: repo, tx: tx}
 }
 
-func (uc *CreateCardBrandUC) CreateCardBrand(ctx context.Context, name string) (*entity.CardBrand, error) {
+func (uc *CreateCardBrandUC) CreateCardBrand(
+	ctx context.Context,
+	name string,
+) (*entity.CardBrand, error) {
 	var insertedCardBrand *entity.CardBrand
 
 	if name == "" {
@@ -28,7 +34,6 @@ func (uc *CreateCardBrandUC) CreateCardBrand(ctx context.Context, name string) (
 
 	err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
 		cb, err := uc.repo.CreateCardBrand(ctx, name)
-
 		if err != nil {
 			if errors.Is(err, errs.ErrCardBrandAlreadyExists) {
 				return errs.ErrCardBrandAlreadyExists

@@ -18,7 +18,10 @@ func NewGetCardBrandByIDUC(repo ports.GetCardBrandByIdRepository) GetCardBrandBy
 	return GetCardBrandByIDUC{repo: repo}
 }
 
-func (uc *GetCardBrandByIDUC) GetCardBrandByID(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error) {
+func (uc *GetCardBrandByIDUC) GetCardBrandByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*entity.CardBrand, error) {
 	brand, err := uc.repo.GetCardBrandByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrCardBrandNotFound) {

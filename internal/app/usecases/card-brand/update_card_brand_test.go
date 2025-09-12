@@ -1,4 +1,4 @@
-package usecases
+package usecases_test
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
@@ -37,12 +38,17 @@ func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
 			name:  "updates a card brand",
 			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
-				repo.EXPECT().UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).Return(cardBrand, nil)
+				repo.EXPECT().
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					Return(cardBrand, nil)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(nil)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(nil)
 			},
 			want: cardBrand,
 		},
@@ -54,9 +60,9 @@ func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
 			tx := domain.NewMockTransactioner(t)
 			tt.repoSetup(repo)
 			tt.txSetup(tx)
-			uc := NewUpdateCardBrandUC(repo, tx)
+			uc := usecases.NewUpdateCardBrandUC(repo, tx)
 			got, err := uc.UpdateCardBrand(context.Background(), tt.input)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			repo.AssertExpectations(t)
 			tx.AssertExpectations(t)
@@ -92,12 +98,17 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 			name:  "returns error on not found",
 			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
-				repo.EXPECT().UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).Return(nil, errs.ErrCardBrandNotFound)
+				repo.EXPECT().
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					Return(nil, errs.ErrCardBrandNotFound)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(errs.ErrCardBrandNotFound)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(errs.ErrCardBrandNotFound)
 			},
 			err: errs.ErrCardBrandNotFound,
 		},
@@ -105,12 +116,17 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 			name:  "returns error on already exists",
 			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
-				repo.EXPECT().UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).Return(nil, errs.ErrCardBrandAlreadyExists)
+				repo.EXPECT().
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					Return(nil, errs.ErrCardBrandAlreadyExists)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(errs.ErrCardBrandAlreadyExists)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(errs.ErrCardBrandAlreadyExists)
 			},
 			err: errs.ErrCardBrandAlreadyExists,
 		},
@@ -119,7 +135,9 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 			input:     ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Return(errors.New("transaction failed"))
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Return(errors.New("transaction failed"))
 			},
 			err: errors.New("transaction failed"),
 		},
@@ -131,9 +149,9 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 			tx := domain.NewMockTransactioner(t)
 			tt.repoSetup(repo)
 			tt.txSetup(tx)
-			uc := NewUpdateCardBrandUC(repo, tx)
+			uc := usecases.NewUpdateCardBrandUC(repo, tx)
 			got, err := uc.UpdateCardBrand(context.Background(), tt.input)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Nil(t, got)
 			assert.Equal(t, tt.err, err)
 			repo.AssertExpectations(t)

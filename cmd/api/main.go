@@ -50,17 +50,21 @@ func main() {
 			poolCfg,
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to connect to database: %w", err)) // Exit if database connection fails
+			panic(
+				fmt.Errorf("failed to connect to database: %w", err),
+			) // Exit if database connection fails
 		}
 
 		// Run database migrations
 		err = migrations.RunMigrations(ctx, migrations.MigrationOptions{
 			MigrationsPath: "./internal/gateways/postgres/migrations",
-			DbInstance:     dbPool,
-			DbCfg:          cfg.DB,
+			DBInstance:     dbPool,
+			DBCfg:          cfg.DB,
 		})
 		if err != nil {
-			panic(fmt.Errorf("failed to run database migrations: %w", err)) // Exit if migrations fail
+			panic(
+				fmt.Errorf("failed to run database migrations: %w", err),
+			) // Exit if migrations fail
 		}
 
 		pgTxManager := &postgres.TxManager{
@@ -78,11 +82,19 @@ func main() {
 		deleteCardBrandUC := cbUCs.NewDeleteCardBrandUC(cardBrandRepo, pgTxManager)
 
 		cardBrandAPI := cbHandler.API{
-			GetCardBrandHandler:    cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
-			ListCardBrandsHandler:  cbHandler.NewListCardBrandsHandler(listCardBrandUC).ListCardBrands,
-			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(createCardBrandUC).CreateCardBrand,
-			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(updateCardBrandUC).UpdateCardBrand,
-			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(deleteCardBrandUC).DeleteCardBrand,
+			GetCardBrandHandler: cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
+			ListCardBrandsHandler: cbHandler.NewListCardBrandsHandler(
+				listCardBrandUC,
+			).ListCardBrands,
+			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(
+				createCardBrandUC,
+			).CreateCardBrand,
+			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(
+				updateCardBrandUC,
+			).UpdateCardBrand,
+			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(
+				deleteCardBrandUC,
+			).DeleteCardBrand,
 		}
 
 		router := _http.NewRouter(logger)

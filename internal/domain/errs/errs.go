@@ -2,9 +2,7 @@ package errs
 
 import "errors"
 
-var (
-	ErrDatabaseGeneric = errors.New("database operation failed")
-)
+var ErrDatabaseGeneric = errors.New("database operation failed")
 
 var (
 	ErrCardBrandNotFound            = errors.New("card brand not found")
