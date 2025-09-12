@@ -1,4 +1,4 @@
-package usecases
+package usecases_test
 
 import (
 	"context"
@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
@@ -33,15 +34,23 @@ func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
 			name:   "returns a list of card brands",
 			filter: ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
-				repo.EXPECT().ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).Return(brands, nil)
+				repo.EXPECT().
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).
+					Return(brands, nil)
 			},
 			want: brands,
 		},
 		{
-			name:   "returns empty result",
-			filter: ports.ListCardBrandFilterOptions{Name: strPtr("NonExistent"), PageSize: 10, PageNumber: 1},
+			name: "returns empty result",
+			filter: ports.ListCardBrandFilterOptions{
+				Name:       strPtr("NonExistent"),
+				PageSize:   10,
+				PageNumber: 1,
+			},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
-				repo.EXPECT().ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Name: strPtr("NonExistent"), PageSize: 10, PageNumber: 1}).Return([]entity.CardBrand{}, nil)
+				repo.EXPECT().
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Name: strPtr("NonExistent"), PageSize: 10, PageNumber: 1}).
+					Return([]entity.CardBrand{}, nil)
 			},
 			want: []entity.CardBrand{},
 		},
@@ -51,9 +60,9 @@ func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := ports.NewMockListCardBrandRepository(t)
 			tt.repoSetup(repo)
-			uc := NewListCardBrandUC(repo)
+			uc := usecases.NewListCardBrandUC(repo)
 			got, err := uc.ListCardBrands(context.Background(), tt.filter)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			repo.AssertExpectations(t)
 		})
@@ -71,7 +80,9 @@ func TestListCardBrandsUC_ListCardBrandsError(t *testing.T) {
 			name:   "returns error on database generic error",
 			filter: ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
-				repo.EXPECT().ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).Return(nil, errs.ErrDatabaseGeneric)
+				repo.EXPECT().
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).
+					Return(nil, errs.ErrDatabaseGeneric)
 			},
 			err: errs.ErrDatabaseGeneric,
 		},
@@ -81,9 +92,9 @@ func TestListCardBrandsUC_ListCardBrandsError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := ports.NewMockListCardBrandRepository(t)
 			tt.repoSetup(repo)
-			uc := NewListCardBrandUC(repo)
+			uc := usecases.NewListCardBrandUC(repo)
 			got, err := uc.ListCardBrands(context.Background(), tt.filter)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Nil(t, got)
 			assert.Equal(t, tt.err, err)
 			repo.AssertExpectations(t)

@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 )
 
@@ -65,11 +64,19 @@ func (b TxManager) querier(ctx context.Context) querier {
 	return b.ConnPool
 }
 
-func (b TxManager) Exec(ctx context.Context, query string, args ...any) (cmd pgconn.CommandTag, err error) {
+func (b TxManager) Exec(
+	ctx context.Context,
+	query string,
+	args ...any,
+) (cmd pgconn.CommandTag, err error) {
 	return b.querier(ctx).Exec(ctx, query, args...)
 }
 
-func (b TxManager) Query(ctx context.Context, query string, args ...any) (rows pgx.Rows, err error) {
+func (b TxManager) Query(
+	ctx context.Context,
+	query string,
+	args ...any,
+) (rows pgx.Rows, err error) {
 	return b.querier(ctx).Query(ctx, query, args...)
 }
 

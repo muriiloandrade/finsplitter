@@ -23,7 +23,10 @@ type ListCardBrandFilterOptions struct {
 }
 
 type ListCardBrandRepository interface {
-	ListCardBrands(ctx context.Context, filter ListCardBrandFilterOptions) ([]entity.CardBrand, error)
+	ListCardBrands(
+		ctx context.Context,
+		filter ListCardBrandFilterOptions,
+	) ([]entity.CardBrand, error)
 }
 
 type UpdateCardBrandOptions struct {

@@ -2,6 +2,7 @@ package cardbrand
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -28,12 +29,15 @@ func NewGetCardBrandHandler(uc usecases.GetCardBrandByIDUC) GetCardBrandHandler 
 	return GetCardBrandHandler{UseCase: uc}
 }
 
-func (h GetCardBrandHandler) GetCardBrand(ctx context.Context, input *GetCardBrandRequest) (*GetCardBrandResponse, error) {
+func (h GetCardBrandHandler) GetCardBrand(
+	ctx context.Context,
+	input *GetCardBrandRequest,
+) (*GetCardBrandResponse, error) {
 	logger := slogctx.FromCtx(ctx)
 	brand, err := h.UseCase.GetCardBrandByID(ctx, input.ID)
 	if err != nil {
 		logger.Error("Failed to get card brand", slog.Any("error", err))
-		if err == errs.ErrCardBrandNotFound {
+		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, huma.Error404NotFound("CardBrand not found")
 		}
 		return nil, huma.Error500InternalServerError(err.Error())

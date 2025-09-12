@@ -2,6 +2,7 @@ package cardbrand
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -29,12 +30,15 @@ func NewDeleteCardBrandHandler(uc usecases.DeleteCardBrandUC) DeleteCardBrandHan
 	return DeleteCardBrandHandler{UseCase: uc}
 }
 
-func (h DeleteCardBrandHandler) DeleteCardBrand(ctx context.Context, input *DeleteCardBrandRequest) (*DeleteCardBrandResponse, error) {
+func (h DeleteCardBrandHandler) DeleteCardBrand(
+	ctx context.Context,
+	input *DeleteCardBrandRequest,
+) (*DeleteCardBrandResponse, error) {
 	logger := slogctx.FromCtx(ctx)
 	cb, err := h.UseCase.DeleteCardBrand(ctx, input.ID)
 	if err != nil {
 		logger.Error("Failed to delete card brand", slog.Any("error", err))
-		if err == errs.ErrCardBrandNotFound {
+		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, huma.Error404NotFound("CardBrand not found")
 		}
 		return nil, huma.Error500InternalServerError(err.Error())

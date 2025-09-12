@@ -1,4 +1,4 @@
-package usecases
+package usecases_test
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteCardBrandUC_DeleteCardBrandSuccess(t *testing.T) {
@@ -39,9 +40,12 @@ func TestDeleteCardBrandUC_DeleteCardBrandSuccess(t *testing.T) {
 				repo.EXPECT().DeleteCardBrand(mock.Anything, id).Return(cardBrand, nil)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(nil)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(nil)
 			},
 			want: cardBrand,
 		},
@@ -53,9 +57,9 @@ func TestDeleteCardBrandUC_DeleteCardBrandSuccess(t *testing.T) {
 			tx := domain.NewMockTransactioner(t)
 			tt.repoSetup(repo)
 			tt.txSetup(tx)
-			uc := NewDeleteCardBrandUC(repo, tx)
+			uc := usecases.NewDeleteCardBrandUC(repo, tx)
 			got, err := uc.DeleteCardBrand(context.Background(), tt.inputID)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			repo.AssertExpectations(t)
 			tx.AssertExpectations(t)
@@ -84,12 +88,17 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 			name:    "returns error on id not found",
 			inputID: id,
 			repoSetup: func(repo *ports.MockDeleteCardBrandRepository) {
-				repo.EXPECT().DeleteCardBrand(mock.Anything, id).Return(nil, errs.ErrCardBrandNotFound)
+				repo.EXPECT().
+					DeleteCardBrand(mock.Anything, id).
+					Return(nil, errs.ErrCardBrandNotFound)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(errs.ErrCardBrandNotFound)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(errs.ErrCardBrandNotFound)
 			},
 			err: errs.ErrCardBrandNotFound,
 		},
@@ -97,12 +106,17 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 			name:    "returns error on foreign key violation",
 			inputID: id,
 			repoSetup: func(repo *ports.MockDeleteCardBrandRepository) {
-				repo.EXPECT().DeleteCardBrand(mock.Anything, id).Return(nil, errs.ErrCardBrandForeignKeyViolation)
+				repo.EXPECT().
+					DeleteCardBrand(mock.Anything, id).
+					Return(nil, errs.ErrCardBrandForeignKeyViolation)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Run(func(ctx context.Context, fn domain.TransactionFunc) {
-					fn(ctx)
-				}).Return(errs.ErrCardBrandForeignKeyViolation)
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(errs.ErrCardBrandForeignKeyViolation)
 			},
 			err: errs.ErrCardBrandForeignKeyViolation,
 		},
@@ -111,7 +125,9 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 			inputID:   id,
 			repoSetup: func(repo *ports.MockDeleteCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
-				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).Return(errors.New("transaction failed"))
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Return(errors.New("transaction failed"))
 			},
 			err: errors.New("transaction failed"),
 		},
@@ -123,9 +139,9 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 			tx := domain.NewMockTransactioner(t)
 			tt.repoSetup(repo)
 			tt.txSetup(tx)
-			uc := NewDeleteCardBrandUC(repo, tx)
+			uc := usecases.NewDeleteCardBrandUC(repo, tx)
 			got, err := uc.DeleteCardBrand(context.Background(), tt.inputID)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Nil(t, got)
 			assert.Equal(t, tt.err, err)
 			repo.AssertExpectations(t)
