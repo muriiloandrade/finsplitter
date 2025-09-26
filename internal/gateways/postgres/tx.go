@@ -41,7 +41,7 @@ func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) error {
 	if err = f(ctxWithTx); err != nil {
 		if rollBackErr := tx.Rollback(ctx); rollBackErr != nil {
 			return &domain.TransactionError{
-				Cause: fmt.Errorf("rollback failed after transaction error: %v (original: %w)", rollBackErr, err),
+				Cause: fmt.Errorf("rollback failed after transaction error: %w (original: %w)", rollBackErr, err),
 			}
 		}
 		return &domain.TransactionError{Cause: err}
