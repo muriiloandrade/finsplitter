@@ -23,10 +23,16 @@ import (
 // CLIOptions for the CLI.
 type CLIOptions struct{}
 
+//nolint:gochecknoglobals // These are set at build time using ldflags.
 var (
 	BuildCommit = "undefined"
 	BuildTag    = "undefined"
 	BuildTime   = "undefined"
+)
+
+const (
+	timeout           = 5 * time.Second
+	readHeaderTimeout = 30 * time.Second
 )
 
 func main() {
@@ -110,8 +116,9 @@ func main() {
 
 		// Create the HTTP server.
 		server := http.Server{
-			Addr:    fmt.Sprintf(":%d", cfg.App.Port),
-			Handler: router,
+			Addr:              fmt.Sprintf(":%d", cfg.App.Port),
+			Handler:           router,
+			ReadHeaderTimeout: readHeaderTimeout,
 		}
 
 		// Tell the CLI how to start your router.
@@ -126,7 +133,6 @@ func main() {
 		// Tell the CLI how to stop your server.
 		hooks.OnStop(func() {
 			// Give the server 5 seconds to gracefully shut down, then give up.
-			const timeout = 5 * time.Second
 			timeoutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			defer dbPool.Close()
