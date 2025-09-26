@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -117,7 +118,10 @@ func main() {
 		// Tell the CLI how to start your router.
 		hooks.OnStart(func() {
 			logger.Info("Starting server...")
-			server.ListenAndServe()
+			err := server.ListenAndServe()
+			if err != nil {
+				logger.Error("Failed to start server", slog.Any("error", err))
+			}
 		})
 
 		// Tell the CLI how to stop your server.
@@ -126,7 +130,10 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			defer dbPool.Close()
-			server.Shutdown(ctx)
+			if err := server.Shutdown(ctx); err != nil {
+				logger.Error("Failed to stop server", slog.Any("error", err))
+			}
+			logger.InfoContext(ctx, "Server stopped")
 		})
 	})
 
