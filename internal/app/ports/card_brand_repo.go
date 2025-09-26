@@ -18,8 +18,8 @@ type GetCardBrandByIDRepository interface {
 type ListCardBrandFilterOptions struct {
 	ID         uuid.UUID
 	Name       *string
-	PageSize   int
-	PageNumber int
+	PageSize   uint
+	PageNumber uint
 }
 
 type ListCardBrandRepository interface {
