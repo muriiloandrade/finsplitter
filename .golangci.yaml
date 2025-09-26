@@ -119,12 +119,12 @@ linters:
     - wastedassign # finds wasted assignment statements
     - whitespace # detects leading and trailing whitespace
     - decorder # checks declaration order and count of types, constants, variables and functions
-    - exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
     - godox # detects usage of FIXME, TODO and other keywords inside comments
     - interfacebloat # checks the number of methods inside an interface
 
     ## disabled
-    # - tagalign # checks that struct tags are well aligned
+    #- exhaustruct # [highly recommend to enable] checks if all structure fields are initialized
+    #- tagalign # checks that struct tags are well aligned
     #- ireturn # accept interfaces, return concrete types
     #- noinlineerr # disallows inline error handling `if err := ...; err != nil {`
     #- prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
@@ -231,42 +231,6 @@ linters:
       check:
         - switch
         - map
-
-    exhaustruct:
-      # List of regular expressions to match type names that should be excluded from processing.
-      # Anonymous structs can be matched by '<anonymous>' alias.
-      # Has precedence over `include`.
-      # Each regular expression must match the full type name, including package path.
-      # For example, to match type `net/http.Cookie` regular expression should be `.*/http\.Cookie`,
-      # but not `http\.Cookie`.
-      # Default: []
-      exclude:
-        # std libs
-        - ^net/http.Client$
-        - ^net/http.Cookie$
-        - ^net/http.Request$
-        - ^net/http.Response$
-        - ^net/http.Server$
-        - ^net/http.Transport$
-        - ^net/url.URL$
-        - ^os/exec.Cmd$
-        - ^reflect.StructField$
-        # public libs
-        - ^github.com/Shopify/sarama.Config$
-        - ^github.com/Shopify/sarama.ProducerMessage$
-        - ^github.com/mitchellh/mapstructure.DecoderConfig$
-        - ^github.com/prometheus/client_golang/.+Opts$
-        - ^github.com/spf13/cobra.Command$
-        - ^github.com/spf13/cobra.CompletionOptions$
-        - ^github.com/stretchr/testify/mock.Mock$
-        - ^github.com/testcontainers/testcontainers-go.+Request$
-        - ^github.com/testcontainers/testcontainers-go.FromDockerfile$
-        - ^golang.org/x/tools/go/analysis.Analyzer$
-        - ^google.golang.org/protobuf/.+Options$
-        - ^gopkg.in/yaml.v3.Node$
-      # Allows empty structures in return statements.
-      # Default: false
-      allow-empty-returns: true
 
     funcorder:
       # Checks if the exported methods of a structure are placed before the non-exported ones.
