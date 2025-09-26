@@ -50,7 +50,7 @@ func NewContextWithLogger(ctx context.Context, cfg config.Config, w io.Writer) c
 
 	customHandler := slogctx.NewHandler(logHandler, nil)
 
-	logger := slog.New(customHandler)
+	logger := slog.New(&CustomHandler{Handler: customHandler})
 
 	slog.SetDefault(logger)
 
