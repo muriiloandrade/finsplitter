@@ -15,7 +15,7 @@
         "source.organizeImports": "always",
         "source.fixAll": "always"
     },
-    "go.lintTool": "golangci-lint",
+    "go.lintTool": "golangci-lint-v2",
     "go.lintFlags": [
         "--path-mode=abs",
         "--fast-only"
