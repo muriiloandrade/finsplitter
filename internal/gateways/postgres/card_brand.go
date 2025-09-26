@@ -140,7 +140,7 @@ func (r *CardBrandRepository) ListCardBrands(
 	cardBrandList := make([]entity.CardBrand, 0, opts.PageSize)
 	for rows.Next() {
 		var brand sqlc.CardBrand
-		if err := rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
+		if err = rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
 			logger.ErrorContext(ctx,
 				"Failed to scan card brand",
 				slog.String("operation", listCardBrandsOp),

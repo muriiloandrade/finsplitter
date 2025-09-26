@@ -117,7 +117,7 @@ func main() {
 		// Tell the CLI how to start your router.
 		hooks.OnStart(func() {
 			logger.Info("Starting server...")
-			err := server.ListenAndServe()
+			err = server.ListenAndServe()
 			if err != nil {
 				logger.Error("Failed to start server", slog.Any("error", err))
 			}
@@ -126,13 +126,14 @@ func main() {
 		// Tell the CLI how to stop your server.
 		hooks.OnStop(func() {
 			// Give the server 5 seconds to gracefully shut down, then give up.
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			const timeout = 5 * time.Second
+			timeoutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			defer dbPool.Close()
-			if err := server.Shutdown(ctx); err != nil {
+			if err = server.Shutdown(timeoutCtx); err != nil {
 				logger.Error("Failed to stop server", slog.Any("error", err))
 			}
-			logger.InfoContext(ctx, "Server stopped")
+			logger.InfoContext(timeoutCtx, "Server stopped")
 		})
 	})
 
