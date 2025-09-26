@@ -17,13 +17,13 @@ type TxManager struct {
 	ConnPool *pgxpool.Pool
 }
 
-func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) (err error) {
+func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) error {
 	if domain.HasTX(ctx) {
 		return &domain.TransactionError{Cause: errors.New("already in transaction")}
 	}
 
-	var tx pgx.Tx
-	if tx, err = b.ConnPool.Begin(ctx); err != nil {
+	tx, err := b.ConnPool.Begin(ctx)
+	if err != nil {
 		return &domain.TransactionError{Cause: fmt.Errorf("cannot begin a transaction: %w", err)}
 	}
 
@@ -40,12 +40,18 @@ func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) (err er
 
 	if err = f(ctxWithTx); err != nil {
 		if rollBackErr := tx.Rollback(ctx); rollBackErr != nil {
-			err = rollBackErr
+			return &domain.TransactionError{
+				Cause: fmt.Errorf("rollback failed after transaction error: %v (original: %w)", rollBackErr, err),
+			}
 		}
-		return
+		return &domain.TransactionError{Cause: err}
 	}
-	err = tx.Commit(ctx)
-	return
+
+	if err = tx.Commit(ctx); err != nil {
+		return &domain.TransactionError{Cause: fmt.Errorf("cannot commit transaction: %w", err)}
+	}
+
+	return nil
 }
 
 // querier should be used when either a transaction or a common connection could be used.
@@ -68,7 +74,7 @@ func (b TxManager) Exec(
 	ctx context.Context,
 	query string,
 	args ...any,
-) (cmd pgconn.CommandTag, err error) {
+) (pgconn.CommandTag, error) {
 	return b.querier(ctx).Exec(ctx, query, args...)
 }
 
@@ -76,7 +82,7 @@ func (b TxManager) Query(
 	ctx context.Context,
 	query string,
 	args ...any,
-) (rows pgx.Rows, err error) {
+) (pgx.Rows, error) {
 	return b.querier(ctx).Query(ctx, query, args...)
 }
 
