@@ -43,7 +43,7 @@ func (h UpdateCardBrandHandler) UpdateCardBrand(
 		Name: input.Body.Name,
 	})
 	if err != nil {
-		logger.Error("Failed to update card brand", slog.Any("error", err))
+		logger.ErrorContext(ctx, "Failed to update card brand", slog.Any("error", err))
 
 		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, huma.Error404NotFound("CardBrand not found")

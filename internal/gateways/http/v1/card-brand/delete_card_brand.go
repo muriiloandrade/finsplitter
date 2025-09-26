@@ -37,7 +37,7 @@ func (h DeleteCardBrandHandler) DeleteCardBrand(
 	logger := slogctx.FromCtx(ctx)
 	cb, err := h.UseCase.DeleteCardBrand(ctx, input.ID)
 	if err != nil {
-		logger.Error("Failed to delete card brand", slog.Any("error", err))
+		logger.ErrorContext(ctx, "Failed to delete card brand", slog.Any("error", err))
 		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, huma.Error404NotFound("CardBrand not found")
 		}

@@ -51,7 +51,7 @@ func (h ListCardBrandsHandler) ListCardBrands(
 		PageNumber: input.PageNumber,
 	})
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to list card brands",
 			slog.String("operation", operation),
 			slog.Any("error", err),

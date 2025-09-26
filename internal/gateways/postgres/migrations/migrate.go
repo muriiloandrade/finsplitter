@@ -25,8 +25,8 @@ type MigrationOptions struct {
 func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	logger := slogctx.FromCtx(ctx)
 
-	logger.Info("Starting database migrations...")
-	logger.Debug(
+	logger.InfoContext(ctx, "Starting database migrations...")
+	logger.DebugContext(ctx,
 		"Database connection string",
 		slog.String("conn_string", opts.DBInstance.Config().ConnString()),
 	)
@@ -61,7 +61,7 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	}
 
 	// Apply migrations
-	logger.Info(
+	logger.InfoContext(ctx,
 		"Applying migrations from migrations path",
 		slog.String("migrations_path", opts.MigrationsPath),
 	)
@@ -80,9 +80,9 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	}
 
 	if errors.Is(err, migrate.ErrNoChange) {
-		logger.Info("Database is up to date, no new migrations to apply.")
+		logger.InfoContext(ctx, "Database is up to date, no new migrations to apply.")
 	} else {
-		logger.Info("Database migrations applied successfully.")
+		logger.InfoContext(ctx, "Database migrations applied successfully.")
 	}
 
 	return nil

@@ -36,7 +36,7 @@ func (h GetCardBrandHandler) GetCardBrand(
 	logger := slogctx.FromCtx(ctx)
 	brand, err := h.UseCase.GetCardBrandByID(ctx, input.ID)
 	if err != nil {
-		logger.Error("Failed to get card brand", slog.Any("error", err))
+		logger.ErrorContext(ctx, "Failed to get card brand", slog.Any("error", err))
 		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, huma.Error404NotFound("CardBrand not found")
 		}
