@@ -82,8 +82,8 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 		{
 			name:          "returns error on empty name",
 			input:         "",
-			repoSetup:     func(repo *ports.MockCreateCardBrandRepository) {},
-			txSetup:       func(tx *domain.MockTransactioner) {},
+			repoSetup:     func(_ *ports.MockCreateCardBrandRepository) {},
+			txSetup:       func(_ *domain.MockTransactioner) {},
 			expectedError: errors.New("name is required"),
 		},
 		{
@@ -121,7 +121,7 @@ func TestCreateCardBrandUC_CreateCardBrandError(t *testing.T) {
 		{
 			name:      "returns error on transaction failed",
 			input:     "Visa",
-			repoSetup: func(repo *ports.MockCreateCardBrandRepository) {},
+			repoSetup: func(_ *ports.MockCreateCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
 				tx.EXPECT().WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
 					Return(errors.New("transaction failed"))

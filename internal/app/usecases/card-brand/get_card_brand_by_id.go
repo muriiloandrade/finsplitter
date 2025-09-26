@@ -11,10 +11,10 @@ import (
 )
 
 type GetCardBrandByIDUC struct {
-	repo ports.GetCardBrandByIdRepository
+	repo ports.GetCardBrandByIDRepository
 }
 
-func NewGetCardBrandByIDUC(repo ports.GetCardBrandByIdRepository) GetCardBrandByIDUC {
+func NewGetCardBrandByIDUC(repo ports.GetCardBrandByIDRepository) GetCardBrandByIDUC {
 	return GetCardBrandByIDUC{repo: repo}
 }
 

@@ -2,7 +2,6 @@ package logging
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"os"
 
@@ -11,7 +10,7 @@ import (
 	slogctx "github.com/veqryn/slog-context"
 )
 
-func NewContextWithLogger(ctx context.Context, cfg config.Config, w io.Writer) context.Context {
+func NewContextWithLogger(ctx context.Context, cfg config.Config) context.Context {
 	defaultAttrs := []slog.Attr{
 		slog.Group(
 			"application",

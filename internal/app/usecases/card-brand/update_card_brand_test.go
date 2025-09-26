@@ -36,10 +36,10 @@ func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
 	}{
 		{
 			name:  "updates a card brand",
-			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
+			input: ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
 				repo.EXPECT().
-					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{ID: id, Name: "Visa"}).
 					Return(cardBrand, nil)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
@@ -82,24 +82,24 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 	}{
 		{
 			name:      "returns error on empty name",
-			input:     ports.UpdateCardBrandOptions{Id: id, Name: ""},
-			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {},
-			txSetup:   func(tx *domain.MockTransactioner) {},
+			input:     ports.UpdateCardBrandOptions{ID: id, Name: ""},
+			repoSetup: func(_ *ports.MockUpdateCardBrandRepository) {},
+			txSetup:   func(_ *domain.MockTransactioner) {},
 			err:       errors.New("name and id are required"),
 		},
 		{
 			name:      "returns error on empty id",
-			input:     ports.UpdateCardBrandOptions{Id: uuid.Nil, Name: "Visa"},
-			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {},
-			txSetup:   func(tx *domain.MockTransactioner) {},
+			input:     ports.UpdateCardBrandOptions{ID: uuid.Nil, Name: "Visa"},
+			repoSetup: func(_ *ports.MockUpdateCardBrandRepository) {},
+			txSetup:   func(_ *domain.MockTransactioner) {},
 			err:       errors.New("name and id are required"),
 		},
 		{
 			name:  "returns error on not found",
-			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
+			input: ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
 				repo.EXPECT().
-					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{ID: id, Name: "Visa"}).
 					Return(nil, errs.ErrCardBrandNotFound)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
@@ -114,10 +114,10 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 		},
 		{
 			name:  "returns error on already exists",
-			input: ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
+			input: ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
 			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
 				repo.EXPECT().
-					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{Id: id, Name: "Visa"}).
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{ID: id, Name: "Visa"}).
 					Return(nil, errs.ErrCardBrandAlreadyExists)
 			},
 			txSetup: func(tx *domain.MockTransactioner) {
@@ -132,8 +132,8 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 		},
 		{
 			name:      "returns error on transaction failed",
-			input:     ports.UpdateCardBrandOptions{Id: id, Name: "Visa"},
-			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {},
+			input:     ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
+			repoSetup: func(_ *ports.MockUpdateCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
 				tx.EXPECT().
 					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).

@@ -28,7 +28,7 @@ func (uc *UpdateCardBrandUC) UpdateCardBrand(
 ) (*entity.CardBrand, error) {
 	var cardBrand *entity.CardBrand
 
-	if opts.Name == "" || opts.Id.IsNil() {
+	if opts.Name == "" || opts.ID.IsNil() {
 		return nil, errors.New("name and id are required")
 	}
 

@@ -39,7 +39,7 @@ func (h UpdateCardBrandHandler) UpdateCardBrand(
 ) (*UpdateCardBrandResponse, error) {
 	logger := slogctx.FromCtx(ctx)
 	brand, err := h.UseCase.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		Id:   input.ID,
+		ID:   input.ID,
 		Name: input.Body.Name,
 	})
 	if err != nil {
