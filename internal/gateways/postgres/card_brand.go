@@ -47,14 +47,14 @@ func (r *CardBrandRepository) CreateCardBrand(
 		Name: name,
 	})
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to create card brand",
 			slog.String("operation", createCardBrandOp),
 			slog.Any("error", err),
 		)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", createCardBrandOp),
 				slog.Any("error", err),
@@ -85,7 +85,7 @@ func (r *CardBrandRepository) GetCardBrandByID(
 		ID: id,
 	})
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to get card brand",
 			slog.String("operation", getCardBrandByIDOp),
 			slog.Any("error", err),
@@ -118,7 +118,7 @@ func (r *CardBrandRepository) ListCardBrands(
 
 	sql, params, err := q.ToSql()
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to build SQL query for listing card brands",
 			slog.String("operation", listCardBrandsOp),
 			slog.Any("error", err),
@@ -128,7 +128,7 @@ func (r *CardBrandRepository) ListCardBrands(
 
 	rows, err := r.db.Query(ctx, sql, params...)
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to list card brands",
 			slog.String("operation", listCardBrandsOp),
 			slog.Any("error", err),
@@ -141,7 +141,7 @@ func (r *CardBrandRepository) ListCardBrands(
 	for rows.Next() {
 		var brand sqlc.CardBrand
 		if err := rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Failed to scan card brand",
 				slog.String("operation", listCardBrandsOp),
 				slog.Any("error", err),
@@ -164,7 +164,7 @@ func (r *CardBrandRepository) UpdateCardBrand(
 		Name: opts.Name,
 	})
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to update card brand",
 			slog.String("operation", updateCardBrandOp),
 			slog.Any("error", err),
@@ -172,7 +172,7 @@ func (r *CardBrandRepository) UpdateCardBrand(
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", updateCardBrandOp),
 				slog.Any("error", err),
@@ -208,7 +208,7 @@ func (r *CardBrandRepository) DeleteCardBrand(
 		ID: id,
 	})
 	if err != nil {
-		logger.Error(
+		logger.ErrorContext(ctx,
 			"Failed to delete card brand",
 			slog.String("operation", deleteCardBrandOp),
 			slog.Any("error", err),
@@ -216,7 +216,7 @@ func (r *CardBrandRepository) DeleteCardBrand(
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", deleteCardBrandOp),
 				slog.Any("error", err),
