@@ -108,8 +108,8 @@ func (r *CardBrandRepository) ListCardBrands(
 		Limit(uint64(opts.PageSize)).
 		Offset(uint64((opts.PageNumber - 1) * opts.PageSize))
 
-	if !opts.Id.IsNil() {
-		q = q.Where(squirrel.Eq{"cb.id": opts.Id})
+	if !opts.ID.IsNil() {
+		q = q.Where(squirrel.Eq{"cb.id": opts.ID})
 	}
 
 	if opts.Name != nil && *opts.Name != "" {
@@ -160,7 +160,7 @@ func (r *CardBrandRepository) UpdateCardBrand(
 	logger := slogctx.FromCtx(ctx)
 
 	cb, err := r.sqlc.UpdateCardBrand(ctx, sqlc.UpdateCardBrandParams{
-		ID:   opts.Id,
+		ID:   opts.ID,
 		Name: opts.Name,
 	})
 	if err != nil {

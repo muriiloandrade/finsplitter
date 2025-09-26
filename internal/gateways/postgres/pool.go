@@ -20,7 +20,7 @@ func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
 
-	dbConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+	dbConfig.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
 		pgxuuid.Register(conn.TypeMap())
 		pgxdecimal.Register(conn.TypeMap())
 		return nil

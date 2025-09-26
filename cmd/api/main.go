@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/humacli"
@@ -32,13 +31,13 @@ var (
 
 func main() {
 	// Create a CLI app
-	cli := humacli.New(func(hooks humacli.Hooks, options *CLIOptions) {
+	cli := humacli.New(func(hooks humacli.Hooks, _ *CLIOptions) {
 		cfg := config.LoadEnv(BuildTag, BuildCommit, BuildTime)
 		if cfg == nil {
 			panic("failed to load config")
 		}
 
-		ctx := logging.NewContextWithLogger(context.Background(), *cfg, os.Stdout)
+		ctx := logging.NewContextWithLogger(context.Background(), *cfg)
 		logger := slogctx.FromCtx(ctx)
 
 		poolCfg, err := postgres.NewPoolConfig(cfg.DB)

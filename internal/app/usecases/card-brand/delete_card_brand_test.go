@@ -80,8 +80,8 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 		{
 			name:      "returns error on empty id",
 			inputID:   uuid.Nil,
-			repoSetup: func(repo *ports.MockDeleteCardBrandRepository) {},
-			txSetup:   func(tx *domain.MockTransactioner) {},
+			repoSetup: func(_ *ports.MockDeleteCardBrandRepository) {},
+			txSetup:   func(_ *domain.MockTransactioner) {},
 			err:       errors.New("id is required"),
 		},
 		{
@@ -123,7 +123,7 @@ func TestDeleteCardBrandUC_DeleteCardBrandError(t *testing.T) {
 		{
 			name:      "returns error on transaction failed",
 			inputID:   id,
-			repoSetup: func(repo *ports.MockDeleteCardBrandRepository) {},
+			repoSetup: func(_ *ports.MockDeleteCardBrandRepository) {},
 			txSetup: func(tx *domain.MockTransactioner) {
 				tx.EXPECT().
 					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).

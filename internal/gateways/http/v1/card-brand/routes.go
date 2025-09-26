@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/go-chi/chi/v5"
 )
 
 type Handler[I, O any] func(context.Context, *I) (*O, error)
@@ -18,7 +17,7 @@ type API struct {
 	DeleteCardBrandHandler Handler[DeleteCardBrandRequest, DeleteCardBrandResponse]
 }
 
-func (a API) RegisterRoutes(r *chi.Mux, api huma.API) {
+func (a API) RegisterRoutes(api huma.API) {
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodGet,
 		Path:        "/card-brands",

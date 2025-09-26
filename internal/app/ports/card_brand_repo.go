@@ -11,12 +11,12 @@ type CreateCardBrandRepository interface {
 	CreateCardBrand(ctx context.Context, name string) (*entity.CardBrand, error)
 }
 
-type GetCardBrandByIdRepository interface {
+type GetCardBrandByIDRepository interface {
 	GetCardBrandByID(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error)
 }
 
 type ListCardBrandFilterOptions struct {
-	Id         uuid.UUID
+	ID         uuid.UUID
 	Name       *string
 	PageSize   int
 	PageNumber int
@@ -30,7 +30,7 @@ type ListCardBrandRepository interface {
 }
 
 type UpdateCardBrandOptions struct {
-	Id   uuid.UUID
+	ID   uuid.UUID
 	Name string
 }
 
