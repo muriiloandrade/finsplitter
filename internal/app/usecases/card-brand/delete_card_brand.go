@@ -16,11 +16,17 @@ type DeleteCardBrandUC struct {
 	repo ports.DeleteCardBrandRepository
 }
 
-func NewDeleteCardBrandUC(repo ports.DeleteCardBrandRepository, tx domain.Transactioner) DeleteCardBrandUC {
+func NewDeleteCardBrandUC(
+	repo ports.DeleteCardBrandRepository,
+	tx domain.Transactioner,
+) DeleteCardBrandUC {
 	return DeleteCardBrandUC{repo: repo, tx: tx}
 }
 
-func (uc *DeleteCardBrandUC) DeleteCardBrand(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error) {
+func (uc *DeleteCardBrandUC) DeleteCardBrand(
+	ctx context.Context,
+	id uuid.UUID,
+) (*entity.CardBrand, error) {
 	var cardBrand *entity.CardBrand
 
 	if id.IsNil() {
@@ -29,7 +35,6 @@ func (uc *DeleteCardBrandUC) DeleteCardBrand(ctx context.Context, id uuid.UUID) 
 
 	err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
 		brand, err := uc.repo.DeleteCardBrand(ctx, id)
-
 		if err != nil {
 			return err
 		}
@@ -37,7 +42,6 @@ func (uc *DeleteCardBrandUC) DeleteCardBrand(ctx context.Context, id uuid.UUID) 
 		cardBrand = brand
 		return nil
 	})
-
 	if err != nil {
 		if errors.Is(err, errs.ErrCardBrandNotFound) {
 			return nil, errs.ErrCardBrandNotFound

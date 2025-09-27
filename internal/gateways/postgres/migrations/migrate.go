@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -15,8 +16,8 @@ import (
 )
 
 type MigrationOptions struct {
-	DbInstance     *pgxpool.Pool
-	DbCfg          config.Database
+	DBInstance     *pgxpool.Pool
+	DBCfg          config.Database
 	MigrationsPath string
 }
 
@@ -24,10 +25,13 @@ type MigrationOptions struct {
 func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	logger := slogctx.FromCtx(ctx)
 
-	logger.Info("Starting database migrations...")
-	logger.Debug("Database connection string", slog.String("conn_string", opts.DbInstance.Config().ConnString()))
+	logger.InfoContext(ctx, "Starting database migrations...")
+	logger.DebugContext(ctx,
+		"Database connection string",
+		slog.String("conn_string", opts.DBInstance.Config().ConnString()),
+	)
 
-	db, err := sql.Open("pgx", opts.DbInstance.Config().ConnString())
+	db, err := sql.Open("pgx", opts.DBInstance.Config().ConnString())
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
@@ -35,7 +39,7 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 
 	// Setup database driver instance
 	dbDriver, err := migratePgx.WithInstance(db, &migratePgx.Config{
-		SchemaName: opts.DbCfg.Schema,
+		SchemaName: opts.DBCfg.Schema,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create migrate pgx database driver instance: %w", err)
@@ -57,9 +61,12 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 	}
 
 	// Apply migrations
-	logger.Info("Applying migrations from migrations path", slog.String("migrations_path", opts.MigrationsPath))
+	logger.InfoContext(ctx,
+		"Applying migrations from migrations path",
+		slog.String("migrations_path", opts.MigrationsPath),
+	)
 	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("failed to apply migrations: %w", err)
 	}
 
@@ -72,10 +79,10 @@ func RunMigrations(ctx context.Context, opts MigrationOptions) error {
 		return fmt.Errorf("migration database error: %w", dbErr)
 	}
 
-	if err == migrate.ErrNoChange {
-		logger.Info("Database is up to date, no new migrations to apply.")
+	if errors.Is(err, migrate.ErrNoChange) {
+		logger.InfoContext(ctx, "Database is up to date, no new migrations to apply.")
 	} else {
-		logger.Info("Database migrations applied successfully.")
+		logger.InfoContext(ctx, "Database migrations applied successfully.")
 	}
 
 	return nil

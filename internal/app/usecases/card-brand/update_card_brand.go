@@ -15,20 +15,25 @@ type UpdateCardBrandUC struct {
 	repo ports.UpdateCardBrandRepository
 }
 
-func NewUpdateCardBrandUC(repo ports.UpdateCardBrandRepository, tx domain.Transactioner) UpdateCardBrandUC {
+func NewUpdateCardBrandUC(
+	repo ports.UpdateCardBrandRepository,
+	tx domain.Transactioner,
+) UpdateCardBrandUC {
 	return UpdateCardBrandUC{repo: repo, tx: tx}
 }
 
-func (uc *UpdateCardBrandUC) UpdateCardBrand(ctx context.Context, opts ports.UpdateCardBrandOptions) (*entity.CardBrand, error) {
+func (uc *UpdateCardBrandUC) UpdateCardBrand(
+	ctx context.Context,
+	opts ports.UpdateCardBrandOptions,
+) (*entity.CardBrand, error) {
 	var cardBrand *entity.CardBrand
 
-	if opts.Name == "" || opts.Id.IsNil() {
+	if opts.Name == "" || opts.ID.IsNil() {
 		return nil, errors.New("name and id are required")
 	}
 
 	err := uc.tx.WithTx(ctx, func(ctx context.Context) error {
 		brand, err := uc.repo.UpdateCardBrand(ctx, opts)
-
 		if err != nil {
 			if errors.Is(err, errs.ErrCardBrandNotFound) {
 				return errs.ErrCardBrandNotFound

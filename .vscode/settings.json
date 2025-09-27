@@ -1,33 +1,38 @@
 {
-    "go.formatTool": "goimports",
     "go.inlayHints.compositeLiteralFields": true,
     "go.inlayHints.assignVariableTypes": true,
     "go.inlayHints.functionTypeParameters": true,
     "go.inlayHints.parameterNames": true,
     "go.inlayHints.rangeVariableTypes": true,
-    "go.lintTool": "golangci-lint",
     "go.testOnSave": true,
     "go.useLanguageServer": true,
-    "go.languageServerFlags": ["-rpc.trace"],
-    "[go]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "golang.go",
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "always",
-            "source.fixAll": "always"
-        }
+    "go.languageServerFlags": [
+        "-rpc.trace"
+    ],
+    "go.lintOnSave": "workspace",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always",
+        "source.fixAll": "always"
+    },
+    "go.lintTool": "golangci-lint-v2",
+    "go.lintFlags": [
+        "--path-mode=abs",
+        "--fast-only"
+    ],
+    "go.formatTool": "custom",
+    "go.alternateTools": {
+        "customFormatter": "golangci-lint"
+    },
+    "go.formatFlags": [
+        "fmt",
+        "--stdin"
+    ],
+    "gopls": {
+        "ui.semanticTokens": true
     },
     "makefile.configureOnOpen": false,
     "chat.instructionsFilesLocations": {
         ".github/instructions": true
     },
-    "cSpell.words": [
-        "cardbrand",
-        "danielgtaylor",
-        "finsplitter",
-        "huma",
-        "slogctx",
-        "sqlc",
-        "veqryn"
-    ]
 }

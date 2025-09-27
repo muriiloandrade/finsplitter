@@ -11,14 +11,17 @@ import (
 )
 
 type GetCardBrandByIDUC struct {
-	repo ports.GetCardBrandByIdRepository
+	repo ports.GetCardBrandByIDRepository
 }
 
-func NewGetCardBrandByIDUC(repo ports.GetCardBrandByIdRepository) GetCardBrandByIDUC {
+func NewGetCardBrandByIDUC(repo ports.GetCardBrandByIDRepository) GetCardBrandByIDUC {
 	return GetCardBrandByIDUC{repo: repo}
 }
 
-func (uc *GetCardBrandByIDUC) GetCardBrandByID(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error) {
+func (uc *GetCardBrandByIDUC) GetCardBrandByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*entity.CardBrand, error) {
 	brand, err := uc.repo.GetCardBrandByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errs.ErrCardBrandNotFound) {

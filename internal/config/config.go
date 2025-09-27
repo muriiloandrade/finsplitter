@@ -33,7 +33,7 @@ type Database struct {
 	Password string `conf:"env:PG_PASS,required"`
 	Host     string `conf:"env:PG_HOST,required"`
 	Port     int    `conf:"env:PG_PORT,default:5432"`
-	DbName   string `conf:"env:PG_DB,required"`
+	DBName   string `conf:"env:PG_DB,required"`
 	SSLMode  string `conf:"env:PG_SSL_MODE,default:require"`
 	Schema   string `conf:"env:PG_SCHEMA,default:public"`
 	Pool     PoolConfig

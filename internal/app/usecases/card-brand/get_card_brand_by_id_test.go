@@ -1,4 +1,4 @@
-package usecases
+package usecases_test
 
 import (
 	"context"
@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetCardBrandByIDUC_GetCardBrandByIDSuccess(t *testing.T) {
@@ -43,9 +44,9 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDSuccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := ports.NewMockGetCardBrandByIdRepository(t)
 			tt.repoSetup(repo)
-			uc := NewGetCardBrandByIDUC(repo)
+			uc := usecases.NewGetCardBrandByIDUC(repo)
 			got, err := uc.GetCardBrandByID(context.Background(), tt.inputID)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			repo.AssertExpectations(t)
 		})
@@ -65,7 +66,9 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 			name:    "returns error on id not found",
 			inputID: id,
 			repoSetup: func(repo *ports.MockGetCardBrandByIdRepository) {
-				repo.EXPECT().GetCardBrandByID(mock.Anything, id).Return(nil, errs.ErrCardBrandNotFound)
+				repo.EXPECT().
+					GetCardBrandByID(mock.Anything, id).
+					Return(nil, errs.ErrCardBrandNotFound)
 			},
 			err: errs.ErrCardBrandNotFound,
 		},
@@ -73,7 +76,9 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 			name:    "returns error on database generic error",
 			inputID: id,
 			repoSetup: func(repo *ports.MockGetCardBrandByIdRepository) {
-				repo.EXPECT().GetCardBrandByID(mock.Anything, id).Return(nil, errs.ErrDatabaseGeneric)
+				repo.EXPECT().
+					GetCardBrandByID(mock.Anything, id).
+					Return(nil, errs.ErrDatabaseGeneric)
 			},
 			err: errs.ErrDatabaseGeneric,
 		},
@@ -83,9 +88,9 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := ports.NewMockGetCardBrandByIdRepository(t)
 			tt.repoSetup(repo)
-			uc := NewGetCardBrandByIDUC(repo)
+			uc := usecases.NewGetCardBrandByIDUC(repo)
 			got, err := uc.GetCardBrandByID(context.Background(), tt.inputID)
-			assert.Error(t, err)
+			require.Error(t, err)
 			assert.Nil(t, got)
 			assert.Equal(t, tt.err, err)
 			repo.AssertExpectations(t)

@@ -6,11 +6,10 @@ import (
 	"log/slog"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
@@ -18,11 +17,13 @@ import (
 	slogctx "github.com/veqryn/slog-context"
 )
 
-const createCardBrandOp = "postgres.CardBrandRepository.CreateCardBrand"
-const getCardBrandByIDOp = "postgres.CardBrandRepository.GetCardBrandByID"
-const listCardBrandsOp = "postgres.CardBrandRepository.ListCardBrands"
-const updateCardBrandOp = "postgres.CardBrandRepository.UpdateCardBrand"
-const deleteCardBrandOp = "postgres.CardBrandRepository.DeleteCardBrand"
+const (
+	createCardBrandOp  = "postgres.CardBrandRepository.CreateCardBrand"
+	getCardBrandByIDOp = "postgres.CardBrandRepository.GetCardBrandByID"
+	listCardBrandsOp   = "postgres.CardBrandRepository.ListCardBrands"
+	updateCardBrandOp  = "postgres.CardBrandRepository.UpdateCardBrand"
+	deleteCardBrandOp  = "postgres.CardBrandRepository.DeleteCardBrand"
+)
 
 type CardBrandRepository struct {
 	db   querier
@@ -36,17 +37,24 @@ func NewCardBrandRepository(db *TxManager) *CardBrandRepository {
 	}
 }
 
-func (r *CardBrandRepository) CreateCardBrand(ctx context.Context, name string) (*entity.CardBrand, error) {
+func (r *CardBrandRepository) CreateCardBrand(
+	ctx context.Context,
+	name string,
+) (*entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	brand, err := r.sqlc.CreateCardBrand(ctx, sqlc.CreateCardBrandParams{
 		Name: name,
 	})
 	if err != nil {
-		logger.Error("Failed to create card brand", slog.String("operation", createCardBrandOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to create card brand",
+			slog.String("operation", createCardBrandOp),
+			slog.Any("error", err),
+		)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", createCardBrandOp),
 				slog.Any("error", err),
@@ -67,21 +75,31 @@ func (r *CardBrandRepository) CreateCardBrand(ctx context.Context, name string) 
 	return &cardBrand, nil
 }
 
-func (r *CardBrandRepository) GetCardBrandByID(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error) {
+func (r *CardBrandRepository) GetCardBrandByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	brand, err := r.sqlc.GetCardBrand(ctx, sqlc.GetCardBrandParams{
 		ID: id,
 	})
 	if err != nil {
-		logger.Error("Failed to get card brand", slog.String("operation", getCardBrandByIDOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to get card brand",
+			slog.String("operation", getCardBrandByIDOp),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 	cardBrand := parseToCardBrand(brand)
 	return &cardBrand, nil
 }
 
-func (r *CardBrandRepository) ListCardBrands(ctx context.Context, opts ports.ListCardBrandFilterOptions) ([]entity.CardBrand, error) {
+func (r *CardBrandRepository) ListCardBrands(
+	ctx context.Context,
+	opts ports.ListCardBrandFilterOptions,
+) ([]entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	q := psql.
@@ -90,8 +108,8 @@ func (r *CardBrandRepository) ListCardBrands(ctx context.Context, opts ports.Lis
 		Limit(uint64(opts.PageSize)).
 		Offset(uint64((opts.PageNumber - 1) * opts.PageSize))
 
-	if !opts.Id.IsNil() {
-		q = q.Where(squirrel.Eq{"cb.id": opts.Id})
+	if !opts.ID.IsNil() {
+		q = q.Where(squirrel.Eq{"cb.id": opts.ID})
 	}
 
 	if opts.Name != nil && *opts.Name != "" {
@@ -100,13 +118,21 @@ func (r *CardBrandRepository) ListCardBrands(ctx context.Context, opts ports.Lis
 
 	sql, params, err := q.ToSql()
 	if err != nil {
-		logger.Error("Failed to build SQL query for listing card brands", slog.String("operation", listCardBrandsOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to build SQL query for listing card brands",
+			slog.String("operation", listCardBrandsOp),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 
 	rows, err := r.db.Query(ctx, sql, params...)
 	if err != nil {
-		logger.Error("Failed to list card brands", slog.String("operation", listCardBrandsOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to list card brands",
+			slog.String("operation", listCardBrandsOp),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 	defer rows.Close()
@@ -114,8 +140,12 @@ func (r *CardBrandRepository) ListCardBrands(ctx context.Context, opts ports.Lis
 	cardBrandList := make([]entity.CardBrand, 0, opts.PageSize)
 	for rows.Next() {
 		var brand sqlc.CardBrand
-		if err := rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
-			logger.Error("Failed to scan card brand", slog.String("operation", listCardBrandsOp), slog.Any("error", err))
+		if err = rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
+			logger.ErrorContext(ctx,
+				"Failed to scan card brand",
+				slog.String("operation", listCardBrandsOp),
+				slog.Any("error", err),
+			)
 			return nil, err
 		}
 		cardBrandList = append(cardBrandList, parseToCardBrand(brand))
@@ -123,20 +153,26 @@ func (r *CardBrandRepository) ListCardBrands(ctx context.Context, opts ports.Lis
 	return cardBrandList, nil
 }
 
-func (r *CardBrandRepository) UpdateCardBrand(ctx context.Context, opts ports.UpdateCardBrandOptions) (*entity.CardBrand, error) {
+func (r *CardBrandRepository) UpdateCardBrand(
+	ctx context.Context,
+	opts ports.UpdateCardBrandOptions,
+) (*entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	cb, err := r.sqlc.UpdateCardBrand(ctx, sqlc.UpdateCardBrandParams{
-		ID:   opts.Id,
+		ID:   opts.ID,
 		Name: opts.Name,
 	})
-
 	if err != nil {
-		logger.Error("Failed to update card brand", slog.String("operation", updateCardBrandOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to update card brand",
+			slog.String("operation", updateCardBrandOp),
+			slog.Any("error", err),
+		)
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", updateCardBrandOp),
 				slog.Any("error", err),
@@ -162,19 +198,25 @@ func (r *CardBrandRepository) UpdateCardBrand(ctx context.Context, opts ports.Up
 	return &cardBrand, nil
 }
 
-func (r *CardBrandRepository) DeleteCardBrand(ctx context.Context, id uuid.UUID) (*entity.CardBrand, error) {
+func (r *CardBrandRepository) DeleteCardBrand(
+	ctx context.Context,
+	id uuid.UUID,
+) (*entity.CardBrand, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	cb, err := r.sqlc.DeleteCardBrand(ctx, sqlc.DeleteCardBrandParams{
 		ID: id,
 	})
-
 	if err != nil {
-		logger.Error("Failed to delete card brand", slog.String("operation", deleteCardBrandOp), slog.Any("error", err))
+		logger.ErrorContext(ctx,
+			"Failed to delete card brand",
+			slog.String("operation", deleteCardBrandOp),
+			slog.Any("error", err),
+		)
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			logger.Error(
+			logger.ErrorContext(ctx,
 				"Database operation failed",
 				slog.String("operation", deleteCardBrandOp),
 				slog.Any("error", err),

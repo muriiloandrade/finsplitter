@@ -13,7 +13,7 @@ MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
  	-v $(MIGRATIONS_PATH):/migrations \
  	-w /migrations \
  	--network finsplitter-net \
- 	migrate/migrate:v4.18.2 \
+ 	migrate/migrate:v4.18.3 \
  	-path /migrations/ \
  	-database "$(DATABASE_URL)"
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
@@ -25,7 +25,15 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
-	vektra/mockery:3
+	vektra/mockery:v3.5.3
+GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
+	-v $(shell go env GOCACHE):/home/.cache/go-build \
+	-e GOCACHE=/home/.cache/go-build \
+	-v $(shell go env GOMODCACHE):/home/.cache/mod \
+	-e GOMODCACHE=/home/.cache/mod \
+	-v ~/.cache/golangci-lint:/home/.cache/golangci-lint \
+	-e GOLANGCI_LINT_CACHE=/home/.cache/golangci-lint \
+	golangci/golangci-lint:v2.4.0-alpine golangci-lint
 
 # Default target
 default: help
@@ -81,11 +89,16 @@ run-network-compose: build start-infra
 	@echo "==> Running Docker API image"
 	@docker run --rm --network finsplitter-net --env-file .env -p ${PORT}:${PORT} --name ${NAME} -t ${NAME}:${VERSION}
 
-code-check:
-	@echo "==> Linting..."
-	@$(golanci-lint run)
+format:
 	@echo "==> Formatting..."
-	@$(golanci-lint fmt)
+	@$(GOLANGCI_LINT_CMD) fmt
+
+lint:
+	@echo "==> Linting..."
+	@$(GOLANGCI_LINT_CMD) run
+
+code-check: format lint
+	@echo "==> Code check complete"
 
 test:
 	@echo "==> Running unit tests"
@@ -97,12 +110,9 @@ test-watch:
 test-cov:
 	@echo "==> Running test coverage report - IMPLEMENT ME"
 
-tools: install-golangci-lint install-lefthook
+tools: install-lefthook
 	@echo "==> Dealt with tools used on project"
 
-install-golangci-lint:
-	@echo "==> Installing golangci-lint"
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ${HOME}/go/bin v2.0.2
 
 install-lefthook:
 	@echo "==> Installing lefthook"

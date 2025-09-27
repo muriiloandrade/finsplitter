@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/humacli"
@@ -23,21 +23,27 @@ import (
 // CLIOptions for the CLI.
 type CLIOptions struct{}
 
+//nolint:gochecknoglobals // These are set at build time using ldflags.
 var (
 	BuildCommit = "undefined"
 	BuildTag    = "undefined"
 	BuildTime   = "undefined"
 )
 
+const (
+	timeout           = 5 * time.Second
+	readHeaderTimeout = 30 * time.Second
+)
+
 func main() {
 	// Create a CLI app
-	cli := humacli.New(func(hooks humacli.Hooks, options *CLIOptions) {
+	cli := humacli.New(func(hooks humacli.Hooks, _ *CLIOptions) {
 		cfg := config.LoadEnv(BuildTag, BuildCommit, BuildTime)
 		if cfg == nil {
 			panic("failed to load config")
 		}
 
-		ctx := logging.NewContextWithLogger(context.Background(), *cfg, os.Stdout)
+		ctx := logging.NewContextWithLogger(context.Background(), *cfg)
 		logger := slogctx.FromCtx(ctx)
 
 		poolCfg, err := postgres.NewPoolConfig(cfg.DB)
@@ -50,17 +56,21 @@ func main() {
 			poolCfg,
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to connect to database: %w", err)) // Exit if database connection fails
+			panic(
+				fmt.Errorf("failed to connect to database: %w", err),
+			) // Exit if database connection fails
 		}
 
 		// Run database migrations
 		err = migrations.RunMigrations(ctx, migrations.MigrationOptions{
 			MigrationsPath: "./internal/gateways/postgres/migrations",
-			DbInstance:     dbPool,
-			DbCfg:          cfg.DB,
+			DBInstance:     dbPool,
+			DBCfg:          cfg.DB,
 		})
 		if err != nil {
-			panic(fmt.Errorf("failed to run database migrations: %w", err)) // Exit if migrations fail
+			panic(
+				fmt.Errorf("failed to run database migrations: %w", err),
+			) // Exit if migrations fail
 		}
 
 		pgTxManager := &postgres.TxManager{
@@ -78,11 +88,19 @@ func main() {
 		deleteCardBrandUC := cbUCs.NewDeleteCardBrandUC(cardBrandRepo, pgTxManager)
 
 		cardBrandAPI := cbHandler.API{
-			GetCardBrandHandler:    cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
-			ListCardBrandsHandler:  cbHandler.NewListCardBrandsHandler(listCardBrandUC).ListCardBrands,
-			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(createCardBrandUC).CreateCardBrand,
-			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(updateCardBrandUC).UpdateCardBrand,
-			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(deleteCardBrandUC).DeleteCardBrand,
+			GetCardBrandHandler: cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
+			ListCardBrandsHandler: cbHandler.NewListCardBrandsHandler(
+				listCardBrandUC,
+			).ListCardBrands,
+			CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(
+				createCardBrandUC,
+			).CreateCardBrand,
+			UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(
+				updateCardBrandUC,
+			).UpdateCardBrand,
+			DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(
+				deleteCardBrandUC,
+			).DeleteCardBrand,
 		}
 
 		router := _http.NewRouter(logger)
@@ -98,23 +116,30 @@ func main() {
 
 		// Create the HTTP server.
 		server := http.Server{
-			Addr:    fmt.Sprintf(":%d", cfg.App.Port),
-			Handler: router,
+			Addr:              fmt.Sprintf(":%d", cfg.App.Port),
+			Handler:           router,
+			ReadHeaderTimeout: readHeaderTimeout,
 		}
 
 		// Tell the CLI how to start your router.
 		hooks.OnStart(func() {
 			logger.Info("Starting server...")
-			server.ListenAndServe()
+			err = server.ListenAndServe()
+			if err != nil {
+				logger.Error("Failed to start server", slog.Any("error", err))
+			}
 		})
 
 		// Tell the CLI how to stop your server.
 		hooks.OnStop(func() {
 			// Give the server 5 seconds to gracefully shut down, then give up.
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			timeoutCtx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 			defer dbPool.Close()
-			server.Shutdown(ctx)
+			if err = server.Shutdown(timeoutCtx); err != nil {
+				logger.Error("Failed to stop server", slog.Any("error", err))
+			}
+			logger.InfoContext(timeoutCtx, "Server stopped")
 		})
 	})
 
