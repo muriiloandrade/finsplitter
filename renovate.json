@@ -1,6 +1,113 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration for Finsplitter - A personal finance control application",
   "extends": [
-    "config:recommended"
-  ]
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    "schedule:daily",
+    "schedule:automergeNonOfficeHours"
+  ],
+  "timezone": "America/Sao_Paulo",
+  "prConcurrentLimit": 5,
+  "labels": [
+    "dependencies"
+  ],
+  "assignees": [
+    "@muriiloandrade"
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      "matchStrings": [
+        "migrate\\/migrate:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "sqlc\\/sqlc:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "mockery:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "golangci-lint:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "FROM golang:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "depNameTemplate": "golang",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "compose\\.infra\\.yml$"
+      ],
+      "matchStrings": [
+        "image:\\s*postgres:(?<currentValue>[0-9]+\\.[0-9]+)"
+      ],
+      "depNameTemplate": "postgres",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "groupName": "golang dependencies",
+      "matchManagers": [
+        "gomod"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "groupName": "docker base images",
+      "matchPackageNames": [
+        "golang",
+        "postgres"
+      ]
+    },
+    {
+      "groupName": "docker dev tools",
+      "matchPackageNames": [
+        "migrate/migrate",
+        "sqlc/sqlc",
+        "vektra/mockery",
+        "golangci/golangci-lint"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "go"
+      ],
+      "allowedVersions": ">=1.23"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "platformAutomerge": true
 }
