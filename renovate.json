@@ -27,10 +27,10 @@
         "^Makefile$"
       ],
       "matchStrings": [
-        "migrate\\/migrate:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
-        "sqlc\\/sqlc:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
-        "mockery:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
-        "golangci-lint:v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "(?<depName>migrate\\/migrate):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "(?<depName>sqlc\\/sqlc):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "(?<depName>vektra\\/mockery):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
+        "(?<depName>golangci\\/golangci-lint):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "docker"
     },
