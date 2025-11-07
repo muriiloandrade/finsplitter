@@ -13,7 +13,7 @@ MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
  	-v $(MIGRATIONS_PATH):/migrations \
  	-w /migrations \
  	--network finsplitter-net \
- 	migrate/migrate:v4.18.3 \
+ 	migrate/migrate:v4.19.0 \
  	-path /migrations/ \
  	-database "$(DATABASE_URL)"
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
