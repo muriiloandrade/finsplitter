@@ -1,0 +1,67 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pull-requests: read
+    security-events: write
+
+env:
+    GO_VERSION: "1.25.4"
+
+jobs:
+    quality:
+        name: Code Quality
+        uses: ./.github/workflows/quality.yml
+        with:
+            go-versions: '["1.25.4"]'
+            golangci-lint-version: "v2.4.0"
+            timeout: "10m"
+
+    test:
+        name: Test
+        uses: ./.github/workflows/test.yml
+        with:
+            go-versions: '["1.25.4"]'
+            upload-coverage: true
+
+    build:
+        name: Build
+        uses: ./.github/workflows/build.yml
+        with:
+            go-versions: '["1.25.4"]'
+            binary-name: "finsplitter"
+            main-path: "./cmd/api"
+            upload-artifact: false
+
+    security:
+        name: Security
+        uses: ./.github/workflows/security.yml
+        with:
+            go-versions: '["1.25.4"]'
+
+    status-check:
+        name: CI Status Check
+        if: always()
+        needs: [quality, test, build, security]
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check all jobs
+              run: |
+                  if [[ "${{ needs.quality.result }}" == "failure" ]] || \
+                     [[ "${{ needs.test.result }}" == "failure" ]] || \
+                     [[ "${{ needs.build.result }}" == "failure" ]] || \
+                     [[ "${{ needs.security.result }}" == "failure" ]]; then
+                    echo "One or more jobs failed"
+                    exit 1
+                  fi
+                  echo "All jobs passed successfully"
