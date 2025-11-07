@@ -1,0 +1,48 @@
+name: Security Scan
+
+on:
+    workflow_call:
+        inputs:
+            go-versions:
+                description: "Go versions to scan with (JSON array)"
+                required: false
+                default: '["1.25.4"]'
+                type: string
+            gosec-args:
+                description: "Arguments for Gosec"
+                required: false
+                default: "-no-fail -fmt sarif -out gosec-results.sarif ./..."
+                type: string
+
+permissions:
+    contents: read
+    security-events: write
+
+jobs:
+    security:
+        name: Security Scan (Go ${{ matrix.go-version }})
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                go-version: ${{ fromJSON(inputs.go-versions) }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Go
+              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  cache: true
+
+            - name: Run Gosec Security Scanner
+              uses: securego/gosec@6be2b51fd78feca86af91f5186b7964d76cb1256 # 2.22.10
+              with:
+                  args: ${{ inputs.gosec-args }}
+
+            - name: Upload SARIF file
+              uses: github/codeql-action/upload-sarif@7434149006143a4d75b82a2f411ef15b03ccc2d7 # 4.31.2
+              with:
+                  sarif_file: gosec-results.sarif
