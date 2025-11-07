@@ -33,7 +33,3 @@ services:
           action: rebuild
     networks:
       - finsplitter
-
-networks:
-  finsplitter:
-    name: finsplitter-net
