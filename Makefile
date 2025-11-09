@@ -21,11 +21,11 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	-v .:/src \
  	-w /src \
  	--network finsplitter-net \
- 	sqlc/sqlc:1.29.0
+ 	sqlc/sqlc:1.30.0
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
-	vektra/mockery:v3.5.3
+	vektra/mockery:v3.5.5
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
@@ -33,7 +33,7 @@ GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-e GOMODCACHE=/home/.cache/mod \
 	-v ~/.cache/golangci-lint:/home/.cache/golangci-lint \
 	-e GOLANGCI_LINT_CACHE=/home/.cache/golangci-lint \
-	golangci/golangci-lint:v2.4.0-alpine golangci-lint
+	golangci/golangci-lint:v2.6.1-alpine golangci-lint
 
 # Default target
 default: help
