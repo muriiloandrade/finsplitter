@@ -23,14 +23,14 @@ jobs:
         uses: ./.github/workflows/quality.yml
         with:
             go-versions: '["1.25.4"]'
-            golangci-lint-version: "v2.4.0"
+            golangci-lint-version: "v2.6.1"
             timeout: "10m"
 
     test:
         name: Test
         uses: ./.github/workflows/test.yml
         with:
-            go-versions: '["1.25.4"]'
+            go-versions: '["1.25.4", "1.25.x"]'
             upload-coverage: true
 
     build:

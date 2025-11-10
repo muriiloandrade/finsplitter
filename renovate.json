@@ -6,80 +6,40 @@
         "docker:pinDigests",
         "helpers:pinGitHubActionDigests",
         "schedule:daily",
-        "schedule:automergeNonOfficeHours"
-    ],
-    "timezone": "America/Sao_Paulo",
-    "prConcurrentLimit": 5,
-    "labels": [
-        "dependencies"
-    ],
-    "assignees": [
-        "@muriiloandrade"
+        "schedule:automergeNonOfficeHours",
+        ":label(dependencies)",
+        ":assignee(@muriiloandrade)",
+        ":timezone(America/Sao_Paulo)",
+        ":prConcurrentLimit10",
+        ":enableVulnerabilityAlerts",
+        ":automergeStableNonMajor",
+        "customManagers:dockerfileVersions",
+        "customManagers:makefileVersions"
     ],
     "postUpdateOptions": [
         "gomodTidy",
         "gomodUpdateImportPaths"
     ],
-    "customManagers": [
-        {
-            "customType": "regex",
-            "managerFilePatterns": [
-                "/^Makefile$/"
-            ],
-            "matchStrings": [
-                "(?<depName>migrate\\/migrate):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?",
-                "(?<depName>sqlc\\/sqlc):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?",
-                "(?<depName>vektra\\/mockery):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?",
-                "(?<depName>golangci\\/golangci-lint):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z]+)?)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
-            ],
-            "datasourceTemplate": "docker"
-        },
-        {
-            "customType": "regex",
-            "managerFilePatterns": [
-                "/^Dockerfile$/"
-            ],
-            "matchStrings": [
-                "FROM\\s+(?<depName>\\S+):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+-[a-z]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
-            ],
-            "datasourceTemplate": "docker"
-        },
-        {
-            "customType": "regex",
-            "managerFilePatterns": [
-                "/compose\\.infra\\.yml$/"
-            ],
-            "matchStrings": [
-                "image:\\s*(?<depName>\\S+):(?<currentValue>[0-9]+\\.[0-9]+-[a-z]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
-            ],
-            "datasourceTemplate": "docker"
-        }
-    ],
+    "prConcurrentLimit": 5,
     "packageRules": [
         {
+            "description": "Group all Go dependencies together",
             "groupName": "golang dependencies",
             "matchManagers": [
                 "gomod"
             ]
         },
         {
-            "matchManagers": [
-                "gomod"
-            ],
-            "matchUpdateTypes": [
-                "minor",
-                "patch"
-            ],
-            "automerge": true
-        },
-        {
+            "description": "Group Docker base images",
             "groupName": "docker base images",
             "matchPackageNames": [
                 "golang",
-                "postgres"
+                "postgres",
+                "gcr.io/distroless/static-debian12"
             ]
         },
         {
+            "description": "Group Docker dev tools used in Makefile",
             "groupName": "docker dev tools",
             "matchPackageNames": [
                 "migrate/migrate",
@@ -89,23 +49,15 @@
             ]
         },
         {
-            "matchUpdateTypes": [
-                "major"
-            ],
-            "automerge": false
-        },
-        {
+            "description": "Require Go version >= 1.24",
             "matchManagers": [
                 "gomod"
             ],
             "matchPackageNames": [
                 "go"
             ],
-            "allowedVersions": ">=1.23"
+            "allowedVersions": ">=1.24"
         }
     ],
-    "vulnerabilityAlerts": {
-        "enabled": true
-    },
     "platformAutomerge": true
 }
