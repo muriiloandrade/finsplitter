@@ -30,7 +30,7 @@ jobs:
         name: Test
         uses: ./.github/workflows/test.yml
         with:
-            go-versions: '["1.24.x", "1.25.x"]'
+            go-versions: '["1.25.4", "1.25.x"]'
             upload-coverage: true
 
     build:
