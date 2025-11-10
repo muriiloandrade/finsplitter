@@ -23,8 +23,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^Makefile$"
+      "managerFilePatterns": [
+        "/^Makefile$/"
       ],
       "matchStrings": [
         "(?<depName>migrate\\/migrate):v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)",
@@ -36,8 +36,8 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^Dockerfile$"
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
       ],
       "matchStrings": [
         "FROM golang:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
@@ -47,8 +47,8 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "compose\\.infra\\.yml$"
+      "managerFilePatterns": [
+        "/compose\\.infra\\.yml$/"
       ],
       "matchStrings": [
         "image:\\s*postgres:(?<currentValue>[0-9]+\\.[0-9]+)"
