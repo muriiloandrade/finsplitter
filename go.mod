@@ -82,6 +82,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.18.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/urfave/cli/v3 v3.4.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.starlark.net v0.0.0-20231101134539-556fd59b42f6 // indirect
 	go.yaml.in/yaml/v3 v3.0.3 // indirect
@@ -110,6 +111,6 @@ require (
 )
 
 tool (
-	github.com/evilmartians/lefthook
+	github.com/evilmartians/lefthook/v2
 	github.com/go-delve/delve/cmd/dlv
 )
