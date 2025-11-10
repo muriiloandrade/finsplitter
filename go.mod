@@ -1,6 +1,6 @@
 module github.com/muriiloandrade/finsplitter
 
-go 1.25.4
+go 1.25
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.34.1
@@ -15,7 +15,6 @@ require (
 )
 
 require (
-	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/briandowns/spinner v1.23.2 // indirect
