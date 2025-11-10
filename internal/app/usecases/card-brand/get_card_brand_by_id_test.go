@@ -27,13 +27,13 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDSuccess(t *testing.T) {
 	tests := []struct {
 		name      string
 		inputID   uuid.UUID
-		repoSetup func(repo *ports.MockGetCardBrandByIdRepository)
+		repoSetup func(repo *ports.MockGetCardBrandByIDRepository)
 		want      *entity.CardBrand
 	}{
 		{
 			name:    "returns card brand by id",
 			inputID: id,
-			repoSetup: func(repo *ports.MockGetCardBrandByIdRepository) {
+			repoSetup: func(repo *ports.MockGetCardBrandByIDRepository) {
 				repo.EXPECT().GetCardBrandByID(mock.Anything, id).Return(cardBrand, nil)
 			},
 			want: cardBrand,
@@ -42,7 +42,7 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDSuccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := ports.NewMockGetCardBrandByIdRepository(t)
+			repo := ports.NewMockGetCardBrandByIDRepository(t)
 			tt.repoSetup(repo)
 			uc := usecases.NewGetCardBrandByIDUC(repo)
 			got, err := uc.GetCardBrandByID(context.Background(), tt.inputID)
@@ -59,13 +59,13 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 	tests := []struct {
 		name      string
 		inputID   uuid.UUID
-		repoSetup func(repo *ports.MockGetCardBrandByIdRepository)
+		repoSetup func(repo *ports.MockGetCardBrandByIDRepository)
 		err       error
 	}{
 		{
 			name:    "returns error on id not found",
 			inputID: id,
-			repoSetup: func(repo *ports.MockGetCardBrandByIdRepository) {
+			repoSetup: func(repo *ports.MockGetCardBrandByIDRepository) {
 				repo.EXPECT().
 					GetCardBrandByID(mock.Anything, id).
 					Return(nil, errs.ErrCardBrandNotFound)
@@ -75,7 +75,7 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 		{
 			name:    "returns error on database generic error",
 			inputID: id,
-			repoSetup: func(repo *ports.MockGetCardBrandByIdRepository) {
+			repoSetup: func(repo *ports.MockGetCardBrandByIDRepository) {
 				repo.EXPECT().
 					GetCardBrandByID(mock.Anything, id).
 					Return(nil, errs.ErrDatabaseGeneric)
@@ -86,7 +86,7 @@ func TestGetCardBrandByIDUC_GetCardBrandByIDError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := ports.NewMockGetCardBrandByIdRepository(t)
+			repo := ports.NewMockGetCardBrandByIDRepository(t)
 			tt.repoSetup(repo)
 			uc := usecases.NewGetCardBrandByIDUC(repo)
 			got, err := uc.GetCardBrandByID(context.Background(), tt.inputID)
