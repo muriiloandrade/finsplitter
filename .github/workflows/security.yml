@@ -38,11 +38,11 @@ jobs:
                   cache: true
 
             - name: Run Gosec Security Scanner
-              uses: securego/gosec@6be2b51fd78feca86af91f5186b7964d76cb1256 # 2.22.10
+              uses: securego/gosec@6be2b51fd78feca86af91f5186b7964d76cb1256 # v2.22.10
               with:
                   args: ${{ inputs.gosec-args }}
 
             - name: Upload SARIF file
-              uses: github/codeql-action/upload-sarif@7434149006143a4d75b82a2f411ef15b03ccc2d7 # 4.31.2
+              uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4.31.2
               with:
                   sarif_file: gosec-results.sarif
