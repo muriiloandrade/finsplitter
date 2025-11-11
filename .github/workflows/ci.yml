@@ -46,6 +46,8 @@ jobs:
         uses: ./.github/workflows/security.yml
         with:
             go-versions: '["1.25.4"]'
+        permissions:
+            security-events: write
 
     checks:
         name: Prerequisites Check

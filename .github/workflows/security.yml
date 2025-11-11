@@ -14,10 +14,6 @@ on:
                 default: "-no-fail -fmt sarif -out gosec-results.sarif ./..."
                 type: string
 
-permissions:
-    contents: read
-    security-events: write
-
 jobs:
     security:
         name: Security Scan (Go ${{ matrix.go-version }})
