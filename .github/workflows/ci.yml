@@ -48,10 +48,16 @@ jobs:
         with:
             go-versions: '["1.25.4"]'
 
+    checks:
+        name: Prerequisites Check
+        uses: ./.github/workflows/prerequisites.yml
+        with:
+            go-versions: '["1.25.4"]'
+
     status-check:
         name: CI Status Check
         if: always()
-        needs: [quality, test, build, security]
+        needs: [quality, test, build, security, checks]
         runs-on: ubuntu-latest
 
         steps:
@@ -60,7 +66,8 @@ jobs:
                   if [[ "${{ needs.quality.result }}" == "failure" ]] || \
                      [[ "${{ needs.test.result }}" == "failure" ]] || \
                      [[ "${{ needs.build.result }}" == "failure" ]] || \
-                     [[ "${{ needs.security.result }}" == "failure" ]]; then
+                     [[ "${{ needs.security.result }}" == "failure" ]]; then \
+                     [[ "${{ needs.checks.result }}" == "failure" ]]; then
                     echo "One or more jobs failed"
                     exit 1
                   fi

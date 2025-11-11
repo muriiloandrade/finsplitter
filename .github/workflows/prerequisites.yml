@@ -1,0 +1,53 @@
+name: Prerequisites Check
+
+on:
+    workflow_call:
+        inputs:
+            go-versions:
+                description: "Go versions to check (JSON array)"
+                required: false
+                default: '["1.25.4"]'
+                type: string
+
+jobs:
+    checks:
+        name: Prerequisites Check (Go ${{ matrix.go-version }})
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                go-version: ${{ fromJSON(inputs.go-versions) }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+            - name: Set up Go
+              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  cache: true
+
+            - name: Verify dependencies
+              run: go mod verify
+
+            - name: Verify go mod tidy
+              run: |
+                  go mod tidy
+                  test -z "$(git status --porcelain go.(mod|sum))"
+
+            - name: Verify SQLC generation
+              run: |
+                  make generate-sqlc
+                  test -z "$(git status --porcelain internal/gateways/postgres/sqlc/)"
+
+            - name: Verify mock generation
+              run: |
+                  make generate-mocks
+                  test -z "$(git status --porcelain -- '*mocks.gen.go')"
+
+            - name: Check for TODOs in PR
+              run: |
+                  if git diff origin/${{ github.base_ref }}...HEAD | grep -i "TODO\|FIXME\|XXX"; then
+                    echo "::warning::Found TODO/FIXME comments in PR"
+                  fi
