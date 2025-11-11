@@ -24,7 +24,6 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	--add-host host.docker.internal:host-gateway \
  	-v .:/src \
  	-w /src \
- 	--network finsplitter-net \
  	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
 MOCKERY_VERSION := v3.5.5@sha256:b5bb5f45647d3d7646496617113bc4a2bec4349df20d23b33afdbc73fa514ee1
