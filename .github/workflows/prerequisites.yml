@@ -34,7 +34,7 @@ jobs:
             - name: Verify go mod tidy
               run: |
                   go mod tidy
-                  test -z "$(git status --porcelain go.(mod|sum))"
+                  test -z "$(git status --porcelain go.mod go.sum)"
 
             - name: Verify SQLC generation
               run: |
