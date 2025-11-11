@@ -67,7 +67,7 @@ jobs:
                   if [[ "${{ needs.quality.result }}" == "failure" ]] || \
                      [[ "${{ needs.test.result }}" == "failure" ]] || \
                      [[ "${{ needs.build.result }}" == "failure" ]] || \
-                     [[ "${{ needs.security.result }}" == "failure" ]]; then \
+                     [[ "${{ needs.security.result }}" == "failure" ]] || \
                      [[ "${{ needs.checks.result }}" == "failure" ]]; then
                     echo "One or more jobs failed"
                     exit 1
