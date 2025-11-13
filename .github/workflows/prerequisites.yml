@@ -52,6 +52,11 @@ jobs:
                     echo "::warning::Found TODO/FIXME comments in PR"
                   fi
 
+            - name: Run Commitlint
+              uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
+              with:
+                  configFile: .github/commitlint.config.mjs
+
             - name: Run Gitleaks
               uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
               env:
