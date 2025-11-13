@@ -50,7 +50,6 @@ jobs:
             go-versions: '["1.25.4"]'
             binary-name: "finsplitter"
             main-path: "./cmd/api"
-            upload-artifact: false
 
     checks:
         name: Prerequisites Check
@@ -60,10 +59,19 @@ jobs:
         with:
             go-versions: '["1.25.4"]'
 
+    release-drafter:
+        name: Update Release Draft
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        needs: [quality, test, build, security, checks]
+        uses: ./.github/workflows/release-drafter.yml
+        permissions:
+            contents: write
+            pull-requests: write
+
     status-check:
         name: CI Status Check
         if: always()
-        needs: [quality, test, build, security, checks]
+        needs: [quality, test, build, security, checks, release-drafter]
         runs-on: ubuntu-latest
 
         steps:
