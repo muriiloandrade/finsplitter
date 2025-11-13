@@ -1,4 +1,4 @@
-include .env
+-include .env
 
 .PHONY: *
 
@@ -24,7 +24,6 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
  	--add-host host.docker.internal:host-gateway \
  	-v .:/src \
  	-w /src \
- 	--network finsplitter-net \
  	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
 MOCKERY_VERSION := v3.5.5@sha256:b5bb5f45647d3d7646496617113bc4a2bec4349df20d23b33afdbc73fa514ee1
@@ -61,7 +60,7 @@ stop-infra:
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
 start-dev start-debug: start-%:
-start-%: start-infra
+start-%: docker-network-setup start-infra
 	@echo "==> Running containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
 		docker compose --profile debug --env-file .env up --build; \
@@ -93,7 +92,7 @@ run-network-host: build
 	@echo "==> Running Docker API image"
 	@docker run --rm --network host --env-file .env --name ${NAME} -t ${NAME}:${VERSION}
 
-run-network-compose: build start-infra
+run-network-compose: docker-network-setup build start-infra
 	@echo "==> Running Docker API image"
 	@docker run --rm --network finsplitter-net --env-file .env -p ${PORT}:${PORT} --name ${NAME} -t ${NAME}:${VERSION}
 
@@ -121,7 +120,6 @@ test-cov:
 tools: install-lefthook
 	@echo "==> Dealt with tools used on project"
 
-
 install-lefthook:
 	@echo "==> Installing lefthook"
 	@go tool lefthook install
@@ -129,6 +127,10 @@ install-lefthook:
 docker-scout: build
 	@echo "==> Search for vulnerabilities on prod image"
 	@docker scout cves -e --only-fixed ${NAME}:${VERSION}
+
+docker-network-setup:
+	@echo "==> Setting up docker network if not exists"
+	@docker network inspect finsplitter-net --format {{ .Id }} 2>/dev/null || docker network create finsplitter-net
 
 # === Generation Targets ===
 generate: generate-sqlc generate-mocks
@@ -184,8 +186,9 @@ help:
 	@echo "  DATABASE_URL               Database connection string (must be set in .env or passed)"
 	@echo ""
 	@echo "Generation Targets:"
-	@echo "  generate                   Generate code (e.g., SQLC)."
+	@echo "  generate                   Generate all code (SQLC + mocks)."
 	@echo "  generate-sqlc              Generate SQLC code only."
+	@echo "  generate-mocks             Generate mock files only."
 	@echo ""
 	@echo "Other Targets:"
 	@echo "  start-infra                Start infrastructure containers (e.g., database)."
