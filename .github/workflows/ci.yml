@@ -55,6 +55,8 @@ jobs:
     checks:
         name: Prerequisites Check
         uses: ./.github/workflows/prerequisites.yml
+        permissions:
+            contents: read
         with:
             go-versions: '["1.25.4"]'
 
