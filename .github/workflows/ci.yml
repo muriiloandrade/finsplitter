@@ -37,6 +37,11 @@ jobs:
         uses: ./.github/workflows/security.yml
         with:
             go-versions: '["1.25.4"]'
+        permissions:
+            security-events: write
+            packages: read
+            actions: read
+            contents: read
 
     build:
         name: Build
