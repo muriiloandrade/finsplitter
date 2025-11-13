@@ -1,0 +1,110 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+    - title: "🚀 Features"
+      labels:
+          - "feature"
+          - "enhancement"
+          - "feat"
+    - title: "🐛 Bug Fixes"
+      labels:
+          - "fix"
+          - "bugfix"
+          - "bug"
+    - title: "🧰 Maintenance"
+      labels:
+          - "chore"
+          - "ci"
+          - "refactor"
+          - "perf"
+          - "build"
+    - title: "📚 Documentation"
+      labels:
+          - "documentation"
+          - "docs"
+    - title: "🔒 Security"
+      labels:
+          - "security"
+    - title: "⚡ Performance Improvements"
+      labels:
+          - "performance"
+          - "perf"
+    - title: "🛠️ Dependencies"
+      labels:
+          - "dependencies"
+          - "deps"
+
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+
+version-resolver:
+    major:
+        labels:
+            - "major"
+            - "breaking"
+    minor:
+        labels:
+            - "minor"
+            - "feature"
+            - "feat"
+    default: patch
+
+autolabeler:
+    - label: "feature"
+      title:
+          - '/^feat(\(.+\))?: .+/'
+    - label: "bug"
+      title:
+          - '/^fix(\(.+\))?: .+/'
+    - label: "chore"
+      title:
+          - '/^chore(\(.+\))?: .+/'
+    - label: "ci"
+      title:
+          - '/^ci(\(.+\))?: .+/'
+    - label: "docs"
+      title:
+          - '/^docs(\(.+\))?: .+/'
+    - label: "refactor"
+      title:
+          - '/^refactor(\(.+\))?: .+/'
+    - label: "perf"
+      title:
+          - '/^perf(\(.+\))?: .+/'
+    - label: "build"
+      title:
+          - '/^build(\(.+\))?: .+/'
+    - label: "dependencies"
+      branch:
+          - '/renovate\/.+/'
+          - '/dependabot\/.+/'
+      title:
+          - '/^deps(\(.+\))?: .+/'
+          - '/^build\(deps\): .+/'
+    - label: "breaking"
+      title:
+          - "/^.+!: .+/"
+          - "/BREAKING CHANGE/"
+    - label: "security"
+      title:
+          - '/^security(\(.+\))?: .+/'
+          - "/security/i"
+
+exclude-labels:
+    - "skip-changelog"
+
+template: |
+    ## Changes
+
+    $CHANGES
+
+    ## Contributors
+
+    Thanks to all contributors who made this release possible! 🎉
+
+    $CONTRIBUTORS
+
+footer: |
+    **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
