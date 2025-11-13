@@ -32,6 +32,12 @@ jobs:
             go-versions: '["1.25.4", "1.25.x"]'
             upload-coverage: true
 
+    security:
+        name: Security
+        uses: ./.github/workflows/security.yml
+        with:
+            go-versions: '["1.25.4"]'
+
     build:
         name: Build
         uses: ./.github/workflows/build.yml
@@ -50,7 +56,7 @@ jobs:
     status-check:
         name: CI Status Check
         if: always()
-        needs: [quality, test, build, checks]
+        needs: [quality, test, build, security, checks]
         runs-on: ubuntu-latest
 
         steps:
@@ -59,6 +65,7 @@ jobs:
                   if [[ "${{ needs.quality.result }}" == "failure" ]] || \
                      [[ "${{ needs.test.result }}" == "failure" ]] || \
                      [[ "${{ needs.build.result }}" == "failure" ]] || \
+                     [[ "${{ needs.security.result }}" == "failure" ]] || \
                      [[ "${{ needs.checks.result }}" == "failure" ]]; then
                     echo "One or more jobs failed"
                     exit 1
