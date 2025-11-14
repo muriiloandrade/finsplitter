@@ -1,37 +1,38 @@
 ---
 include:
-  - compose.infra.yml
-  - compose.debug.yml
+    - compose.infra.yml
+    - compose.debug.yml
 
 services:
-  api:
-    image: finsplitter:dev
-    container_name: finsplitter
-    profiles:
-      - backend
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      target: setup
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
-    command: go run cmd/api/main.go
-    develop:
-      watch:
-        - path: ./
-          target: /app
-          action: sync+restart
-        - path: go.mod
-          action: rebuild
-        - path: go.sum
-          action: rebuild
-    networks:
-      - finsplitter
+    api:
+        image: finsplitter:dev
+        container_name: finsplitter
+        profiles:
+            - backend
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+            target: setup
+        env_file:
+            - .env
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "${APP_PORT}:${APP_PORT}"
+        command: go run cmd/api/main.go
+        develop:
+            watch:
+                - path: ./
+                  target: /app
+                  action: sync+restart
+                - path: go.mod
+                  action: rebuild
+                - path: go.sum
+                  action: rebuild
+        networks:
+            - finsplitter
 
 networks:
-  finsplitter:
-    name: finsplitter-net
+    finsplitter:
+        name: finsplitter-net
+        external: true

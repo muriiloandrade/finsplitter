@@ -131,7 +131,7 @@ Environment variables example provided as `.env.example`.
 
 Once the application is running, access:
 
-- **OpenAPI Spec**: `http://localhost:3033/openapi`
+- **OpenAPI Spec**: `http://localhost:3033/openapi.{json,yaml}`
 - **Interactive Docs**: `http://localhost:3033/docs`
 - **Health Checks**: 
   - Liveness: `http://localhost:3033/health/liveness`
