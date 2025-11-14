@@ -162,13 +162,8 @@ migrate-up: migrate-check-vars
 	@$(MIGRATE_CMD) up $(n)
 
 migrate-down: migrate-check-vars
-	@echo "==> Reverting all migrations down"
-	@$(MIGRATE_CMD) down --all
-
-migrate-down-%: n=$*
-migrate-down-%: migrate-check-vars
-	@echo "==> Reverting migrations down $(if $(n),for $(n) steps...)"
-	@$(MIGRATE_CMD) down $(n)
+	@echo "==> Reverting migrations down $(if $(n),for $(n) steps,all migrations)..."
+	@$(MIGRATE_CMD) down $(if $(n),$(n),--all)
 
 # === Application Targets ===
 
@@ -179,8 +174,7 @@ help:
 	@echo "Migration Targets:"
 	@echo "  new-migration name=<name>  Create a new SQL migration file."
 	@echo "  migrate-up [n=<steps>]     Apply migrations up (optionally specific number of steps)."
-	@echo "  migrate-down-<steps>       Revert migrations down a specific amount of steps."
-	@echo "  migrate-down-all           Revert all migrations down."
+	@echo "  migrate-down [n=<steps>]   Revert migrations down (optionally specific number of steps, default: all)."
 	@echo "Variables for migrations:"
 	@echo "  MIGRATIONS_PATH            Path to migration files (default: $(MIGRATIONS_PATH))"
 	@echo "  DATABASE_URL               Database connection string (must be set in .env or passed)"
