@@ -1,30 +1,34 @@
 ---
 services:
-  postgresql:
-    profiles:
-      - infra
-    image: postgres:18.1-trixie@sha256:28bda6d50590658221007b10573830c941b483e9d1a5bc2713a3f60477df8389
-    container_name: finsplitter-db
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
-      timeout: 5s
-    volumes:
-      - database:/var/lib/postgresql/data
-    ports:
-      - ${PG_PORT:-5432}:5432
-    environment:
-      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
-      POSTGRES_USER: ${PG_USER:-finsplitter}
-      POSTGRES_DB: ${PG_DB:-finsplitter}
-    env_file:
-      - .env
-    networks:
-      - finsplitter
+    postgresql:
+        profiles:
+            - infra
+        image: postgres:18.1-trixie@sha256:28bda6d50590658221007b10573830c941b483e9d1a5bc2713a3f60477df8389
+        container_name: finsplitter-db
+        restart: unless-stopped
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}",
+                ]
+            start_period: 20s
+            interval: 30s
+            retries: 5
+            timeout: 5s
+        volumes:
+            - database:/var/lib/postgresql
+        ports:
+            - ${PG_PORT:-5432}:5432
+        environment:
+            POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+            POSTGRES_USER: ${PG_USER:-finsplitter}
+            POSTGRES_DB: ${PG_DB:-finsplitter}
+        env_file:
+            - .env
+        networks:
+            - finsplitter
 
 volumes:
-  database:
-    driver: local
+    database:
+        driver: local

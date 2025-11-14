@@ -63,9 +63,9 @@ start-dev start-debug: start-%:
 start-%: docker-network-setup start-infra
 	@echo "==> Running containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile debug --env-file .env up --build; \
+		docker compose --profile infra --profile debug --env-file .env up --build --watch; \
 	else \
-		docker compose --profile backend --env-file .env up --build; \
+		docker compose --profile infra --profile backend --env-file .env up --build --watch; \
 	fi
 
 stop-dev stop-debug: stop-%:
