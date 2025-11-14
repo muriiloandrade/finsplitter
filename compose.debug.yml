@@ -1,35 +1,46 @@
 ---
 include:
-  - compose.infra.yml
+    - compose.infra.yml
 
 services:
-  debug-api:
-    image: finsplitter:debug
-    container_name: finsplitter-debug
-    profiles:
-      - debug
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      target: setup
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
-      - "2345:2345"  # Delve debugger port
-    security_opt:
-      - "seccomp:unconfined"  # Required for delve
-    command: ["go", "tool", "dlv", "debug", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "./cmd/api/main.go"]
-    develop:
-      watch:
-        - path: ./
-          target: /app
-          action: sync+restart
-        - path: go.mod
-          action: rebuild
-        - path: go.sum
-          action: rebuild
-    networks:
-      - finsplitter
+    debug-api:
+        image: finsplitter:debug
+        container_name: finsplitter-debug
+        profiles:
+            - debug
+        build:
+            context: .
+            dockerfile: ./Dockerfile
+            target: setup
+        env_file:
+            - .env
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "${APP_PORT}:${APP_PORT}"
+            - "2345:2345" # Delve debugger port
+        security_opt:
+            - "seccomp:unconfined" # Required for delve
+        command:
+            [
+                "go",
+                "tool",
+                "dlv",
+                "debug",
+                "--headless",
+                "--listen=:2345",
+                "--api-version=2",
+                "--accept-multiclient",
+                "./cmd/api/main.go",
+            ]
+        develop:
+            watch:
+                - path: ./
+                  target: /app
+                  action: sync+restart
+                - path: go.mod
+                  action: rebuild
+                - path: go.sum
+                  action: rebuild
+        networks:
+            - finsplitter
