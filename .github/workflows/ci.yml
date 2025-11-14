@@ -12,6 +12,7 @@ concurrency:
 permissions:
     contents: read
     pull-requests: read
+    packages: write
 
 env:
     GO_VERSION: "1.25.4"
@@ -43,14 +44,6 @@ jobs:
             actions: read
             contents: read
 
-    build:
-        name: Build
-        uses: ./.github/workflows/build.yml
-        with:
-            go-versions: '["1.25.4"]'
-            binary-name: "finsplitter"
-            main-path: "./cmd/api"
-
     checks:
         name: Prerequisites Check
         uses: ./.github/workflows/prerequisites.yml
@@ -58,6 +51,20 @@ jobs:
             contents: read
         with:
             go-versions: '["1.25.4"]'
+
+    docker-build:
+        name: Docker Build
+        needs: [quality, test, security, checks]
+        uses: ./.github/workflows/docker-build.yml
+        with:
+            platforms: "linux/amd64"
+            push: ${{ github.event_name != 'pull_request' }}
+            tags-template: |
+                type=ref,event=branch
+                type=ref,event=pr
+        permissions:
+            contents: read
+            packages: write
 
     pr-labeler:
         name: Label Pull Request
@@ -72,7 +79,7 @@ jobs:
     release-drafter:
         name: Update Release Draft
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        needs: [quality, test, build, security, checks]
+        needs: [quality, test, security, checks, docker-build]
         uses: ./.github/workflows/release-drafter.yml
         permissions:
             contents: write
@@ -81,7 +88,7 @@ jobs:
     status-check:
         name: CI Status Check
         if: always()
-        needs: [quality, test, build, security, checks, release-drafter]
+        needs: [quality, test, security, checks, docker-build, release-drafter]
         runs-on: ubuntu-latest
 
         steps:
@@ -89,9 +96,9 @@ jobs:
               run: |
                   if [[ "${{ needs.quality.result }}" == "failure" ]] || \
                      [[ "${{ needs.test.result }}" == "failure" ]] || \
-                     [[ "${{ needs.build.result }}" == "failure" ]] || \
                      [[ "${{ needs.security.result }}" == "failure" ]] || \
-                     [[ "${{ needs.checks.result }}" == "failure" ]]; then
+                     [[ "${{ needs.checks.result }}" == "failure" ]] || \
+                     [[ "${{ needs.docker-build.result }}" == "failure" ]]; then
                     echo "One or more jobs failed"
                     exit 1
                   fi
