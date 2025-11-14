@@ -130,7 +130,7 @@ docker-scout: build
 
 docker-network-setup:
 	@echo "==> Setting up docker network if not exists"
-	@docker network inspect finsplitter-net --format {{ .Id }} 2>/dev/null || docker network create finsplitter-net
+	@docker network inspect finsplitter-net --format '{{.Id}}' 2>/dev/null || docker network create finsplitter-net
 
 # === Generation Targets ===
 generate: generate-sqlc generate-mocks
