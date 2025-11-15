@@ -54,13 +54,13 @@ jobs:
 
     docker-build:
         name: Docker Build
+        if: github.event_name == 'pull_request'
         needs: [quality, test, security, checks]
         uses: ./.github/workflows/docker-build.yml
         with:
             platforms: "linux/amd64"
-            push: ${{ github.event_name != 'pull_request' }}
+            push: false
             tags-template: |
-                type=ref,event=branch
                 type=ref,event=pr
         permissions:
             contents: read
@@ -79,7 +79,7 @@ jobs:
     release-drafter:
         name: Update Release Draft
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        needs: [quality, test, security, checks, docker-build]
+        needs: [quality, test, security, checks]
         uses: ./.github/workflows/release-drafter.yml
         permissions:
             contents: write
