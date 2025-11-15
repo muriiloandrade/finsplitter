@@ -18,8 +18,17 @@ env:
     GO_VERSION: "1.25.4"
 
 jobs:
+    checks:
+        name: Prerequisites Check
+        uses: ./.github/workflows/prerequisites.yml
+        permissions:
+            contents: read
+        with:
+            go-versions: '["1.25.4"]'
+
     quality:
         name: Code Quality
+        needs: [checks]
         uses: ./.github/workflows/quality.yml
         with:
             go-versions: '["1.25.4"]'
@@ -28,6 +37,7 @@ jobs:
 
     test:
         name: Test
+        needs: [checks]
         uses: ./.github/workflows/test.yml
         with:
             go-versions: '["1.25.4", "1.25.x"]'
@@ -35,6 +45,7 @@ jobs:
 
     security:
         name: Security
+        needs: [checks]
         uses: ./.github/workflows/security.yml
         with:
             go-versions: '["1.25.4"]'
@@ -43,14 +54,6 @@ jobs:
             packages: read
             actions: read
             contents: read
-
-    checks:
-        name: Prerequisites Check
-        uses: ./.github/workflows/prerequisites.yml
-        permissions:
-            contents: read
-        with:
-            go-versions: '["1.25.4"]'
 
     docker-build:
         name: Docker Build
