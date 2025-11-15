@@ -23,6 +23,8 @@ jobs:
     quality:
         name: Code Quality (Go ${{ matrix.go-version }})
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         strategy:
             matrix:

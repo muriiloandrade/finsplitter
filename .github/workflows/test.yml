@@ -18,6 +18,8 @@ jobs:
     test:
         name: Test (Go ${{ matrix.go-version }})
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
         strategy:
             matrix:
