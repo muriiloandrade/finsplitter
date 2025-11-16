@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	App Application
-	Env Environment
-	DB  Database
+	App  Application
+	Env  Environment
+	DB   Database
+	OTel OpenTelemetry
 }
 
 type Application struct {
@@ -46,6 +47,19 @@ type PoolConfig struct {
 	MaxConnIdleTime   time.Duration `conf:"env:PG_MAX_CONN_IDLE_TIME,default:10m"`
 	HealthCheckPeriod time.Duration `conf:"env:PG_HEALTH_CHECK_PERIOD,default:1m"`
 	ConnectTimeout    time.Duration `conf:"env:PG_CONNECT_TIMEOUT,default:15s"`
+}
+
+type OpenTelemetry struct {
+	Enabled         bool          `conf:"env:OTEL_ENABLED,default:false"`
+	ServiceName     string        `conf:"env:OTEL_SERVICE_NAME,default:finsplitter"`
+	ExporterURL     string        `conf:"env:OTEL_EXPORTER_OTLP_ENDPOINT,default:http://localhost:4318"`
+	Insecure        bool          `conf:"env:OTEL_EXPORTER_INSECURE,default:true"`
+	EnableTraces    bool          `conf:"env:OTEL_ENABLE_TRACES,default:true"`
+	EnableMetrics   bool          `conf:"env:OTEL_ENABLE_METRICS,default:true"`
+	EnableLogs      bool          `conf:"env:OTEL_ENABLE_LOGS,default:true"`
+	SamplerRatio    float64       `conf:"env:OTEL_SAMPLER_RATIO,default:1.0"`
+	ExporterTimeout time.Duration `conf:"env:OTEL_EXPORTER_TIMEOUT,default:30s"`
+	ExportInterval  time.Duration `conf:"env:OTEL_EXPORT_INTERVAL,default:5s"`
 }
 
 func LoadEnv(buildTag, buildCommit, buildTime string) *Config {

@@ -105,6 +105,61 @@ Repositories extract connection from context in `querier` interface methods.
 - Structured logging via `log/slog` with context propagation (`slogctx.FromCtx(ctx)`)
 - Initialize logger with app metadata in `cmd/api/main.go` via `logging.NewContextWithLogger()`
 - Support "text" (prettylog) and "json" formats controlled by `LOG_FORMAT` env var
+- Optional OpenTelemetry log export via `MultiHandler` pattern (dual local + OTel output)
+
+### OpenTelemetry Observability
+**Package Structure** (`pkg/telemetry`):
+- `options.go`: Shared `Options` struct with **Functional Options Pattern** for all providers
+  - `WithServiceName(name)` - Required, validates non-empty
+  - `WithServiceVersion(version)` - Defaults to "local"
+  - `WithEnvironment(env)` - Defaults to "development"
+  - `WithExporterURL(url)` - Required, validates non-empty
+  - `WithInsecure(bool)` - Controls TLS (true for dev, false for prod)
+  - `WithExporterTimeout(duration)` - Defaults to 10 seconds
+  - `WithExportInterval(duration)` - Defaults to 60 seconds (for metrics)
+  - `NewOptions(opts...)` - Creates Options with validation and defaults applied
+- `resource.go`: Shared `NewResource()` function for resource detection (process, OS, container, host)
+- `shutdown.go`: Shared `ShutdownFunc` type alias
+- `tracing/`: `NewTracerProvider(ctx, opts, samplerRatio)` - traces with OTLP HTTP exporter
+- `metrics/`: `NewMeterProvider(ctx, opts)` - metrics with periodic reader (uses opts.ExportInterval())
+- `logging/`: `NewLoggerProvider(ctx, opts)` - logs with batch processor
+
+**Usage Example**:
+```go
+opts, err := telemetry.NewOptions(
+    telemetry.WithServiceName("finsplitter"),
+    telemetry.WithServiceVersion("v1.0.0"),
+    telemetry.WithEnvironment("production"),
+    telemetry.WithExporterURL("otel-collector:4318"),
+    telemetry.WithInsecure(false),
+    telemetry.WithExporterTimeout(10 * time.Second),
+    telemetry.WithExportInterval(60 * time.Second),
+)
+if err != nil {
+    // Handle validation error
+}
+tracerProvider, shutdown, err := tracing.NewTracerProvider(ctx, opts, 1.0)
+meterProvider, shutdown, err := metrics.NewMeterProvider(ctx, opts)
+```
+
+**Initialization** (`cmd/api/main.go`):
+- Private `initializeOpenTelemetry(ctx, cfg)` function creates all providers based on config flags
+- Providers initialized early in main(), before logger context creation
+- Shutdown functions called via defer to flush data on exit
+- Global provider registration via `otel.SetTracerProvider()`, `otel.SetMeterProvider()`
+
+**Instrumentation**:
+- HTTP: `otelchi.Middleware()` in `internal/gateways/http/global_router.go`
+- PostgreSQL: `otelpgx.NewTracer()` in `internal/gateways/postgres/pool.go`
+- Logs: `otelslog` bridge via `MultiHandler` in `pkg/telemetry/logging/logger.go`
+
+**Configuration** (`internal/config/config.go`):
+- `OTEL_ENABLED`: Master switch for all telemetry
+- `OTEL_ENABLE_{TRACES|METRICS|LOGS}`: Individual signal controls
+- `OTEL_SAMPLER_RATIO`: Trace sampling ratio (0.0-1.0)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP HTTP endpoint (default: localhost:4318)
+- `OTEL_EXPORTER_TIMEOUT`: OTLP exporter timeout (default: 5s)
+- `OTEL_EXPORT_INTERVAL`: Metrics export interval (default: 30s)
 
 ### Dependency Injection
 Manual DI in `cmd/api/main.go`:

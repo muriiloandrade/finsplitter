@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/exaring/otelpgx"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5"
@@ -28,6 +29,7 @@ func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {
 		pgxdecimal.Register(conn.TypeMap())
 		return nil
 	}
+	dbConfig.ConnConfig.Tracer = otelpgx.NewTracer()
 	dbConfig.MaxConns = cfg.Pool.MaxConns
 	dbConfig.MinConns = cfg.Pool.MinConns
 	dbConfig.MaxConnLifetime = cfg.Pool.MaxConnLifetime

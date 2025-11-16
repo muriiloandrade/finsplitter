@@ -8,9 +8,18 @@ import (
 	"github.com/dusted-go/logging/prettylog"
 	"github.com/muriiloandrade/finsplitter/internal/config"
 	slogctx "github.com/veqryn/slog-context"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel/sdk/log"
 )
 
-func NewContextWithLogger(ctx context.Context, cfg config.Config) context.Context {
+// NewContextWithLogger creates a new context with a configured logger.
+// If otelLoggerProvider is provided, logs will be sent to both local output and OTel collector.
+// If otelLoggerProvider is nil, only local logging is configured (useful for tests and local dev without OTel).
+func NewContextWithLogger(
+	ctx context.Context,
+	cfg config.Config,
+	otelLoggerProvider *log.LoggerProvider,
+) context.Context {
 	defaultAttrs := []slog.Attr{
 		slog.Group(
 			"application",
@@ -50,7 +59,20 @@ func NewContextWithLogger(ctx context.Context, cfg config.Config) context.Contex
 
 	customHandler := slogctx.NewHandler(logHandler, nil)
 
-	logger := slog.New(&CustomHandler{Handler: customHandler})
+	// Wrap with CustomHandler for context value extraction
+	var finalHandler slog.Handler = &CustomHandler{Handler: customHandler}
+
+	// If OTel logger provider is provided, create multi-handler to send logs to both local and OTel
+	if otelLoggerProvider != nil {
+		otelHandler := otelslog.NewHandler(
+			cfg.App.Name,
+			otelslog.WithLoggerProvider(otelLoggerProvider),
+			otelslog.WithVersion(cfg.App.Version),
+		)
+		finalHandler = NewMultiHandler(finalHandler, otelHandler)
+	}
+
+	logger := slog.New(finalHandler)
 
 	slog.SetDefault(logger)
 
