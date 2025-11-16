@@ -75,6 +75,19 @@ make stop-dev            # Stop development environment
 make stop-infra          # Stop infrastructure only
 ```
 
+#### 📊 Observability
+```bash
+make start-monitoring    # Start Grafana stack (Tempo, Loki, Prometheus, OTel Collector)
+make stop-monitoring     # Stop observability stack
+```
+
+**Access Points**:
+- Grafana: http://localhost:3000 (dashboards, traces, logs, metrics)
+- Prometheus: http://localhost:9090 (metrics)
+- Tempo: http://localhost:3200 (traces API)
+- Loki: http://localhost:3100 (logs API)
+- OTel Collector: http://localhost:4318 (OTLP HTTP receiver)
+
 #### 🧪 Code Quality & Testing
 ```bash
 make code-check          # Run linters and formatters

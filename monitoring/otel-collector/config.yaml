@@ -1,0 +1,76 @@
+receivers:
+    otlp:
+        protocols:
+            grpc:
+                endpoint: 0.0.0.0:4317
+            http:
+                endpoint: 0.0.0.0:4318
+                cors:
+                    allowed_origins:
+                        - "http://*"
+                        - "https://*"
+
+processors:
+    batch:
+        timeout: 10s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+
+    memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+    resource:
+        attributes:
+            - key: service.namespace
+              value: finsplitter
+              action: insert
+            - key: deployment.environment
+              from_attribute: environment
+              action: upsert
+
+    attributes:
+        actions:
+            - key: http.route
+              action: upsert
+              from_attribute: http.target
+            # - key: db.statement
+            #   action: delete
+
+exporters:
+    otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+            insecure: true
+
+    prometheusremotewrite:
+        endpoint: http://prometheus:9090/api/v1/write
+        tls:
+            insecure: true
+
+    debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
+service:
+    pipelines:
+        traces:
+            receivers: [otlp]
+            processors: [memory_limiter, resource, batch]
+            exporters: [otlp/tempo, debug]
+
+        metrics:
+            receivers: [otlp]
+            processors: [memory_limiter, resource, batch]
+            exporters: [prometheusremotewrite, debug]
+
+        logs:
+            receivers: [otlp]
+            processors: [memory_limiter, resource, batch, attributes]
+            exporters: [debug]
+
+    telemetry:
+        logs:
+            level: info

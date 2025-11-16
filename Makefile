@@ -59,6 +59,15 @@ stop-infra:
 	@echo "==> Stopping infra containers"
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
+start-monitoring:
+	@echo "==> Starting monitoring stack"
+	@docker network inspect finsplitter-net --format '{{.Id}}' 2>/dev/null || docker network create finsplitter-net
+	@docker compose --profile monitoring --env-file .env up -d
+
+stop-monitoring:
+	@echo "==> Stopping monitoring stack"
+	@docker compose --profile monitoring --env-file .env down -v --remove-orphans
+
 start-dev start-debug: start-%:
 start-%: docker-network-setup start-infra
 	@echo "==> Running containers in $* mode"
@@ -183,6 +192,10 @@ help:
 	@echo "  generate                   Generate all code (SQLC + mocks)."
 	@echo "  generate-sqlc              Generate SQLC code only."
 	@echo "  generate-mocks             Generate mock files only."
+	@echo ""
+	@echo "Monitoring Targets:"
+	@echo "  start-monitoring           Start observability stack (OTel, Grafana, Tempo, Loki)"
+	@echo "  stop-monitoring            Stop observability stack"
 	@echo ""
 	@echo "Other Targets:"
 	@echo "  start-infra                Start infrastructure containers (e.g., database)."

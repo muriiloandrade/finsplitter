@@ -29,24 +29,6 @@ services:
         networks:
             - finsplitter
 
-    jaeger:
-        profiles:
-            - infra
-        image: cr.jaegertracing.io/jaegertracing/jaeger:2.11.0@sha256:b585df1b6299bbbd16bf7c679da30389349736e4b6bc8f4f500142a75bf26ca8
-        container_name: finsplitter-jaeger
-        restart: unless-stopped
-        ports:
-            - "16686:16686" # Jaeger UI
-            - "4317:4317" # OTLP gRPC receiver
-            - "4318:4318" # OTLP HTTP receiver
-        environment:
-            - LOG_LEVEL=debug
-            - COLLECTOR_OTLP_ENABLED=true
-        # volumes:
-        #     - ./config.yaml:/jaeger/config.yaml
-        networks:
-            - finsplitter
-
 volumes:
     database:
         driver: local
