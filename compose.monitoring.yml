@@ -15,7 +15,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         networks:
-            - finsplitter-net
+            - finsplitter
         restart: unless-stopped
         healthcheck:
             test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
@@ -38,7 +38,7 @@ services:
             - "4317" # OTLP gRPC receiver
             - "4318" # OTLP HTTP receiver
         networks:
-            - finsplitter-net
+            - finsplitter
         restart: unless-stopped
         healthcheck:
             test:
@@ -61,7 +61,7 @@ services:
             - "3100:3100" # Loki HTTP
             - "9096:9096" # Loki gRPC
         networks:
-            - finsplitter-net
+            - finsplitter
         restart: unless-stopped
         healthcheck:
             test:
@@ -88,7 +88,7 @@ services:
         ports:
             - "9090:9090" # Prometheus UI
         networks:
-            - finsplitter-net
+            - finsplitter
         restart: unless-stopped
         healthcheck:
             test:
@@ -125,7 +125,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         networks:
-            - finsplitter-net
+            - finsplitter
         restart: unless-stopped
         depends_on:
             - tempo

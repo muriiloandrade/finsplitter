@@ -59,9 +59,8 @@ stop-infra:
 	@echo "==> Stopping infra containers"
 	@docker compose --profile infra --env-file .env down -v --remove-orphans
 
-start-monitoring:
+start-monitoring: docker-network-setup
 	@echo "==> Starting monitoring stack"
-	@docker network inspect finsplitter-net --format '{{.Id}}' 2>/dev/null || docker network create finsplitter-net
 	@docker compose --profile monitoring --env-file .env up -d
 
 stop-monitoring:
