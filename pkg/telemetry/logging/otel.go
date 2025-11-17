@@ -9,6 +9,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
 	slogctx "github.com/veqryn/slog-context"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/log"
 )
 
@@ -40,6 +41,7 @@ func NewLoggerProvider(
 		log.WithProcessor(log.NewBatchProcessor(exporter)),
 		log.WithResource(res),
 	)
+	global.SetLoggerProvider(lp)
 
 	logger.InfoContext(ctx, "logger provider initialized",
 		slog.String("service", opts.ServiceName()),
