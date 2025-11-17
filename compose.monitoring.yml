@@ -1,0 +1,20 @@
+services:
+    otel:
+        profiles:
+            - monitoring
+        container_name: finsplitter-lgtm
+        image: grafana/otel-lgtm:0.11.17@sha256:15b963783b3dc24a6256ebc1bffd4fc6c133348810faf86ecaa939912fd311b6
+        networks:
+            - finsplitter
+        restart: unless-stopped
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "3000:3000"
+            - "4317:4317"
+            - "4318:4318"
+            - "9090:9090"
+        environment:
+            - GF_AUTH_ANONYMOUS_ENABLED=true
+            - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+            - GF_SECURITY_ALLOW_EMBEDDING=true

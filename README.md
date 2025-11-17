@@ -75,6 +75,19 @@ make stop-dev            # Stop development environment
 make stop-infra          # Stop infrastructure only
 ```
 
+#### 📊 Observability
+```bash
+make start-monitoring    # Start Grafana stack (Tempo, Loki, Prometheus, OTel Collector)
+make stop-monitoring     # Stop observability stack
+```
+
+**Access Points**:
+- Grafana: http://localhost:3000 (dashboards, traces, logs, metrics)
+- Prometheus: http://localhost:9090 (metrics)
+- Tempo: http://localhost:3200 (traces API)
+- Loki: http://localhost:3100 (logs API)
+- OTel Collector: http://localhost:4318 (OTLP HTTP receiver)
+
 #### 🧪 Code Quality & Testing
 ```bash
 make code-check          # Run linters and formatters
@@ -121,11 +134,49 @@ This project follows **Clean Architecture** principles with **Hexagonal/Ports-an
 - **🔧 SQLC Integration**: Type-safe database access from SQL queries  
 - **🧪 Comprehensive Testing**: Testify/mock with table-driven tests
 - **📦 Dependency Injection**: Manual DI with clear boundaries
-- **�️ OpenAPI**: Auto-generated docs with Huma v2
+- **📄 OpenAPI**: Auto-generated docs with Huma v2
+- **🔭 Observability**: OpenTelemetry tracing, metrics, and logs with Jaeger
 
 ## 🔧 Configuration
 
 Environment variables example provided as `.env.example`.
+
+### OpenTelemetry Configuration
+
+Finsplitter supports OpenTelemetry for distributed tracing, metrics, and logs:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OTEL_ENABLED` | Enable OpenTelemetry instrumentation | `false` |
+| `OTEL_SERVICE_NAME` | Service name for telemetry | Uses `APP_NAME` |
+| `OTEL_EXPORTER_URL` | OTLP HTTP endpoint | `http://localhost:4318` |
+| `OTEL_INSECURE` | Use insecure connection | `true` |
+| `OTEL_ENABLE_TRACES` | Enable trace collection | `true` |
+| `OTEL_ENABLE_METRICS` | Enable metrics collection | `true` |
+| `OTEL_ENABLE_LOGS` | Enable log export | `true` |
+| `OTEL_SAMPLER_RATIO` | Trace sampling ratio (0.0-1.0) | `1.0` |
+
+#### Local Observability Stack
+
+Jaeger is included in the infrastructure Docker Compose setup:
+
+```bash
+# Start infrastructure with Jaeger
+make start-infra
+
+# Access Jaeger UI
+open http://localhost:16686
+```
+
+Jaeger provides:
+- 🔍 **Distributed Tracing**: View request flows across services
+- 📊 **Performance Analysis**: Identify bottlenecks and latency
+- 🗺️ **Service Dependencies**: Visualize system architecture
+
+**Automatic Instrumentation**:
+- ✅ HTTP requests (via `otelchi` middleware)
+- ✅ PostgreSQL queries (via `otelpgx` tracer)
+- ✅ Application logs (via `otelslog` bridge)
 
 ## 📋 API Documentation
 
