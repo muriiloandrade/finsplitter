@@ -90,6 +90,11 @@ func (r *CardBrandRepository) GetCardBrandByID(
 			slog.String("operation", getCardBrandByIDOp),
 			slog.Any("error", err),
 		)
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errs.ErrCardBrandNotFound
+		}
+
 		return nil, err
 	}
 	cardBrand := parseToCardBrand(brand)
