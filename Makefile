@@ -126,6 +126,8 @@ test-cov:
 	@echo "==> Running test coverage report - IMPLEMENT ME"
 
 tools: install-lefthook
+	@echo "==> Installing necessary development tools"
+	@go install github.com/go-delve/delve/cmd/dlv@latest
 	@echo "==> Dealt with tools used on project"
 
 install-lefthook:
