@@ -23,7 +23,6 @@ func NewRouter(_ *slog.Logger) *chi.Mux {
 	r.Use(
 		middleware.SupressNotFound(r),
 		middleware.CleanPath,
-		middleware.Recoverer,
 		otelchi.Middleware(
 			"finsplitter",
 			otelchi.WithChiRoutes(r),
@@ -34,8 +33,8 @@ func NewRouter(_ *slog.Logger) *chi.Mux {
 					"/health/liveness",
 					"/health/readiness",
 					"/docs",
-					"openapi.yml",
-					"openapi.json",
+					"/openapi.yaml",
+					"/openapi.json",
 				}
 				return !slices.Contains(blockList, r.URL.Path)
 			}),
@@ -43,6 +42,7 @@ func NewRouter(_ *slog.Logger) *chi.Mux {
 		otelchimetric.NewRequestDurationMillis(baseCfg),
 		otelchimetric.NewRequestInFlight(baseCfg),
 		otelchimetric.NewResponseSizeBytes(baseCfg),
+		middleware.Recoverer,
 	)
 
 	return r
