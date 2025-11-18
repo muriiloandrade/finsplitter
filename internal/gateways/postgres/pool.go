@@ -29,7 +29,7 @@ func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {
 		pgxdecimal.Register(conn.TypeMap())
 		return nil
 	}
-	dbConfig.ConnConfig.Tracer = otelpgx.NewTracer()
+	dbConfig.ConnConfig.Tracer = otelpgx.NewTracer(otelpgx.WithIncludeQueryParameters())
 	dbConfig.MaxConns = cfg.Pool.MaxConns
 	dbConfig.MinConns = cfg.Pool.MinConns
 	dbConfig.MaxConnLifetime = cfg.Pool.MaxConnLifetime

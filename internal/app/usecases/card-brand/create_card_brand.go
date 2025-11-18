@@ -39,7 +39,6 @@ func (uc *CreateCardBrandUC) CreateCardBrand(
 				return errs.ErrCardBrandAlreadyExists
 			}
 		}
-
 		insertedCardBrand = cb
 		return err
 	})

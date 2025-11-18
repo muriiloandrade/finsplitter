@@ -6,18 +6,6 @@ import (
 
 type txExistsKey struct{}
 
-type TransactionError struct {
-	Cause error
-}
-
-func (t *TransactionError) Error() string {
-	return "transaction error: " + t.Cause.Error()
-}
-
-func (t *TransactionError) TransactionErrCause() string {
-	return t.Cause.Error()
-}
-
 type TransactionFunc func(ctx context.Context) error
 
 type Transactioner interface {

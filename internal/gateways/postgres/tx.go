@@ -19,12 +19,12 @@ type TxManager struct {
 
 func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) error {
 	if domain.HasTX(ctx) {
-		return &domain.TransactionError{Cause: errors.New("already in transaction")}
+		return errors.New("already in transaction")
 	}
 
 	tx, err := b.ConnPool.Begin(ctx)
 	if err != nil {
-		return &domain.TransactionError{Cause: fmt.Errorf("cannot begin a transaction: %w", err)}
+		return fmt.Errorf("cannot begin a transaction: %w", err)
 	}
 
 	ctxWithTx := context.WithValue(domain.WithTx(ctx), txKey{}, tx)
@@ -40,15 +40,13 @@ func (b TxManager) WithTx(ctx context.Context, f domain.TransactionFunc) error {
 
 	if err = f(ctxWithTx); err != nil {
 		if rollBackErr := tx.Rollback(ctx); rollBackErr != nil {
-			return &domain.TransactionError{
-				Cause: fmt.Errorf("rollback failed after transaction error: %w (original: %w)", rollBackErr, err),
-			}
+			return fmt.Errorf("rollback failed after transaction error: %w (original: %w)", rollBackErr, err)
 		}
-		return &domain.TransactionError{Cause: err}
+		return err
 	}
 
 	if err = tx.Commit(ctx); err != nil {
-		return &domain.TransactionError{Cause: fmt.Errorf("cannot commit transaction: %w", err)}
+		return fmt.Errorf("cannot commit transaction: %w", err)
 	}
 
 	return nil
