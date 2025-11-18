@@ -5,6 +5,7 @@
 [![CI](https://github.com/muriiloandrade/finsplitter/actions/workflows/ci.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/ci.yml)
 [![Release](https://github.com/muriiloandrade/finsplitter/actions/workflows/release.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/release.yml)
 [![Security](https://github.com/muriiloandrade/finsplitter/actions/workflows/security.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/muriiloandrade/finsplitter/branch/main/graph/badge.svg)](https://codecov.io/gh/muriiloandrade/finsplitter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/muriiloandrade/finsplitter)](https://goreportcard.com/report/github.com/muriiloandrade/finsplitter)
 
 ## 🚀 Quick Start
@@ -149,29 +150,12 @@ Finsplitter supports OpenTelemetry for distributed tracing, metrics, and logs:
 |----------|-------------|---------|
 | `OTEL_ENABLED` | Enable OpenTelemetry instrumentation | `false` |
 | `OTEL_SERVICE_NAME` | Service name for telemetry | Uses `APP_NAME` |
-| `OTEL_EXPORTER_URL` | OTLP HTTP endpoint | `http://localhost:4318` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP HTTP endpoint | `http://localhost:4318` |
 | `OTEL_INSECURE` | Use insecure connection | `true` |
 | `OTEL_ENABLE_TRACES` | Enable trace collection | `true` |
 | `OTEL_ENABLE_METRICS` | Enable metrics collection | `true` |
 | `OTEL_ENABLE_LOGS` | Enable log export | `true` |
 | `OTEL_SAMPLER_RATIO` | Trace sampling ratio (0.0-1.0) | `1.0` |
-
-#### Local Observability Stack
-
-Jaeger is included in the infrastructure Docker Compose setup:
-
-```bash
-# Start infrastructure with Jaeger
-make start-infra
-
-# Access Jaeger UI
-open http://localhost:16686
-```
-
-Jaeger provides:
-- 🔍 **Distributed Tracing**: View request flows across services
-- 📊 **Performance Analysis**: Identify bottlenecks and latency
-- 🗺️ **Service Dependencies**: Visualize system architecture
 
 **Automatic Instrumentation**:
 - ✅ HTTP requests (via `otelchi` middleware)
