@@ -8,7 +8,6 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
-	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 )
 
 type DeleteCardBrandUC struct {
@@ -43,9 +42,6 @@ func (uc *DeleteCardBrandUC) DeleteCardBrand(
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, errs.ErrCardBrandNotFound) {
-			return nil, errs.ErrCardBrandNotFound
-		}
 		return nil, err
 	}
 
