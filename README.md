@@ -2,11 +2,14 @@
 
 > Financial expense splitting application built with Go
 
+[![Go Version](https://img.shields.io/github/go-mod/go-version/muriiloandrade/finsplitter)](https://go.dev/)
 [![CI](https://github.com/muriiloandrade/finsplitter/actions/workflows/ci.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/ci.yml)
 [![Release](https://github.com/muriiloandrade/finsplitter/actions/workflows/release.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/muriiloandrade/finsplitter)](https://github.com/muriiloandrade/finsplitter/releases/latest)
 [![Security](https://github.com/muriiloandrade/finsplitter/actions/workflows/security.yml/badge.svg)](https://github.com/muriiloandrade/finsplitter/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/muriiloandrade/finsplitter/branch/main/graph/badge.svg)](https://codecov.io/gh/muriiloandrade/finsplitter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/muriiloandrade/finsplitter)](https://goreportcard.com/report/github.com/muriiloandrade/finsplitter)
+[![License](https://img.shields.io/github/license/muriiloandrade/finsplitter)](LICENSE)
 
 ## 🚀 Quick Start
 
