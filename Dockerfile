@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25.4-trixie@sha256:a02d35efc036053fdf0da8c15919276bf777a80cbfda6a35c5e9f087e652adfc AS setup
+FROM golang:1.25.5-trixie@sha256:5d35fb8d28b9095d123b7d96095bbf3750ff18be0a87e5a21c9cffc4351fbf96 AS setup
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 go build \
     -o bin/finsplitter cmd/api/main.go
 
 # Execution stage
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:e8a4044e0b4ae4257efa45fc026c0bc30ad320d43bd4c1a7d5271bd241e386d0 AS production
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:2b7c93f6d6648c11f0e80a48558c8f77885eb0445213b8e69a6a0d7c89fc6ae4 AS production
 
 # Copy the built binary
 COPY --from=builder /app/bin/finsplitter /
