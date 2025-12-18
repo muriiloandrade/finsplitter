@@ -70,8 +70,8 @@ github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/dusted-go/logging v1.3.0 h1:SL/EH1Rp27oJQIte+LjWvWACSnYDTqNx5gZULin0XRY=
 github.com/dusted-go/logging v1.3.0/go.mod h1:s58+s64zE5fxSWWZfp+b8ZV0CHyKHjamITGyuY1wzGg=
-github.com/evilmartians/lefthook/v2 v2.0.11 h1:ozT8HPEGZByPnNrJdAc27dwQ5ebmakHJ8cWXGaARISs=
-github.com/evilmartians/lefthook/v2 v2.0.11/go.mod h1:gh7VH7n71VU1rY+WndtexhqCiEURoXy2GOLTSsL8AAw=
+github.com/evilmartians/lefthook/v2 v2.0.12 h1:tmh1wigqfrqsXgr1Nr0VILUxeOr6Ik1l0+PsYujciSk=
+github.com/evilmartians/lefthook/v2 v2.0.12/go.mod h1:gh7VH7n71VU1rY+WndtexhqCiEURoXy2GOLTSsL8AAw=
 github.com/exaring/otelpgx v0.9.4 h1:V0XdEPXAaeBteeL8WbEPLWVCwKh3Be2aVX7/vCBpli4=
 github.com/exaring/otelpgx v0.9.4/go.mod h1:R5/M5LWsPPBZc1SrRE5e0DiU48bI78C1/GPTWs6I66U=
 github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
