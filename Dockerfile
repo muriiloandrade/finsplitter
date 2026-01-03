@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25.5-trixie@sha256:79437b71e42fdc38162dde7a2fc195f4c14321b55c6ba9b0356c9509d838caee AS setup
+FROM golang:1.25.5-trixie@sha256:ef151f0384896831258e71065176f1e63f5a90bcbe6a98ec679a1990011a2655 AS setup
 
 WORKDIR /app
 
