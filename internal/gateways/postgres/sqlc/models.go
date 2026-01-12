@@ -11,16 +11,16 @@ import (
 )
 
 type Bill struct {
-	ID               uuid.UUID        `db:"id" json:"id"`
-	CardID           uuid.UUID        `db:"card_id" json:"cardId"`
-	Month            int16            `db:"month" json:"month"`
-	Year             int16            `db:"year" json:"year"`
-	DueDate          int16            `db:"due_date" json:"dueDate"`
-	DueMonth         int16            `db:"due_month" json:"dueMonth"`
-	Paid             *bool            `db:"paid" json:"paid"`
-	PaidOn           pgtype.Date      `db:"paid_on" json:"paidOn"`
-	CreatedDate      pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	ID               uuid.UUID          `db:"id" json:"id"`
+	CardID           uuid.UUID          `db:"card_id" json:"cardId"`
+	Month            int16              `db:"month" json:"month"`
+	Year             int16              `db:"year" json:"year"`
+	DueDate          int16              `db:"due_date" json:"dueDate"`
+	DueMonth         int16              `db:"due_month" json:"dueMonth"`
+	Paid             *bool              `db:"paid" json:"paid"`
+	PaidOn           pgtype.Date        `db:"paid_on" json:"paidOn"`
+	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 type Card struct {
@@ -29,38 +29,38 @@ type Card struct {
 	UserID  uuid.UUID `db:"user_id" json:"userId"`
 	Name    string    `db:"name" json:"name"`
 	// Last 4 digits, corresponde aos 4 últimos dígitos do número docartão
-	L4d *int16 `db:"l4d" json:"l4d"`
+	L4d *string `db:"l4d" json:"l4d"`
 	// O dia do mês que a fatura vence
 	DueDate int16 `db:"due_date" json:"dueDate"`
 	// O dia do mês que a fatura fecha
 	ClosingDate *int16 `db:"closing_date" json:"closingDate"`
 	// Exemplos: Black, Platinum, entre outros
-	Tier             *string          `db:"tier" json:"tier"`
-	CreatedDate      pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	Tier             *string            `db:"tier" json:"tier"`
+	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 type CardBrand struct {
-	ID               uuid.UUID        `db:"id" json:"id"`
-	Name             string           `db:"name" json:"name"`
-	CreatedDate      pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	ID               uuid.UUID          `db:"id" json:"id"`
+	Name             string             `db:"name" json:"name"`
+	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 type CardPerson struct {
-	CardID            uuid.UUID        `db:"card_id" json:"cardId"`
-	PersonID          uuid.UUID        `db:"person_id" json:"personId"`
-	DefaultPercentage *decimal.Decimal `db:"default_percentage" json:"defaultPercentage"`
-	CreatedDate       pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	EndDate           pgtype.Timestamp `db:"end_date" json:"endDate"`
+	CardID            uuid.UUID          `db:"card_id" json:"cardId"`
+	PersonID          uuid.UUID          `db:"person_id" json:"personId"`
+	DefaultPercentage *decimal.Decimal   `db:"default_percentage" json:"defaultPercentage"`
+	CreatedDate       pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	EndDate           pgtype.Timestamptz `db:"end_date" json:"endDate"`
 }
 
 type Person struct {
-	ID               uuid.UUID        `db:"id" json:"id"`
-	UserID           uuid.UUID        `db:"user_id" json:"userId"`
-	Name             string           `db:"name" json:"name"`
-	CreatedDate      pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	ID               uuid.UUID          `db:"id" json:"id"`
+	UserID           uuid.UUID          `db:"user_id" json:"userId"`
+	Name             string             `db:"name" json:"name"`
+	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 type Transaction struct {
@@ -74,28 +74,28 @@ type Transaction struct {
 	Value *decimal.Decimal `db:"value" json:"value"`
 	Date  pgtype.Date      `db:"date" json:"date"`
 	// Indica se a transação estará presente em mais de 1 fatura
-	RecurringCharge    bool             `db:"recurring_charge" json:"recurringCharge"`
-	InstallmentsNumber *int16           `db:"installments_number" json:"installmentsNumber"`
-	CreatedDate        pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate   pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	RecurringCharge    bool               `db:"recurring_charge" json:"recurringCharge"`
+	InstallmentsNumber *int16             `db:"installments_number" json:"installmentsNumber"`
+	CreatedDate        pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate   pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 type TransactionPerson struct {
-	PersonID        uuid.UUID        `db:"person_id" json:"personId"`
-	TransactionID   uuid.UUID        `db:"transaction_id" json:"transactionId"`
-	Percentage      *decimal.Decimal `db:"percentage" json:"percentage"`
-	CalculatedValue *decimal.Decimal `db:"calculated_value" json:"calculatedValue"`
-	CreatedDate     pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	EndDate         pgtype.Timestamp `db:"end_date" json:"endDate"`
+	PersonID        uuid.UUID          `db:"person_id" json:"personId"`
+	TransactionID   uuid.UUID          `db:"transaction_id" json:"transactionId"`
+	Percentage      *decimal.Decimal   `db:"percentage" json:"percentage"`
+	CalculatedValue *decimal.Decimal   `db:"calculated_value" json:"calculatedValue"`
+	CreatedDate     pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	EndDate         pgtype.Timestamptz `db:"end_date" json:"endDate"`
 }
 
 type User struct {
-	ID               uuid.UUID        `db:"id" json:"id"`
-	Name             string           `db:"name" json:"name"`
-	Email            string           `db:"email" json:"email"`
-	PhoneNumber      *string          `db:"phone_number" json:"phoneNumber"`
-	Username         string           `db:"username" json:"username"`
-	PasswordHash     string           `db:"password_hash" json:"passwordHash"`
-	CreatedDate      pgtype.Timestamp `db:"created_date" json:"createdDate"`
-	LastModifiedDate pgtype.Timestamp `db:"last_modified_date" json:"lastModifiedDate"`
+	ID               uuid.UUID          `db:"id" json:"id"`
+	Name             string             `db:"name" json:"name"`
+	Email            string             `db:"email" json:"email"`
+	PhoneNumber      *string            `db:"phone_number" json:"phoneNumber"`
+	Username         string             `db:"username" json:"username"`
+	PasswordHash     string             `db:"password_hash" json:"passwordHash"`
+	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
+	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
