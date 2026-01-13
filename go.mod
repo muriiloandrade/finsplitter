@@ -5,7 +5,7 @@ go 1.25
 require (
 	github.com/danielgtaylor/huma/v2 v2.34.1
 	github.com/dusted-go/logging v1.3.0
-	github.com/exaring/otelpgx v0.9.4
+	github.com/exaring/otelpgx v0.10.0
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
@@ -40,22 +40,23 @@ require (
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/cilium/ebpf v0.11.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/cosiner/argv v0.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/derekparker/trie/v3 v3.2.0 // indirect
-	github.com/evilmartians/lefthook/v2 v2.0.13 // indirect
+	github.com/evilmartians/lefthook/v2 v2.0.15 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.11 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-delve/delve v1.26.0 // indirect
 	github.com/go-delve/liner v1.2.3-0.20231231155935-4726ab1d7f62 // indirect
 	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/goccy/go-yaml v1.18.0 // indirect
+	github.com/goccy/go-yaml v1.19.1 // indirect
 	github.com/google/go-dap v0.12.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
@@ -68,10 +69,10 @@ require (
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	github.com/kaptinlin/go-i18n v0.2.0 // indirect
-	github.com/kaptinlin/jsonpointer v0.4.6 // indirect
-	github.com/kaptinlin/jsonschema v0.6.1 // indirect
-	github.com/kaptinlin/messageformat-go v0.4.6 // indirect
+	github.com/kaptinlin/go-i18n v0.2.2 // indirect
+	github.com/kaptinlin/jsonpointer v0.4.8 // indirect
+	github.com/kaptinlin/jsonschema v0.6.5 // indirect
+	github.com/kaptinlin/messageformat-go v0.4.7 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/knadh/koanf/parsers/json v1.0.0 // indirect
 	github.com/knadh/koanf/parsers/toml/v2 v2.2.0 // indirect
@@ -85,7 +86,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mattn/go-tty v0.0.7 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -99,7 +100,8 @@ require (
 	github.com/schollz/progressbar/v3 v3.18.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/urfave/cli/v3 v3.4.1 // indirect
+	github.com/tidwall/jsonc v0.3.2 // indirect
+	github.com/urfave/cli/v3 v3.6.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
@@ -111,13 +113,13 @@ require (
 	golang.org/x/arch v0.17.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
-	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
-	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
