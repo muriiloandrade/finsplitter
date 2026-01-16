@@ -130,7 +130,7 @@ require (
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/ardanlabs/conf/v3 v3.10.0
-	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
