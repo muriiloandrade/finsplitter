@@ -3,7 +3,7 @@ module github.com/muriiloandrade/finsplitter
 go 1.25
 
 require (
-	github.com/danielgtaylor/huma/v2 v2.34.2
+	github.com/danielgtaylor/huma/v2 v2.34.3
 	github.com/dusted-go/logging v1.3.0
 	github.com/exaring/otelpgx v0.10.0
 	github.com/gofrs/uuid/v5 v5.4.0
