@@ -46,7 +46,7 @@ require (
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/derekparker/trie/v3 v3.2.0 // indirect
-	github.com/evilmartians/lefthook/v2 v2.1.0 // indirect
+	github.com/evilmartians/lefthook/v2 v2.1.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
