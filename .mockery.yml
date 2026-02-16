@@ -17,3 +17,6 @@ packages:
   github.com/muriiloandrade/finsplitter/internal/app/ports:
     config:
       all: true
+  github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand:
+    config:
+      all: true
