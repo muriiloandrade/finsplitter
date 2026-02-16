@@ -125,10 +125,15 @@ test-watch:
 test-cov:
 	@echo "==> Running test coverage report"
 	@go test -coverprofile=coverage.out $$(go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
-	@go tool cover -func=coverage.out | grep -v "^total:" | tail -n +1
 	@echo ""
-	@echo "==> Total Coverage:"
-	@go tool cover -func=coverage.out | grep "^total:"
+	@echo "==> Coverage by package (excluding mocks):"
+	@go tool cover -func=coverage.out | grep -v "^total:" | grep -v "mocks.gen.go"
+	@echo ""
+	@echo "==> Total Coverage (excluding mocks):"
+	@# Create filtered coverage file excluding mocks, then calculate
+	@grep -v "mocks.gen.go" coverage.out > coverage_no_mocks.out
+	@go tool cover -func=coverage_no_mocks.out | grep "^total:"
+	@rm -f coverage_no_mocks.out
 
 tools: install-lefthook
 	@echo "==> Installing necessary development tools"
