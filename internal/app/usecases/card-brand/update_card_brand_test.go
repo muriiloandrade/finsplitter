@@ -131,6 +131,24 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 			err: errs.ErrCardBrandAlreadyExists,
 		},
 		{
+			name:  "returns error on generic database error",
+			input: ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
+			repoSetup: func(repo *ports.MockUpdateCardBrandRepository) {
+				repo.EXPECT().
+					UpdateCardBrand(mock.Anything, ports.UpdateCardBrandOptions{ID: id, Name: "Visa"}).
+					Return(nil, errs.ErrDatabaseGeneric)
+			},
+			txSetup: func(tx *domain.MockTransactioner) {
+				tx.EXPECT().
+					WithTx(mock.Anything, mock.AnythingOfType("domain.TransactionFunc")).
+					Run(func(ctx context.Context, fn domain.TransactionFunc) {
+						fn(ctx)
+					}).
+					Return(errs.ErrDatabaseGeneric)
+			},
+			err: errs.ErrDatabaseGeneric,
+		},
+		{
 			name:      "returns error on transaction failed",
 			input:     ports.UpdateCardBrandOptions{ID: id, Name: "Visa"},
 			repoSetup: func(_ *ports.MockUpdateCardBrandRepository) {},

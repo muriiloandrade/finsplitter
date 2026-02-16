@@ -22,10 +22,10 @@ type GetCardBrandResponse struct {
 }
 
 type GetCardBrandHandler struct {
-	UseCase usecases.GetCardBrandByIDUC
+	UseCase usecases.GetCardBrandByIDUseCase
 }
 
-func NewGetCardBrandHandler(uc usecases.GetCardBrandByIDUC) GetCardBrandHandler {
+func NewGetCardBrandHandler(uc usecases.GetCardBrandByIDUseCase) GetCardBrandHandler {
 	return GetCardBrandHandler{UseCase: uc}
 }
 
