@@ -51,15 +51,15 @@ func TestCardBrandRepository_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := repo.CreateCardBrand(ctx, tt.brandName)
+			result, createErr := repo.CreateCardBrand(ctx, tt.brandName)
 
 			if tt.wantErr != nil {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, tt.wantErr)
+				require.Error(t, createErr)
+				assert.ErrorIs(t, createErr, tt.wantErr)
 				return
 			}
 
-			require.NoError(t, err)
+			require.NoError(t, createErr)
 			if tt.wantIDNotNil {
 				assert.NotEqual(t, uuid.Nil, result.ID)
 			}
@@ -175,9 +175,9 @@ func TestCardBrandRepository_List(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := repo.ListCardBrands(ctx, tt.filter)
+			result, listErr := repo.ListCardBrands(ctx, tt.filter)
 
-			require.NoError(t, err)
+			require.NoError(t, listErr)
 			assert.Len(t, result, tt.wantCount)
 
 			if tt.wantFirst != nil && len(result) > 0 {

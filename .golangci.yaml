@@ -109,7 +109,7 @@ linters:
     - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
     - testableexamples # checks if examples are testable (have an expected output)
     - testifylint # checks usage of github.com/stretchr/testify
-    - testpackage # makes you use a separate _test package
+    # - testpackage # disabled - requires separate _test package which breaks access to internal functions
     - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
     - unconvert # removes unnecessary type conversions
     - unparam # reports unused function parameters
@@ -311,6 +311,8 @@ linters:
         - os.WriteFile
         - prometheus.ExponentialBuckets.*
         - prometheus.LinearBuckets
+        - context.WithTimeout
+        - time.Duration
 
     nakedret:
       # Make an issue if func has more lines of code than this setting, and it has naked returns.
@@ -418,3 +420,5 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+          - usetesting
+          - testpackage

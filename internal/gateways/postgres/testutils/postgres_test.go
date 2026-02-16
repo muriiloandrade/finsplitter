@@ -36,7 +36,8 @@ func TestStartTestDB(t *testing.T) {
 	// Verify migrations ran successfully by checking for a known table.
 	// This confirms the migration suite executed without errors.
 	// Note: card_brand is the first table created in the migration sequence.
-	err = db.ConnPool.QueryRow(ctx, "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'card_brand'").Scan(&result)
+	err = db.ConnPool.QueryRow(ctx, "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'card_brand'").
+		Scan(&result)
 	require.NoError(t, err, "Failed to check for card_brand table")
 	assert.Equal(t, 1, result, "card_brand table should exist")
 

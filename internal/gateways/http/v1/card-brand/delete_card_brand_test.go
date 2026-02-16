@@ -2,7 +2,6 @@ package cardbrand_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -55,7 +54,7 @@ func TestDeleteCardBrandHandler(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				var statusErr huma.StatusError
-				require.True(t, errors.As(err, &statusErr))
+				require.ErrorAs(t, err, &statusErr)
 				assert.Equal(t, 404, statusErr.GetStatus())
 			},
 		},
@@ -68,7 +67,7 @@ func TestDeleteCardBrandHandler(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				var statusErr huma.StatusError
-				require.True(t, errors.As(err, &statusErr))
+				require.ErrorAs(t, err, &statusErr)
 				assert.Equal(t, 500, statusErr.GetStatus())
 			},
 		},

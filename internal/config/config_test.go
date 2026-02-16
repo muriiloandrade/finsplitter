@@ -7,10 +7,10 @@ import (
 
 func TestConfigDefaults(t *testing.T) {
 	// Set required environment variables
-	os.Setenv("PG_USER", "testuser")
-	os.Setenv("PG_PASS", "testpass")
-	os.Setenv("PG_HOST", "localhost")
-	os.Setenv("PG_DB", "testdb")
+	t.Setenv("PG_USER", "testuser")
+	t.Setenv("PG_PASS", "testpass")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_DB", "testdb")
 	defer os.Unsetenv("PG_USER")
 	defer os.Unsetenv("PG_PASS")
 	defer os.Unsetenv("PG_HOST")
@@ -74,13 +74,13 @@ func TestConfigDefaults(t *testing.T) {
 
 func TestConfigFromEnvironment(t *testing.T) {
 	// Set custom environment variables
-	os.Setenv("PG_USER", "customuser")
-	os.Setenv("PG_PASS", "custompass")
-	os.Setenv("PG_HOST", "customhost")
-	os.Setenv("PG_DB", "customdb")
-	os.Setenv("APP_PORT", "8080")
-	os.Setenv("APP_NAME", "custom-app")
-	os.Setenv("ENV_NAME", "production")
+	t.Setenv("PG_USER", "customuser")
+	t.Setenv("PG_PASS", "custompass")
+	t.Setenv("PG_HOST", "customhost")
+	t.Setenv("PG_DB", "customdb")
+	t.Setenv("APP_PORT", "8080")
+	t.Setenv("APP_NAME", "custom-app")
+	t.Setenv("ENV_NAME", "production")
 	defer os.Unsetenv("PG_USER")
 	defer os.Unsetenv("PG_PASS")
 	defer os.Unsetenv("PG_HOST")
@@ -111,13 +111,13 @@ func TestConfigFromEnvironment(t *testing.T) {
 }
 
 func TestOpenTelemetryConfig(t *testing.T) {
-	os.Setenv("PG_USER", "testuser")
-	os.Setenv("PG_PASS", "testpass")
-	os.Setenv("PG_HOST", "localhost")
-	os.Setenv("PG_DB", "testdb")
-	os.Setenv("OTEL_ENABLED", "true")
-	os.Setenv("OTEL_SERVICE_NAME", "my-service")
-	os.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel:4318")
+	t.Setenv("PG_USER", "testuser")
+	t.Setenv("PG_PASS", "testpass")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_DB", "testdb")
+	t.Setenv("OTEL_ENABLED", "true")
+	t.Setenv("OTEL_SERVICE_NAME", "my-service")
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel:4318")
 	defer os.Unsetenv("PG_USER")
 	defer os.Unsetenv("PG_PASS")
 	defer os.Unsetenv("PG_HOST")
@@ -144,10 +144,10 @@ func TestOpenTelemetryConfig(t *testing.T) {
 }
 
 func TestBuildInfo(t *testing.T) {
-	os.Setenv("PG_USER", "testuser")
-	os.Setenv("PG_PASS", "testpass")
-	os.Setenv("PG_HOST", "localhost")
-	os.Setenv("PG_DB", "testdb")
+	t.Setenv("PG_USER", "testuser")
+	t.Setenv("PG_PASS", "testpass")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_DB", "testdb")
 	defer os.Unsetenv("PG_USER")
 	defer os.Unsetenv("PG_PASS")
 	defer os.Unsetenv("PG_HOST")
