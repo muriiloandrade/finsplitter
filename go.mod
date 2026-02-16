@@ -6,6 +6,7 @@ require (
 	github.com/danielgtaylor/huma/v2 v2.35.0
 	github.com/dusted-go/logging v1.3.0
 	github.com/exaring/otelpgx v0.10.0
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
