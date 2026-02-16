@@ -155,7 +155,6 @@ For complete patterns and examples, see:
 - [`.opencode/context/project-intelligence/database-patterns.md`](.opencode/context/project-intelligence/database-patterns.md) - PostgreSQL
 - [`.opencode/context/project-intelligence/docker-patterns.md`](.opencode/context/project-intelligence/docker-patterns.md) - Docker
 - [`.opencode/context/project-intelligence/workflow.md`](.opencode/context/project-intelligence/workflow.md) - Dev workflow
-- [`.github/copilot-instructions.md`](.github/copilot-instructions.md) - Additional Copilot guidance
 
 ---
 
