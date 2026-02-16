@@ -14,6 +14,16 @@ comment:
 github_checks:
     annotations: false
 
+flags:
+    unit:
+        paths:
+            - "**/*.go"
+            - "!**/testutils/**"
+            - "!**/*mocks.gen.go"
+    testutils:
+        paths:
+            - "**/testutils/**"
+
 coverage:
     range: 50..80
     round: down
@@ -22,16 +32,12 @@ coverage:
         project:
             default:
                 informational: true
-                paths:
-                    - "!**/mocks.gen.go"
+                flags:
+                    - unit
         patch:
             default:
                 informational: true
-                paths:
-                    - "!**/mocks.gen.go"
 
 ignore:
     - "**/*mocks.gen.go"
-    - "**/testutils/"
-# When modifying this file, please validate using
-# curl -X POST --data-binary @codecov.yml https://codecov.io/validate
+    - "**/testutils/**"
