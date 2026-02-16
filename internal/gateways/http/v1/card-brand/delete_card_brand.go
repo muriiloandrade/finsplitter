@@ -23,10 +23,10 @@ type DeleteCardBrandResponse struct {
 }
 
 type DeleteCardBrandHandler struct {
-	UseCase usecases.DeleteCardBrandUC
+	UseCase usecases.DeleteCardBrandUseCase
 }
 
-func NewDeleteCardBrandHandler(uc usecases.DeleteCardBrandUC) DeleteCardBrandHandler {
+func NewDeleteCardBrandHandler(uc usecases.DeleteCardBrandUseCase) DeleteCardBrandHandler {
 	return DeleteCardBrandHandler{UseCase: uc}
 }
 

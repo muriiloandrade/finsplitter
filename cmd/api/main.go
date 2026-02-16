@@ -225,18 +225,18 @@ func newCardBrandAPI(pgTxManager *postgres.TxManager) cbHandler.API {
 	deleteCardBrandUC := cbUCs.NewDeleteCardBrandUC(cardBrandRepo, pgTxManager)
 
 	cardBrandAPI := cbHandler.API{
-		GetCardBrandHandler: cbHandler.NewGetCardBrandHandler(getCardBrandUC).GetCardBrand,
+		GetCardBrandHandler: cbHandler.NewGetCardBrandHandler(&getCardBrandUC).GetCardBrand,
 		ListCardBrandsHandler: cbHandler.NewListCardBrandsHandler(
-			listCardBrandUC,
+			&listCardBrandUC,
 		).ListCardBrands,
 		CreateCardBrandHandler: cbHandler.NewCreateCardBrandHandler(
-			createCardBrandUC,
+			&createCardBrandUC,
 		).CreateCardBrand,
 		UpdateCardBrandHandler: cbHandler.NewUpdateCardBrandHandler(
-			updateCardBrandUC,
+			&updateCardBrandUC,
 		).UpdateCardBrand,
 		DeleteCardBrandHandler: cbHandler.NewDeleteCardBrandHandler(
-			deleteCardBrandUC,
+			&deleteCardBrandUC,
 		).DeleteCardBrand,
 	}
 	return cardBrandAPI

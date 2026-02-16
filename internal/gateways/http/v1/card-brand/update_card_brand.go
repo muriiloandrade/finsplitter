@@ -26,10 +26,10 @@ type UpdateCardBrandResponse struct {
 }
 
 type UpdateCardBrandHandler struct {
-	UseCase usecases.UpdateCardBrandUC
+	UseCase usecases.UpdateCardBrandUseCase
 }
 
-func NewUpdateCardBrandHandler(uc usecases.UpdateCardBrandUC) UpdateCardBrandHandler {
+func NewUpdateCardBrandHandler(uc usecases.UpdateCardBrandUseCase) UpdateCardBrandHandler {
 	return UpdateCardBrandHandler{UseCase: uc}
 }
 
