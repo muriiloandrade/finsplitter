@@ -123,7 +123,12 @@ test-watch:
 	@echo "==> Running unit tests in watch mode - IMPLEMENT ME"
 
 test-cov:
-	@echo "==> Running test coverage report - IMPLEMENT ME"
+	@echo "==> Running test coverage report"
+	@go test -coverprofile=coverage.out $$(go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
+	@go tool cover -func=coverage.out | grep -v "^total:" | tail -n +1
+	@echo ""
+	@echo "==> Total Coverage:"
+	@go tool cover -func=coverage.out | grep "^total:"
 
 tools: install-lefthook
 	@echo "==> Installing necessary development tools"
@@ -211,6 +216,6 @@ help:
 	@echo "  code-check                 Run linters and formatters."
 	@echo "  test                       Run unit tests."
 	@echo "  test-watch                 Run unit tests in watch mode (not implemented)."
-	@echo "  test-cov                   Run test coverage report (not implemented)."
+	@echo "  test-cov                   Run test coverage report."
 	@echo "  tools                      Install necessary development tools."
 	@echo "  docker-scout               Scan the production image for vulnerabilities."
