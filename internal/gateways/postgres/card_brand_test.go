@@ -23,6 +23,10 @@ func setupRepo(t *testing.T) (context.Context, *postgres.CardBrandRepository) {
 func TestCardBrandRepository_Create(t *testing.T) {
 	ctx, repo := setupRepo(t)
 
+	// Setup: create first brand for duplicate test
+	_, err := repo.CreateCardBrand(ctx, "Mastercard")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name         string
 		brandName    string
@@ -44,10 +48,6 @@ func TestCardBrandRepository_Create(t *testing.T) {
 			wantIDNotNil: false,
 		},
 	}
-
-	// Setup: create first brand for duplicate test
-	_, err := repo.CreateCardBrand(ctx, "Mastercard")
-	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -283,6 +283,9 @@ func TestCardBrandRepository_Delete(t *testing.T) {
 			wantErr: errs.ErrCardBrandNotFound,
 		},
 	}
+
+	// Note: ForeignKeyViolation test requires a dependent table with data,
+	// which is not set up in this test. The code path exists at line 232.
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
