@@ -12,7 +12,7 @@
 ## Primary Stack
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
-| Language | Go | 1.25 generics |
+| Language | Go | 1.26 generics |
 | Framework | Huma v2 | 2.35 | REST | Modern Go with API + OpenAPI auto-generation |
 | Database | PostgreSQL | latest | Primary data store |
 | DB Driver | pgx | 5.8 | High-performance PostgreSQL driver |

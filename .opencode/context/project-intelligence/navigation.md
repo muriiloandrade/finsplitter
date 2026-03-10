@@ -11,7 +11,7 @@
 | workflow.md | Development workflow, code quality | high |
 
 ## Quick Overview
-- **Language**: Go 1.25
+- **Language**: Go 1.26
 - **Framework**: Huma v2 (REST API + OpenAPI)
 - **Database**: PostgreSQL (pgx)
 - **Architecture**: Clean Architecture

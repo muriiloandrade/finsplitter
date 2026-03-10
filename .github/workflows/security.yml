@@ -6,7 +6,7 @@ on:
             go-versions:
                 description: "Go versions to scan with (JSON array)"
                 required: false
-                default: '["1.25.4"]'
+                default: '["1.26.1"]'
                 type: string
             gosec-args:
                 description: "Arguments for Gosec"
