@@ -7,7 +7,7 @@
 Finsplitter is a Go backend API using Clean Architecture with Huma v2 and PostgreSQL.
 
 **Quick Facts:**
-- **Language**: Go 1.25
+- **Language**: Go 1.26
 - **Framework**: Huma v2 (REST + OpenAPI)
 - **Database**: PostgreSQL (pgx)
 - **Architecture**: Clean Architecture (Ports & Adapters)

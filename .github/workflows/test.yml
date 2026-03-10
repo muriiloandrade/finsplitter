@@ -6,7 +6,7 @@ on:
             go-versions:
                 description: "Go versions to test (JSON array)"
                 required: false
-                default: '["1.25.4"]'
+                default: '["1.26.1"]'
                 type: string
             upload-coverage:
                 description: "Upload coverage to Codecov"
