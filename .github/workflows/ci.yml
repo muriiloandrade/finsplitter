@@ -14,9 +14,6 @@ permissions:
     pull-requests: read
     packages: write
 
-env:
-    GO_VERSION: '1.26.x'
-
 jobs:
     checks:
         name: Prerequisites Check
