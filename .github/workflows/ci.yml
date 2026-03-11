@@ -14,9 +14,6 @@ permissions:
     pull-requests: read
     packages: write
 
-env:
-    GO_VERSIONS: ["1.26.x"]
-
 jobs:
     checks:
         name: Prerequisites Check
@@ -24,15 +21,15 @@ jobs:
         permissions:
             contents: read
         with:
-            go-versions: env.GO_VERSIONS
+            go-versions: '["1.26.x"]'
 
     quality:
         name: Code Quality
         needs: [checks]
         uses: ./.github/workflows/quality.yml
         with:
-            go-versions: env.GO_VERSIONS
-            golangci-lint-version: "v2.6.1"
+            go-versions: '["1.26.x"]'
+            golangci-lint-version: "v2.11.3"
             timeout: "10m"
 
     test:
@@ -40,7 +37,7 @@ jobs:
         needs: [checks]
         uses: ./.github/workflows/test.yml
         with:
-            go-versions: env.GO_VERSIONS
+            go-versions: '["1.26.x"]'
             upload-coverage: true
 
     security:
@@ -48,7 +45,7 @@ jobs:
         needs: [checks]
         uses: ./.github/workflows/security.yml
         with:
-            go-versions: env.GO_VERSIONS
+            go-versions: '["1.26.x"]'
         permissions:
             security-events: write
             packages: read

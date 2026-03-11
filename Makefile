@@ -8,31 +8,32 @@ DATABASE_URL ?= $(PG_URL)
 
 UID=$(shell id -u)
 GID=$(shell id -g)
+
 # renovate: datasource=docker depName=migrate/migrate
-MIGRATE_VERSION := v4.19.0@sha256:d5c978181e3bfa55cc50e3bd8d7da3d87418a87693453250a8804b81ee6494db
+MIGRATE_VERSION := v4.19.1@sha256:cc4ad8e19d66791e3689405d9a028ce6e9614f32032db14acda1469f7201d6e4
 MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
- 	--add-host host.docker.internal:host-gateway \
- 	-v $(MIGRATIONS_PATH):/migrations \
- 	-w /migrations \
- 	--network finsplitter-net \
- 	migrate/migrate:$(MIGRATE_VERSION) \
- 	-path /migrations/ \
- 	-database "$(DATABASE_URL)"
+	--add-host host.docker.internal:host-gateway \
+	-v $(MIGRATIONS_PATH):/migrations \
+	-w /migrations \
+	--network finsplitter-net \
+	migrate/migrate:$(MIGRATE_VERSION) \
+	-path /migrations/ \
+	-database "$(DATABASE_URL)"
 # renovate: datasource=docker depName=sqlc/sqlc
 SQLC_VERSION := 1.30.0@sha256:b8d1092c720438e093a231e75eba5d55b7696122f390292acabd5b6d3e986a12
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
- 	--add-host host.docker.internal:host-gateway \
- 	-v .:/src \
- 	-w /src \
- 	sqlc/sqlc:$(SQLC_VERSION)
+	--add-host host.docker.internal:host-gateway \
+	-v .:/src \
+	-w /src \
+	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
-MOCKERY_VERSION := v3.5.5@sha256:b5bb5f45647d3d7646496617113bc4a2bec4349df20d23b33afdbc73fa514ee1
+MOCKERY_VERSION := v3.7.0@sha256:c2f1f3320809009784094d8de0003b5af48a380fcfb2716dc0def3ebc4d12a35
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
 	vektra/mockery:$(MOCKERY_VERSION)
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION := v2.6.1-alpine@sha256:a7da5151e0bd61bd7f99e1ebd8e5e144b535b73b2762c498443ff4f6a4a538c4
+GOLANGCI_LINT_VERSION := v2.11.3-alpine@sha256:b1c3de5862ad0a95b4e45a993b0f00415835d687e4f12c845c7493b86c13414e
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
