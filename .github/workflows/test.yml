@@ -40,14 +40,14 @@ jobs:
 
             - name: Run tests with coverage
               run: |
-                  go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+                  make test-cov
 
             - name: Upload coverage to Codecov
               if: ${{ inputs.upload-coverage }}
               uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  files: ./coverage.out
+                  files: ./coverage_filtered.out
                   flags: unit
                   name: codecov-finsplitter-${{ matrix.go-version }}
                   fail_ci_if_error: true
