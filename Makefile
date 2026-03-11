@@ -8,31 +8,32 @@ DATABASE_URL ?= $(PG_URL)
 
 UID=$(shell id -u)
 GID=$(shell id -g)
+
 # renovate: datasource=docker depName=migrate/migrate
-MIGRATE_VERSION := v4.19.1@sha256:0925c4b49497fa212e18c35df5f49c07ad12337a650b5e992d34807d02ffe6cd
+MIGRATE_VERSION := v4.19.1@sha256:cc4ad8e19d66791e3689405d9a028ce6e9614f32032db14acda1469f7201d6e4
 MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
- 	--add-host host.docker.internal:host-gateway \
- 	-v $(MIGRATIONS_PATH):/migrations \
- 	-w /migrations \
- 	--network finsplitter-net \
- 	migrate/migrate:$(MIGRATE_VERSION) \
- 	-path /migrations/ \
- 	-database "$(DATABASE_URL)"
+	--add-host host.docker.internal:host-gateway \
+	-v $(MIGRATIONS_PATH):/migrations \
+	-w /migrations \
+	--network finsplitter-net \
+	migrate/migrate:$(MIGRATE_VERSION) \
+	-path /migrations/ \
+	-database "$(DATABASE_URL)"
 # renovate: datasource=docker depName=sqlc/sqlc
-SQLC_VERSION := 1.30.0@sha256:c92116565512d52e8906b53042d71b6ac78afb5d8993a33551a3ce5c983178af
+SQLC_VERSION := 1.30.0@sha256:b8d1092c720438e093a231e75eba5d55b7696122f390292acabd5b6d3e986a12
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
- 	--add-host host.docker.internal:host-gateway \
- 	-v .:/src \
- 	-w /src \
- 	sqlc/sqlc:$(SQLC_VERSION)
+	--add-host host.docker.internal:host-gateway \
+	-v .:/src \
+	-w /src \
+	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
-MOCKERY_VERSION := v3.7.0@sha256:d3fcb4501e4c9c96f0dd7800d40f2b91042000dad08817103de68d4fc3b8405a
+MOCKERY_VERSION := v3.7.0@sha256:c2f1f3320809009784094d8de0003b5af48a380fcfb2716dc0def3ebc4d12a35
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
 	vektra/mockery:$(MOCKERY_VERSION)
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION := v2.11.3-alpine@sha256:22dc2fb330d60d5269ac1f403fedea81d13dfe182fd5fceb9c191e7fb7a6072e
+GOLANGCI_LINT_VERSION := v2.11.3-alpine@sha256:b1c3de5862ad0a95b4e45a993b0f00415835d687e4f12c845c7493b86c13414e
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
