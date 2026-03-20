@@ -30,8 +30,28 @@ services:
                   action: rebuild
                 - path: go.sum
                   action: rebuild
+        depends_on:
+            postgresql:
+                condition: service_healthy
         networks:
             - finsplitter
+    logto:
+        container_name: logto
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        image: svhd/logto:${TAG-latest}
+        entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
+        ports:
+            - 3001:3001
+            - 3002:3002
+        environment:
+            - TRUST_PROXY_HEADER=1
+            - DB_URL=${LOGTO_PG_URL}
+            # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
+            # Or, you can leverage it for local testing.
+            - ENDPOINT
+            - ADMIN_ENDPOINT
 
 networks:
     finsplitter:
