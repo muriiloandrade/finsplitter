@@ -69,11 +69,9 @@ jobs:
     pr-labeler:
         name: Label Pull Request
         if: github.event_name == 'pull_request'
-        uses: ./.github/workflows/release-drafter.yml
-        with:
-            labeler-only: true
+        uses: ./.github/workflows/pr-labeler.yml
         permissions:
-            contents: write
+            contents: read
             pull-requests: write
 
     release-drafter:
