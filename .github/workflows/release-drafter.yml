@@ -4,7 +4,7 @@ on:
     workflow_call:
         inputs:
             labeler-only:
-                description: "Run in labeler-only mode (disable release notes generation)"
+                description: "Run in labeler-only mode (autolabel PRs without drafting release)"
                 required: false
                 default: false
                 type: boolean
@@ -14,12 +14,22 @@ permissions:
     pull-requests: write
 
 jobs:
+    auto_label_pr:
+        name: Auto Label PR
+        if: ${{ inputs.labeler-only }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: release-drafter/release-drafter/autolabeler@139054aeaa9adc52ab36ddf67437541f039b88e2 # v7.1.1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     update_release_draft:
+        name: Update Release Draft
+        if: ${{ !inputs.labeler-only }}
         runs-on: ubuntu-latest
         steps:
             - uses: release-drafter/release-drafter@139054aeaa9adc52ab36ddf67437541f039b88e2 # v7.1.1
               with:
                   config-name: release-drafter.yml
-                  disable-releaser: ${{ inputs.labeler-only }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
