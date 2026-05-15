@@ -3,7 +3,7 @@ services:
     postgresql:
         profiles:
             - infra
-        image: postgres:18.3-trixie@sha256:a9abf4275f9e99bff8e6aed712b3b7dfec9cac1341bba01c1ffdfce9ff9fc34a
+        image: postgres:18.4-trixie@sha256:775a0820dd34e907ec63277e388d145056d427548e461d7953a070edb5de3a3a
         container_name: finsplitter-db
         restart: unless-stopped
         healthcheck:
