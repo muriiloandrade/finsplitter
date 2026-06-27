@@ -75,7 +75,7 @@ type MockCreateCardBrandRepository_CreateCardBrand_Call struct {
 // CreateCardBrand is a helper method to define mock.On call
 //   - ctx context.Context
 //   - name string
-func (_e *MockCreateCardBrandRepository_Expecter) CreateCardBrand(ctx interface{}, name interface{}) *MockCreateCardBrandRepository_CreateCardBrand_Call {
+func (_e *MockCreateCardBrandRepository_Expecter) CreateCardBrand(ctx any, name any) *MockCreateCardBrandRepository_CreateCardBrand_Call {
 	return &MockCreateCardBrandRepository_CreateCardBrand_Call{Call: _e.mock.On("CreateCardBrand", ctx, name)}
 }
 
@@ -170,7 +170,7 @@ type MockGetCardBrandByIDRepository_GetCardBrandByID_Call struct {
 // GetCardBrandByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockGetCardBrandByIDRepository_Expecter) GetCardBrandByID(ctx interface{}, id interface{}) *MockGetCardBrandByIDRepository_GetCardBrandByID_Call {
+func (_e *MockGetCardBrandByIDRepository_Expecter) GetCardBrandByID(ctx any, id any) *MockGetCardBrandByIDRepository_GetCardBrandByID_Call {
 	return &MockGetCardBrandByIDRepository_GetCardBrandByID_Call{Call: _e.mock.On("GetCardBrandByID", ctx, id)}
 }
 
@@ -265,7 +265,7 @@ type MockListCardBrandRepository_ListCardBrands_Call struct {
 // ListCardBrands is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter ListCardBrandFilterOptions
-func (_e *MockListCardBrandRepository_Expecter) ListCardBrands(ctx interface{}, filter interface{}) *MockListCardBrandRepository_ListCardBrands_Call {
+func (_e *MockListCardBrandRepository_Expecter) ListCardBrands(ctx any, filter any) *MockListCardBrandRepository_ListCardBrands_Call {
 	return &MockListCardBrandRepository_ListCardBrands_Call{Call: _e.mock.On("ListCardBrands", ctx, filter)}
 }
 
@@ -360,7 +360,7 @@ type MockUpdateCardBrandRepository_UpdateCardBrand_Call struct {
 // UpdateCardBrand is a helper method to define mock.On call
 //   - ctx context.Context
 //   - opts UpdateCardBrandOptions
-func (_e *MockUpdateCardBrandRepository_Expecter) UpdateCardBrand(ctx interface{}, opts interface{}) *MockUpdateCardBrandRepository_UpdateCardBrand_Call {
+func (_e *MockUpdateCardBrandRepository_Expecter) UpdateCardBrand(ctx any, opts any) *MockUpdateCardBrandRepository_UpdateCardBrand_Call {
 	return &MockUpdateCardBrandRepository_UpdateCardBrand_Call{Call: _e.mock.On("UpdateCardBrand", ctx, opts)}
 }
 
@@ -455,7 +455,7 @@ type MockDeleteCardBrandRepository_DeleteCardBrand_Call struct {
 // DeleteCardBrand is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *MockDeleteCardBrandRepository_Expecter) DeleteCardBrand(ctx interface{}, id interface{}) *MockDeleteCardBrandRepository_DeleteCardBrand_Call {
+func (_e *MockDeleteCardBrandRepository_Expecter) DeleteCardBrand(ctx any, id any) *MockDeleteCardBrandRepository_DeleteCardBrand_Call {
 	return &MockDeleteCardBrandRepository_DeleteCardBrand_Call{Call: _e.mock.On("DeleteCardBrand", ctx, id)}
 }
 
