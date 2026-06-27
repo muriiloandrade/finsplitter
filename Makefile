@@ -27,7 +27,7 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
 	-w /src \
 	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
-MOCKERY_VERSION := v3.7.0@sha256:c2f1f3320809009784094d8de0003b5af48a380fcfb2716dc0def3ebc4d12a35
+MOCKERY_VERSION := v3.7.1@sha256:bb74169bd86ecd32fa77b8b4646f266d907ac6cb9a21d5cb9de0f7b7ee91c20f
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
