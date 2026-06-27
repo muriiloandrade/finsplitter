@@ -36,6 +36,8 @@ services:
         networks:
             - finsplitter
     logto:
+        profiles:
+            - infra
         container_name: logto
         depends_on:
             postgresql:
@@ -43,15 +45,17 @@ services:
         image: svhd/logto:${TAG-latest}
         entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
         ports:
-            - 3001:3001
-            - 3002:3002
+            - "${LOGTO_PORT:-3001}:3001"
+            - "${LOGTO_PORT_MGMT:-3002}:3002"
         environment:
             - TRUST_PROXY_HEADER=1
-            - DB_URL=${LOGTO_PG_URL}
-            # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
-            # Or, you can leverage it for local testing.
-            - ENDPOINT
-            - ADMIN_ENDPOINT
+            - DB_URL=${LOGTO_DB_URL}
+            - ENDPOINT=${LOGTO_ENDPOINT}
+            - ADMIN_ENDPOINT=${LOGTO_ADMIN_ENDPOINT}
+        env_file:
+            - .env
+        networks:
+            - finsplitter
 
 networks:
     finsplitter:
