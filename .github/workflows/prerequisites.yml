@@ -6,7 +6,7 @@ on:
             go-versions:
                 description: "Go versions to check (JSON array)"
                 required: false
-                default: '["1.26.1"]'
+                default: '["1.26"]'
                 type: string
 
 jobs:
