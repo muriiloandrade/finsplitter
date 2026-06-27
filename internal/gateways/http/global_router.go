@@ -39,9 +39,9 @@ func NewRouter(_ *slog.Logger) *chi.Mux {
 				return !slices.Contains(blockList, r.URL.Path)
 			}),
 		),
-		otelchimetric.NewRequestDurationMillis(baseCfg),
-		otelchimetric.NewRequestInFlight(baseCfg),
-		otelchimetric.NewResponseSizeBytes(baseCfg),
+		otelchimetric.NewServerRequestDuration(baseCfg),
+		otelchimetric.NewServerActiveRequests(baseCfg),
+		otelchimetric.NewServerResponseBodySize(baseCfg),
 		middleware.Recoverer,
 	)
 

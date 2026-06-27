@@ -62,7 +62,7 @@ type MockTransactioner_WithTx_Call struct {
 // WithTx is a helper method to define mock.On call
 //   - context1 context.Context
 //   - transactionFunc TransactionFunc
-func (_e *MockTransactioner_Expecter) WithTx(context1 interface{}, transactionFunc interface{}) *MockTransactioner_WithTx_Call {
+func (_e *MockTransactioner_Expecter) WithTx(context1 any, transactionFunc any) *MockTransactioner_WithTx_Call {
 	return &MockTransactioner_WithTx_Call{Call: _e.mock.On("WithTx", context1, transactionFunc)}
 }
 

@@ -20,6 +20,7 @@ func TestConfigDefaults(t *testing.T) {
 
 	if cfg == nil {
 		t.Fatal("expected config to load, got nil")
+		return
 	}
 
 	// Application defaults
@@ -93,6 +94,7 @@ func TestConfigFromEnvironment(t *testing.T) {
 
 	if cfg == nil {
 		t.Fatal("expected config to load, got nil")
+		return
 	}
 
 	// Verify environment overrides
@@ -130,6 +132,7 @@ func TestOpenTelemetryConfig(t *testing.T) {
 
 	if cfg == nil {
 		t.Fatal("expected config to load, got nil")
+		return
 	}
 
 	if !cfg.OTel.Enabled {
@@ -157,6 +160,7 @@ func TestBuildInfo(t *testing.T) {
 
 	if cfg == nil {
 		t.Fatal("expected config to load, got nil")
+		return
 	}
 
 	if cfg.App.BuildTag != "v1.0.0" {
