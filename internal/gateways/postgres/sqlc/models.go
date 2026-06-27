@@ -95,7 +95,8 @@ type User struct {
 	Email            string             `db:"email" json:"email"`
 	PhoneNumber      *string            `db:"phone_number" json:"phoneNumber"`
 	Username         string             `db:"username" json:"username"`
-	PasswordHash     string             `db:"password_hash" json:"passwordHash"`
+	PasswordHash     *string            `db:"password_hash" json:"passwordHash"`
 	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
 	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
+	LogtoUserID      *string            `db:"logto_user_id" json:"logtoUserId"`
 }
