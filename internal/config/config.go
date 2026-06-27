@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	App  Application
-	Env  Environment
-	DB   Database
-	OTel OpenTelemetry
+	App   Application
+	Env   Environment
+	DB    Database
+	OTel  OpenTelemetry
+	Logto Logto
 }
 
 type Application struct {
@@ -47,6 +48,15 @@ type PoolConfig struct {
 	MaxConnIdleTime   time.Duration `conf:"env:PG_MAX_CONN_IDLE_TIME,default:10m"`
 	HealthCheckPeriod time.Duration `conf:"env:PG_HEALTH_CHECK_PERIOD,default:1m"`
 	ConnectTimeout    time.Duration `conf:"env:PG_CONNECT_TIMEOUT,default:15s"`
+}
+
+type Logto struct {
+	OIDCEndpoint      string `conf:"env:LOGTO_OIDC_ENDPOINT,default:http://localhost:3001/oidc"`
+	ManagementBaseURL string `conf:"env:LOGTO_ENDPOINT,default:http://localhost:3001"`
+	MgmtClientID      string `conf:"env:LOGTO_MGMT_CLIENT_ID"`
+	MgmtClientSecret  string `conf:"env:LOGTO_MGMT_CLIENT_SECRET"`
+	AppClientID       string `conf:"env:LOGTO_APP_CLIENT_ID"`
+	AppClientSecret   string `conf:"env:LOGTO_APP_CLIENT_SECRET"`
 }
 
 type OpenTelemetry struct {
