@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/navigation | Priority: high | Version: 1.2 | Updated: 2026-02-16 -->
+<!-- Context: project-intelligence/navigation | Priority: high | Version: 1.3 | Updated: 2026-06-27 -->
 
 # Project Intelligence
 
@@ -11,10 +11,12 @@
 | workflow.md | Development workflow, code quality | high |
 
 ## Quick Overview
-- **Language**: Go 1.26
+- **Language**: Go 1.26 (GOEXPERIMENT=jsonv2 required)
 - **Framework**: Huma v2 (REST API + OpenAPI)
 - **Database**: PostgreSQL (pgx)
-- **Architecture**: Clean Architecture
+- **Auth**: Logto + jwx/jwkfetch (JWT, JWKS caching)
+- **Cache**: Valkey 9.1 + go-redis/v9
+- **Architecture**: Clean Architecture (Ports & Adapters)
 - **Observability**: OpenTelemetry
 
 ## Update Frequency
