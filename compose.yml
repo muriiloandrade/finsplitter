@@ -16,6 +16,8 @@ services:
             target: setup
         env_file:
             - .env
+        environment:
+            - GOEXPERIMENT=jsonv2
         extra_hosts:
             - "host.docker.internal:host-gateway"
         ports:

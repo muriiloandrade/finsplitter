@@ -56,7 +56,9 @@ type Logto struct {
 	MgmtClientID      string `conf:"env:LOGTO_MGMT_CLIENT_ID"`
 	MgmtClientSecret  string `conf:"env:LOGTO_MGMT_CLIENT_SECRET"`
 	AppClientID       string `conf:"env:LOGTO_APP_CLIENT_ID"`
-	AppClientSecret   string `conf:"env:LOGTO_APP_CLIENT_SECRET"`
+	// AppClientSecret is reserved for future use (e.g. token refresh via
+	// confidential client grant). It is not currently consumed by any code.
+	AppClientSecret string `conf:"env:LOGTO_APP_CLIENT_SECRET"`
 }
 
 type OpenTelemetry struct {

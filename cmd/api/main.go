@@ -10,11 +10,15 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	cbUCs "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/config"
 	_http "github.com/muriiloandrade/finsplitter/internal/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1"
+	authHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 	cbHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	profileHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/profile"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
@@ -90,12 +94,17 @@ func main() {
 			ConnPool: dbPool,
 		}
 
+		userRepo := postgres.NewUserRepository(pgTxManager)
+		logtoM2M := newLogtoM2MClient(logger, cfg)
 		router := _http.NewRouter(logger)
 
 		apiV1 := v1.API{
 			LivenessHandler:  v1.LivenessHandler(),
 			ReadinessHandler: v1.ReadinessHandler(),
 			CardBrandAPI:     newCardBrandAPI(pgTxManager),
+			AuthAPI:          newAuthAPI(userRepo, logtoM2M),
+			ProfileAPI:       newProfileAPI(userRepo),
+			AuthMiddleware:   newAuthMiddleware(logger, cfg, userRepo),
 			Logger:           logger,
 		}
 
@@ -212,6 +221,35 @@ func initializeOpenTelemetry(
 	}
 
 	return nil, nil, nil
+}
+
+func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
+	return logto.NewClient(logto.Config{
+		OIDCEndpoint:      cfg.Logto.OIDCEndpoint,
+		ManagementBaseURL: cfg.Logto.ManagementBaseURL,
+		ClientID:          cfg.Logto.MgmtClientID,
+		ClientSecret:      cfg.Logto.MgmtClientSecret,
+	}, logto.WithLogger(logger))
+}
+
+// newAuthMiddleware builds the JWT validation middleware.
+func newAuthMiddleware(logger *slog.Logger, cfg *config.Config, userRepo ports.UserRepository) *authHandler.Middleware {
+	return authHandler.NewMiddleware(
+		cfg.Logto.OIDCEndpoint,
+		cfg.Logto.AppClientID,
+		userRepo,
+		logger,
+	)
+}
+
+// newAuthAPI creates the auth handler API (register, me).
+func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandler.API {
+	return authHandler.NewAPI(userRepo, logtoM2M)
+}
+
+// newProfileAPI creates the profile handler API (setup).
+func newProfileAPI(userRepo ports.UserRepository) profileHandler.API {
+	return profileHandler.NewAPI(userRepo)
 }
 
 func newCardBrandAPI(pgTxManager *postgres.TxManager) cbHandler.API {

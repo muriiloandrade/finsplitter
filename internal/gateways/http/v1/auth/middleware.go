@@ -2,37 +2,59 @@ package auth
 
 import (
 	"context"
-	"crypto/rsa"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
-	"math/big"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/jwx-go/jwkfetch/v4"
+	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v4/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwt"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	slogctx "github.com/veqryn/slog-context"
 )
 
-// contextKey is a custom type for context keys to avoid collisions.
-type contextKey string
-
 const (
-	userClaimsKey    contextKey = "user_claims"
-	jwksFetchTimeout            = 10 * time.Second
+	jwksRefreshInterval = 15 * time.Minute
+	jwksFetchTimeout    = 10 * time.Second
+)
+
+// enableJWKSRefreshOnMiss controls whether the middleware re-fetches the JWKS
+// when no matching key is found. This handles Logto key rotation without a
+// server restart.
+const enableJWKSRefreshOnMiss = true
+
+//nolint:gochecknoglobals // Path prefix/suffix lists — fixed at init, not mutable state.
+var (
+	// skipPrefixes are path prefixes that do NOT require authentication.
+	// Trailing slashes indicate a directory, so any sub-path is allowed.
+	skipPrefixes = []string{
+		"/health/",
+		"/docs",
+		"/openapi",
+	}
+
+	// skipExact are exact paths that do NOT require authentication.
+	skipExact = []string{
+		"/auth/register",
+	}
+
+	// optionalExact are exact paths that do NOT require authentication
+	// but will still populate claims from a valid token if one is present.
+	optionalExact = []string{
+		"/auth/me",
+	}
 )
 
 // UserClaims holds the JWT claims extracted from the Logto token.
 type UserClaims struct {
-	Sub      string `json:"sub"`                // Logto user ID
-	Username string `json:"username,omitempty"` // May be empty for new users
-	Email    string `json:"email,omitempty"`    // User email
+	Sub      string `json:"sub"`
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email,omitempty"`
 }
 
 // GetUserClaims retrieves UserClaims from the context. Returns nil if not present.
@@ -44,93 +66,246 @@ func GetUserClaims(ctx context.Context) *UserClaims {
 	return claims
 }
 
-// LogtoJWKS holds the JSON Web Key Set from Logto.
-type LogtoJWKS struct {
-	Keys []JWK `json:"keys"`
-}
+type contextKey string
 
-// JWK is a JSON Web Key.
-type JWK struct {
-	Kid string `json:"kid"`
-	Kty string `json:"kty"`
-	Alg string `json:"alg"`
-	Use string `json:"use"`
-	N   string `json:"n"`
-	E   string `json:"e"`
-}
+const userClaimsKey contextKey = "user_claims"
 
-// Middleware validates JWTs issued by Logto.
-// It extracts the user claims and attaches them to the request context.
+// Middleware validates JWTs issued by Logto using the jwx library.
+// JWKS is fetched and cached via jwkfetch.Cache, which auto-refreshes
+// in the background to handle key rotation.
 type Middleware struct {
 	oidcEndpoint string
 	appClientID  string
 	userRepo     ports.UserRepository
 	logger       *slog.Logger
 
-	jwksMu sync.RWMutex
-	jwks   *LogtoJWKS
+	jwksURL  string
+	issuer   string
+	jwkCache *jwkfetch.Cache
 }
 
-// NewMiddleware creates a new auth middleware.
+// NewMiddleware creates a new auth middleware. It initialises a background-
+// refreshed JWKS cache using the Logto OIDC endpoint.
 func NewMiddleware(oidcEndpoint, appClientID string, userRepo ports.UserRepository, logger *slog.Logger) *Middleware {
+	base := strings.TrimRight(oidcEndpoint, "/")
+	jwksURL := base + "/jwks"
+	issuer := base
+
+	// Use background context for the cache lifecycle so the background
+	// refresh goroutine lives for the entire app lifetime.
+	cache, err := jwkfetch.NewCache(context.Background(), httprc.NewClient())
+	if err != nil {
+		// Should never happen with the default client.
+		logger.Warn("Failed to create JWKS cache, falling back to one-shot fetch",
+			slog.Any("error", err),
+		)
+		return &Middleware{
+			oidcEndpoint: oidcEndpoint,
+			appClientID:  appClientID,
+			userRepo:     userRepo,
+			logger:       logger,
+			jwksURL:      jwksURL,
+			issuer:       issuer,
+		}
+	}
+
+	// Use a separate short-lived context for the initial registration so
+	// the background goroutine is not cancelled if Logto isn't ready yet.
+	regCtx, regCancel := context.WithTimeout(context.Background(), jwksFetchTimeout)
+	defer regCancel()
+
+	if regErr := cache.Register(regCtx, jwksURL,
+		jwkfetch.WithMinInterval(jwksRefreshInterval),
+	); regErr != nil {
+		logger.Warn("Failed to register JWKS URL in cache, will retry on first request",
+			slog.Any("error", regErr),
+		)
+		// The cache background goroutine will keep trying to refresh.
+		// The first request that comes in will trigger a Lookup that may
+		// also fail; on cache miss we fall back to a one-shot fetch.
+	}
+
 	return &Middleware{
 		oidcEndpoint: oidcEndpoint,
 		appClientID:  appClientID,
 		userRepo:     userRepo,
 		logger:       logger,
+		jwksURL:      jwksURL,
+		issuer:       issuer,
+		jwkCache:     cache,
 	}
 }
 
-// Protected returns a middleware that requires a valid JWT.
+// Protected returns a chi middleware that enforces JWT authentication.
+// Known public paths are skipped; optional-auth paths populate claims when
+// a valid token is present but never reject unauthenticated requests.
 func (m *Middleware) Protected() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			logger := m.logger.With(slog.String("middleware", "auth.protected"))
-			ctx := slogctx.NewCtx(r.Context(), logger)
+			switch {
+			case isPublicPath(r.URL.Path):
+				next.ServeHTTP(w, r)
 
-			token := extractBearerToken(r)
-			if token == "" {
-				writeError(w, http.StatusUnauthorized, "missing authorization header")
-				return
-			}
+			case isOptionalPath(r.URL.Path):
+				if modified := m.tryPopulateClaims(r); modified != nil {
+					r = modified
+				}
+				next.ServeHTTP(w, r)
 
-			claims, err := m.validateToken(ctx, token)
-			if err != nil {
-				logger.WarnContext(ctx, "Invalid token", slog.Any("error", err))
-				writeError(w, http.StatusUnauthorized, "invalid or expired token")
-				return
+			default:
+				m.requireAuth(w, r, next)
 			}
-
-			// Check if user has completed profile setup (has a local user record).
-			exists, err := m.userRepo.ExistsByLogtoUserID(ctx, claims.Sub)
-			if err != nil {
-				logger.ErrorContext(ctx,
-					"Failed to check user existence",
-					slog.Any("error", err),
-				)
-				writeError(w, http.StatusInternalServerError, "internal error")
-				return
-			}
-			if !exists {
-				writeError(w, http.StatusForbidden, errs.ErrNeedsSetup.Error())
-				return
-			}
-
-			// Attach claims to context.
-			ctx = context.WithValue(ctx, userClaimsKey, claims)
-			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-// Optional returns a middleware that extracts claims if a token is present,
-// but allows unauthenticated requests through.
+// tryPopulateClaims attaches claims to the request context when a valid
+// bearer token is present. Never rejects the request.
+func (m *Middleware) tryPopulateClaims(r *http.Request) *http.Request {
+	logger := m.logger.With(slog.String("middleware", "auth.optional"))
+	ctx := slogctx.NewCtx(r.Context(), logger)
+
+	token := extractBearerToken(r)
+	if token == "" {
+		return nil
+	}
+	claims, err := m.parseAndValidate(ctx, token)
+	if err != nil {
+		logger.DebugContext(ctx, "Optional auth: invalid token",
+			slog.Any("error", err),
+		)
+		return nil
+	}
+	ctx = context.WithValue(ctx, userClaimsKey, claims)
+	return r.WithContext(ctx)
+}
+
+// requireAuth enforces JWT authentication. On any failure it writes an error
+// response and does not call next.
+func (m *Middleware) requireAuth(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	logger := m.logger.With(slog.String("middleware", "auth.require"))
+	ctx := slogctx.NewCtx(r.Context(), logger)
+
+	token := extractBearerToken(r)
+	if token == "" {
+		writeError(w, http.StatusUnauthorized, "missing authorization header")
+		return
+	}
+
+	claims, err := m.parseAndValidate(ctx, token)
+	if err != nil {
+		logger.WarnContext(ctx, "Invalid token", slog.Any("error", err))
+		writeError(w, http.StatusUnauthorized, "invalid or expired token")
+		return
+	}
+
+	exists, existsErr := m.userRepo.ExistsByLogtoUserID(ctx, claims.Sub)
+	if existsErr != nil {
+		logger.ErrorContext(ctx,
+			"Failed to check user existence",
+			slog.Any("error", existsErr),
+		)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	if !exists {
+		writeError(w, http.StatusForbidden, errs.ErrNeedsSetup.Error())
+		return
+	}
+
+	ctx = context.WithValue(ctx, userClaimsKey, claims)
+	next.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// parseAndValidate parses a JWT token string, verifies its signature against
+// the cached JWKS, and validates standard claims (issuer, audience).
+// It handles key rotation by re-fetching the JWKS once when no key matches.
+func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (*UserClaims, error) {
+	tok, err := m.parseWithCache(ctx, tokenString)
+	if err != nil {
+		if enableJWKSRefreshOnMiss && m.jwkCache != nil {
+			// Force a refresh of the JWKS cache — the key may have been
+			// rotated. Retry exactly once.
+			if _, refreshErr := m.jwkCache.Refresh(ctx, m.jwksURL); refreshErr != nil {
+				m.logger.WarnContext(ctx, "Failed to refresh JWKS cache after validation miss",
+					slog.Any("error", refreshErr),
+				)
+			}
+			tok, err = m.parseWithCache(ctx, tokenString)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	sub, ok := tok.Subject()
+	if !ok {
+		return nil, errors.New("token missing subject claim")
+	}
+
+	return &UserClaims{
+		Sub:      sub,
+		Username: claimAsString(tok, "username"),
+		Email:    claimAsString(tok, "email"),
+	}, nil
+}
+
+// lookupJWKS returns a jwk.Set from the cache, or nil if the cache is nil.
+func (m *Middleware) lookupJWKS(ctx context.Context) (jwk.Set, error) {
+	if m.jwkCache == nil {
+		return nil, errors.New("jwks cache not available")
+	}
+	return m.jwkCache.Lookup(ctx, m.jwksURL)
+}
+
+// parseWithCache attempts to parse and validate the token using the cached
+// JWKS. When the cache is nil or a lookup fails, it falls back to a one-shot
+// fetch (e.g. when Logto wasn't ready during the initial registration).
+func (m *Middleware) parseWithCache(ctx context.Context, tokenString string) (jwt.Token, error) {
+	keyset, err := m.lookupJWKS(ctx)
+	if err != nil {
+		// Cache unavailable — fall back to one-shot fetch.
+		client := jwkfetch.NewClient()
+		keyset, err = client.Fetch(ctx, m.jwksURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	tok, err := jwt.Parse([]byte(tokenString), jwt.WithKeySet(keyset))
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate standard claims.
+	if validateErr := jwt.Validate(tok,
+		jwt.WithIssuer(m.issuer),
+		jwt.WithAudience(m.appClientID),
+	); validateErr != nil {
+		return nil, validateErr
+	}
+
+	return tok, nil
+}
+
+// claimAsString safely extracts a string claim from a jwt.Token.
+func claimAsString(tok jwt.Token, key string) string {
+	v, ok := tok.Field(key)
+	if !ok {
+		return ""
+	}
+	s, _ := v.(string)
+	return s
+}
+
+// Optional returns a chi middleware that extracts claims if a token is
+// present but allows unauthenticated requests through.
 func (m *Middleware) Optional() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := extractBearerToken(r)
 			if token != "" {
-				if claims, err := m.validateToken(r.Context(), token); err == nil {
+				if claims, err := m.parseAndValidate(r.Context(), token); err == nil {
 					ctx := context.WithValue(r.Context(), userClaimsKey, claims)
 					r = r.WithContext(ctx)
 				}
@@ -140,126 +315,32 @@ func (m *Middleware) Optional() func(http.Handler) http.Handler {
 	}
 }
 
-func (m *Middleware) validateToken(ctx context.Context, tokenString string) (*UserClaims, error) {
-	jwks, err := m.fetchJWKS(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetch jwks: %w", err)
-	}
-
-	// Parse the token without verification first to extract the kid header.
-	// We need the kid to find the correct JWK for signature verification.
-	tokenParser := jwt.NewParser(
-		jwt.WithValidMethods([]string{"RS256"}),
-		jwt.WithAudience(m.appClientID),
-		jwt.WithIssuer(m.oidcEndpoint),
-	)
-
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		kid, ok := token.Header["kid"].(string)
-		if !ok || kid == "" {
-			return nil, errors.New("missing kid in JWT header")
+// isPublicPath returns true if the path does not require authentication.
+// Directory-like prefixes (with trailing /) match any sub-path; individual
+// paths use exact matching to avoid unintended matches.
+func isPublicPath(path string) bool {
+	for _, p := range skipPrefixes {
+		if strings.HasPrefix(path, p) {
+			return true
 		}
-
-		var jwk *JWK
-		for i := range jwks.Keys {
-			if jwks.Keys[i].Kid == kid {
-				jwk = &jwks.Keys[i]
-				break
-			}
+	}
+	for _, p := range skipExact {
+		if path == p {
+			return true
 		}
-		if jwk == nil {
-			return nil, fmt.Errorf("key %q not found in JWKS", kid)
-		}
-
-		return jwkToRSAPublicKey(jwk)
 	}
-
-	// Custom claims that include optional username and email.
-	type customClaims struct {
-		jwt.RegisteredClaims
-
-		Username string `json:"username"`
-		Email    string `json:"email"`
-	}
-
-	var claims customClaims
-	parsed, err := tokenParser.ParseWithClaims(tokenString, &claims, keyFunc)
-	if err != nil {
-		return nil, fmt.Errorf("parse token: %w", err)
-	}
-	if !parsed.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	return &UserClaims{
-		Sub:      claims.Subject,
-		Username: claims.Username,
-		Email:    claims.Email,
-	}, nil
+	return false
 }
 
-func (m *Middleware) fetchJWKS(ctx context.Context) (*LogtoJWKS, error) {
-	m.jwksMu.RLock()
-	if m.jwks != nil {
-		jwks := m.jwks
-		m.jwksMu.RUnlock()
-		return jwks, nil
+// isOptionalPath returns true if the path is authentication-optional.
+// Uses exact matching to avoid unintended matches.
+func isOptionalPath(path string) bool {
+	for _, p := range optionalExact {
+		if path == p {
+			return true
+		}
 	}
-	m.jwksMu.RUnlock()
-
-	m.jwksMu.Lock()
-	defer m.jwksMu.Unlock()
-
-	// Double-check after acquiring write lock.
-	if m.jwks != nil {
-		return m.jwks, nil
-	}
-
-	url := strings.TrimRight(m.oidcEndpoint, "/") + "/jwks"
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("create jwks request: %w", err)
-	}
-
-	client := &http.Client{Timeout: jwksFetchTimeout}
-	resp, requestErr := client.Do(req)
-	if requestErr != nil {
-		return nil, fmt.Errorf("fetch jwks from %s: %w", url, requestErr)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("jwks endpoint returned status %d", resp.StatusCode)
-	}
-
-	var jwks LogtoJWKS
-	if decodeErr := json.NewDecoder(resp.Body).Decode(&jwks); decodeErr != nil {
-		return nil, fmt.Errorf("decode jwks: %w", decodeErr)
-	}
-
-	if len(jwks.Keys) == 0 {
-		return nil, errors.New("JWKS contains no keys")
-	}
-
-	m.jwks = &jwks
-	return &jwks, nil
-}
-
-// jwkToRSAPublicKey converts a JWK to an RSA public key.
-func jwkToRSAPublicKey(jwk *JWK) (*rsa.PublicKey, error) {
-	nBytes, err := base64.RawURLEncoding.DecodeString(jwk.N)
-	if err != nil {
-		return nil, fmt.Errorf("decode jwk n: %w", err)
-	}
-	eBytes, err := base64.RawURLEncoding.DecodeString(jwk.E)
-	if err != nil {
-		return nil, fmt.Errorf("decode jwk e: %w", err)
-	}
-
-	n := new(big.Int).SetBytes(nBytes)
-	e := int(big.NewInt(0).SetBytes(eBytes).Int64())
-
-	return &rsa.PublicKey{N: n, E: e}, nil
+	return false
 }
 
 // extractBearerToken extracts the Bearer token from the Authorization header.
