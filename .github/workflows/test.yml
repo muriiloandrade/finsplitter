@@ -36,7 +36,7 @@ jobs:
                   cache: true
 
             - name: Verify dependencies
-              run: go mod verify
+              run: GOEXPERIMENT=jsonv2 go mod verify
 
             - name: Run tests with coverage
               run: |

@@ -12,10 +12,13 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jwx-go/jwkfetch/v4 v4.0.2
 	github.com/lestrrat-go/jwx/v4 v4.0.2
+	github.com/redis/go-redis/extra/redisotel/v9 v9.21.0
+	github.com/redis/go-redis/v9 v9.21.0
 	github.com/riandyrn/otelchi v0.12.3
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0
+	github.com/testcontainers/testcontainers-go/modules/redis v0.43.0
 	github.com/veqryn/slog-context v0.9.0
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0
@@ -141,8 +144,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.21.0 // indirect
-	github.com/redis/go-redis/extra/redisotel/v9 v9.21.0 // indirect
-	github.com/redis/go-redis/v9 v9.21.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/progressbar/v3 v3.19.0 // indirect
@@ -151,7 +152,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/testcontainers/testcontainers-go v0.43.0 // indirect
-	github.com/testcontainers/testcontainers-go/modules/redis v0.43.0 // indirect
 	github.com/tidwall/jsonc v0.3.3 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
