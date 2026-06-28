@@ -1,172 +1,58 @@
-# Redis-Based JWKS Cache with OpenTelemetry
+# Redis JWKS Cache — Implementation Plan
 
-**Date**: 2026-06-27
-**Status**: Design — Approved
-**Related**: [Auth Logto Integration](2026-03-20-auth-logto-integration.md)
+> **For Claude:** Use the Development Agent workflow to implement this plan task-by-task.
 
-## Overview
+**Goal:** Swap in-memory JWKS cache for Valkey-backed Redis with OTel instrumentation.
 
-Replace the in-memory `sync.RWMutex` + `jwk.Set` cache in the auth middleware
-with a Valkey-backed cache. This adds:
+**Architecture:** Valkey 9.1 in compose.infra.yml → go-redis v9 in `pkg/cache` with redisotel tracing/metrics → middleware reads JWKS from Redis with TTL → graceful fallback on Redis errors.
 
-- A Valkey 9.1 service in `compose.infra.yml`
-- A `pkg/cache` Go module wrapping `go-redis/v9` with OTel instrumentation
-- Redis-based JWKS storage with TTL (15 min)
-- Cache hit/miss logs backed by real Redis operations
-- Graceful degradation when Valkey is unavailable
+**Tech Stack:** Valkey 9.1, go-redis v9, redisotel, OTel 1.44
 
-## Components
+---
 
-### 1. Valkey Service (`compose.infra.yml`)
+### Task 1: Add Valkey to compose.infra.yml
 
-```yaml
-valkey:
-    profiles:
-        - infra
-    image: valkey/valkey:9.1.0-trixie@sha256:4963247afc4cd33c7d3b2d2816b9f7f8eeebab148d29056c2ca4d7cbc966f2d9
-    container_name: finsplitter-valkey
-    restart: unless-stopped
-    healthcheck:
-        test: ["CMD", "valkey-cli", "ping"]
-        start_period: 5s
-        interval: 10s
-        retries: 5
-        timeout: 3s
-    ports:
-        - "${VALKEY_PORT:-6379}:6379"
-    networks:
-        - finsplitter
-    volumes:
-        - valkey-data:/data
+**Files:**
+- Modify: `compose.infra.yml`
 
-volumes:
-    valkey-data:
-        driver: local
-```
+Add Valkey service alongside PostgreSQL with healthcheck and named volume.
 
-### 2. Config (`internal/config/config.go`)
+### Task 2: Redis config + .env.example
 
-New `Redis` struct:
+**Files:**
+- Modify: `internal/config/config.go`
+- Modify: `.env.example`
 
-```go
-type Redis struct {
-    URL string `conf:"env:REDIS_URL,default:redis://localhost:6379/0"`
-}
-```
+### Task 3: go-redis dependencies
 
-Added to `Config`:
+**Run:** `GOEXPERIMENT=jsonv2 go get github.com/redis/go-redis/v9 github.com/redis/go-redis/extra/redisotel/v9`
 
-```go
-type Config struct {
-    App   Application
-    Env   Environment
-    DB    Database
-    Redis Redis          // new
-    OTel  OpenTelemetry
-    Logto Logto
-}
-```
+### Task 4: pkg/cache/client.go
 
-### 3. `.env.example`
+**Files:**
+- Create: `pkg/cache/client.go`
 
-```env
-# ============================================================
-# Valkey Configuration
-# ============================================================
-REDIS_URL=redis://host.docker.internal:6379/0
-VALKEY_PORT=6379
-```
+Thin go-redis wrapper with `SetJSON`, `GetJSON`, `Ping`, `Close`. OTel via `redisotel.InstrumentTracing` + `InstrumentMetrics`.
 
-### 4. `pkg/cache/client.go`
+### Task 5: Middleware Redis integration
 
-Thin go-redis wrapper with functional options, exposing only typed methods:
+**Files:**
+- Modify: `internal/gateways/http/v1/auth/middleware.go`
 
-```go
-package cache
+Replace `jwkSetMu`/`jwkSet`/`jwkSetTime` with `cache *cache.Client`. `getJWKS` checks Redis first, falls back to direct fetch. Cache logs re-enabled.
 
-type Client struct {
-    raw redis.UniversalClient
-}
+### Task 6: Wire Redis client in main.go
 
-func New(ctx context.Context, url string, opts ...Option) (*Client, error)
-func (c *Client) SetJSON(ctx context.Context, key string, val any, ttl time.Duration) error
-func (c *Client) GetJSON(ctx context.Context, key string, dest any) (found bool, err error)
-func (c *Client) Del(ctx context.Context, keys ...string) error
-func (c *Client) Ping(ctx context.Context) error
-func (c *Client) Close() error
-```
+**Files:**
+- Modify: `cmd/api/main.go`
 
-OTel instrumentation via `redisotel`:
+Create Redis client, inject into auth middleware, close on shutdown.
 
-```go
-import "github.com/redis/go-redis/extra/redisotel/v9"
+### Task 7: Build, lint, verify
 
-rdb := redis.NewClient(opts)
-redisotel.InstrumentTracing(rdb)  // spans per command
-redisotel.InstrumentMetrics(rdb)  // counters + histograms
-```
+- `make code-check`
+- `docker compose build api`
+- `make start-infra` + verify Valkey starts
+- Verify cache logs (miss → hit)
 
-Both use the global OTel tracer/meter provider — consistent with the rest of the
-application (otelhttp, otelpgx, otelchi).
-
-### 5. Middleware Changes (`internal/gateways/http/v1/auth/middleware.go`)
-
-`NewMiddleware` accepts an additional `*cache.Client` parameter. The
-`Middleware` struct replaces `jwkSetMu`/`jwkSet`/`jwkSetTime` with a single
-`cache *cache.Client` field.
-
-`getJWKS` becomes:
-
-```
-1. Redis GET "jwks:keyset"
-   → Hit: logger.Debug("JWKS cache hit"), unmarshal, return
-2. Miss: logger.Debug("JWKS cache miss, fetching from Logto")
-   → Fetch from Logto via jwkfetch.Client
-   → Redis SET "jwks:keyset" <json> TTL=15min
-   → return
-3. Redis error: logger.Warn, fall back to direct fetch (graceful degradation)
-```
-
-### 6. Wiring (`cmd/api/main.go`)
-
-```go
-redisClient, err := cache.New(ctx, cfg.Redis.URL)
-// ...
-newAuthMiddleware(logger, cfg, userRepo, redisClient)
-
-// shutdown:
-redisClient.Close()
-```
-
-## Data Flow
-
-```
-Request with Bearer token
-  → Middleware.requireAuth()
-    → parseAndValidate()
-      → getJWKS(ctx)
-         ├── Redis GET "jwks:keyset"
-         │    ├── HIT  → log "cache hit",  unmarshal, return
-         │    └── MISS → log "cache miss", fetch from Logto
-         │               Redis SET "jwks:keyset" <json> EX 900
-         │               return
-         └── Redis ERROR → log warn, fetch from Logto directly
-  → jwt.Parse(tok, WithKeySet(keyset))
-  → jwt.Validate(tok, issuer, audience)
-```
-
-## Dependencies
-
-```
-go get github.com/redis/go-redis/v9
-go get github.com/redis/go-redis/extra/redisotel/v9
-```
-
-## Exit Criteria
-
-- [ ] `make start-infra` starts PostgreSQL + Valkey
-- [ ] `make code-check` passes (build + lint)
-- [ ] First authenticated request logs "JWKS cache miss", subsequent requests log "JWKS cache hit"
-- [ ] Stopping Valkey container triggers graceful fallback (warn log + direct fetch)
-- [ ] Restarting Valkey re-fetches JWKS on next request (cache evicted)
-- [ ] OTel spans visible for Redis GET/SET commands
+### Task 8: Commit

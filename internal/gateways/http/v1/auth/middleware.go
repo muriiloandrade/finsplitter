@@ -19,6 +19,12 @@ import (
 	slogctx "github.com/veqryn/slog-context"
 )
 
+// jwkFetcher abstracts fetching a JWK Set so the middleware can be tested
+// without a real Logto endpoint. Satisfied by *jwkfetch.Client in production.
+type jwkFetcher interface {
+	Fetch(ctx context.Context, url string) (jwk.Set, error)
+}
+
 const jwksCacheKey = "jwks:keyset"
 
 // jwksCacheTTL is how long the JWKS set is cached in Valkey before a refresh.
@@ -80,8 +86,8 @@ type Middleware struct {
 	jwksURL string
 	issuer  string
 
-	jwkClient *jwkfetch.Client // used to fetch JWKS from Logto
-	cache     *cache.Client    // used to cache JWKS across requests
+	jwkClient jwkFetcher // used to fetch JWKS from Logto
+	cache     *cache.Client
 }
 
 // NewMiddleware creates a new auth middleware. The JWKS is not fetched
