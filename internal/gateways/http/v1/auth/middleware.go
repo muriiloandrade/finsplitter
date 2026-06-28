@@ -109,21 +109,21 @@ func NewMiddleware(oidcEndpoint, appClientID string, userRepo ports.UserReposito
 		}
 	}
 
-	// Use a separate short-lived context for the initial registration so
-	// the background goroutine is not cancelled if Logto isn't ready yet.
-	regCtx, regCancel := context.WithTimeout(context.Background(), jwksFetchTimeout)
-	defer regCancel()
-
-	if regErr := cache.Register(regCtx, jwksURL,
-		jwkfetch.WithMinInterval(jwksRefreshInterval),
-	); regErr != nil {
-		logger.Warn("Failed to register JWKS URL in cache, will retry on first request",
-			slog.Any("error", regErr),
-		)
-		// The cache background goroutine will keep trying to refresh.
-		// The first request that comes in will trigger a Lookup that may
-		// also fail; on cache miss we fall back to a one-shot fetch.
-	}
+	// Register the JWKS URL in a background goroutine so it doesn't block
+	// app startup. Once Logto is ready the initial fetch succeeds, and the
+	// cache auto-refreshes from then on. Until registration completes,
+	// requests fall back to one-shot fetches.
+	go func() {
+		regCtx, regCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer regCancel()
+		if regErr := cache.Register(regCtx, jwksURL,
+			jwkfetch.WithMinInterval(jwksRefreshInterval),
+		); regErr != nil {
+			logger.Warn("Failed to register JWKS URL in cache",
+				slog.Any("error", regErr),
+			)
+		}
+	}()
 
 	return &Middleware{
 		oidcEndpoint: oidcEndpoint,
