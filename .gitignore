@@ -50,3 +50,6 @@ go.work
 ### Worktrees ###
 .worktrees/
 worktrees/
+
+### OpenCode ###
+.opencode/package*.json
