@@ -21,6 +21,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
+	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/metrics"
@@ -44,6 +45,7 @@ const (
 	readHeaderTimeout       = 30 * time.Second
 )
 
+//nolint:gocognit // Main function is inherently complex due to DI wiring.
 func main() {
 	// Create a CLI app
 	cli := humacli.New(func(hooks humacli.Hooks, _ *CLIOptions) {
@@ -95,6 +97,7 @@ func main() {
 		}
 
 		userRepo := postgres.NewUserRepository(pgTxManager)
+		redisClient := newRedisClient(ctx, logger, cfg)
 		logtoM2M := newLogtoM2MClient(logger, cfg)
 		router := _http.NewRouter(logger)
 
@@ -104,7 +107,7 @@ func main() {
 			CardBrandAPI:     newCardBrandAPI(pgTxManager),
 			AuthAPI:          newAuthAPI(userRepo, logtoM2M),
 			ProfileAPI:       newProfileAPI(userRepo),
-			AuthMiddleware:   newAuthMiddleware(logger, cfg, userRepo),
+			AuthMiddleware:   newAuthMiddleware(logger, cfg, userRepo, redisClient),
 			Logger:           logger,
 		}
 
@@ -132,6 +135,9 @@ func main() {
 			timeoutCtx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 			defer cancel()
 			defer dbPool.Close()
+			if redisClient != nil {
+				defer redisClient.Close()
+			}
 			if err = server.Shutdown(timeoutCtx); err != nil {
 				logger.Error("Failed to stop server", slog.Any("error", err))
 			}
@@ -223,6 +229,21 @@ func initializeOpenTelemetry(
 	return nil, nil, nil
 }
 
+// newRedisClient creates a cache client connected to Valkey/Redis.
+// If the connection fails it logs a warning and returns nil, allowing the
+// application to degrade gracefully (JWKS fetched on every request).
+func newRedisClient(ctx context.Context, logger *slog.Logger, cfg *config.Config) *cache.Client {
+	client, err := cache.New(ctx, cfg.Redis.URL)
+	if err != nil {
+		logger.WarnContext(ctx,
+			"Redis unavailable, auth middleware will fetch JWKS on every request",
+			slog.Any("error", err),
+		)
+		return nil
+	}
+	return client
+}
+
 func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
 	return logto.NewClient(logto.Config{
 		OIDCEndpoint:      cfg.Logto.OIDCEndpoint,
@@ -233,12 +254,18 @@ func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
 }
 
 // newAuthMiddleware builds the JWT validation middleware.
-func newAuthMiddleware(logger *slog.Logger, cfg *config.Config, userRepo ports.UserRepository) *authHandler.Middleware {
+func newAuthMiddleware(
+	logger *slog.Logger,
+	cfg *config.Config,
+	userRepo ports.UserRepository,
+	cacheClient *cache.Client,
+) *authHandler.Middleware {
 	return authHandler.NewMiddleware(
 		cfg.Logto.OIDCEndpoint,
 		cfg.Logto.AppClientID,
 		userRepo,
 		logger,
+		cacheClient,
 	)
 }
 

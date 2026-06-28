@@ -12,6 +12,7 @@ type Config struct {
 	App   Application
 	Env   Environment
 	DB    Database
+	Redis Redis
 	OTel  OpenTelemetry
 	Logto Logto
 }
@@ -48,6 +49,10 @@ type PoolConfig struct {
 	MaxConnIdleTime   time.Duration `conf:"env:PG_MAX_CONN_IDLE_TIME,default:10m"`
 	HealthCheckPeriod time.Duration `conf:"env:PG_HEALTH_CHECK_PERIOD,default:1m"`
 	ConnectTimeout    time.Duration `conf:"env:PG_CONNECT_TIMEOUT,default:15s"`
+}
+
+type Redis struct {
+	URL string `conf:"env:REDIS_URL,default:redis://localhost:6379/0"`
 }
 
 type Logto struct {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/jwx-go/jwkfetch/v4"
@@ -15,10 +15,16 @@ import (
 	"github.com/lestrrat-go/jwx/v4/jwt"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
+	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	slogctx "github.com/veqryn/slog-context"
 )
 
-const jwksRefreshInterval = 15 * time.Minute
+const jwksCacheKey = "jwks:keyset"
+
+// jwksCacheTTL is how long the JWKS set is cached in Valkey before a refresh.
+// This duration must be long enough to amortise the fetch cost but short
+// enough to pick up Logto key rotations in reasonable time.
+const jwksCacheTTL = 15 * time.Minute
 
 //nolint:gochecknoglobals // Path prefix/suffix lists — fixed at init, not mutable state.
 var (
@@ -63,8 +69,8 @@ type contextKey string
 const userClaimsKey contextKey = "user_claims"
 
 // Middleware validates JWTs issued by Logto using the jwx library.
-// JWKS is fetched on demand and cached in-memory. The cache is
-// refreshed every jwksRefreshInterval to handle key rotation.
+// JWKS is fetched on demand and cached in Valkey (via the cache.Client). The
+// cache is refreshed every jwksCacheTTL (15 minutes) to handle key rotation.
 type Middleware struct {
 	oidcEndpoint string
 	appClientID  string
@@ -73,17 +79,24 @@ type Middleware struct {
 
 	jwksURL string
 	issuer  string
-	client  *jwkfetch.Client
 
-	jwkSetMu   sync.RWMutex
-	jwkSet     jwk.Set   // cached JWKS, nil until first fetch
-	jwkSetTime time.Time // when jwkSet was last fetched
+	jwkClient *jwkfetch.Client // used to fetch JWKS from Logto
+	cache     *cache.Client    // used to cache JWKS across requests
 }
 
 // NewMiddleware creates a new auth middleware. The JWKS is not fetched
 // until the first authenticated request, so Logto does not need to be
-// ready at startup time.
-func NewMiddleware(oidcEndpoint, appClientID string, userRepo ports.UserRepository, logger *slog.Logger) *Middleware {
+// ready at startup time. The cache client is used to share the JWKS set
+// across requests (and potentially across instances).
+//
+// When the cache client is nil, each request fetches the JWKS from Logto
+// directly (no caching).
+func NewMiddleware(
+	oidcEndpoint, appClientID string,
+	userRepo ports.UserRepository,
+	logger *slog.Logger,
+	cacheClient *cache.Client,
+) *Middleware {
 	base := strings.TrimRight(oidcEndpoint, "/")
 	return &Middleware{
 		oidcEndpoint: oidcEndpoint,
@@ -92,7 +105,8 @@ func NewMiddleware(oidcEndpoint, appClientID string, userRepo ports.UserReposito
 		logger:       logger,
 		jwksURL:      base + "/jwks",
 		issuer:       base,
-		client:       jwkfetch.NewClient(),
+		jwkClient:    jwkfetch.NewClient(),
+		cache:        cacheClient,
 	}
 }
 
@@ -220,35 +234,55 @@ func (m *Middleware) parseWithKeyset(ctx context.Context, tokenString string) (j
 	return tok, nil
 }
 
-// getJWKS returns the cached JWKS, fetching it from Logto on first call or
-// when the cached set is stale (older than jwksRefreshInterval). This TTL-
-// based approach handles key rotation without error-based cache invalidation,
-// so bad-token requests never trigger unnecessary re-fetches.
+// getJWKS returns the JWKS set, retrieving it from Valkey when possible and
+// falling back to a direct Logto fetch on cache miss or cache error.
 func (m *Middleware) getJWKS(ctx context.Context) (jwk.Set, error) {
-	// Fast path: already cached and fresh.
-	m.jwkSetMu.RLock()
-	if m.jwkSet != nil && time.Since(m.jwkSetTime) < jwksRefreshInterval {
-		set := m.jwkSet
-		m.jwkSetMu.RUnlock()
+	if m.cache != nil {
+		set, err := m.getJWKSFromCache(ctx)
+		if err == nil {
+			return set, nil
+		}
+		// Fall through to direct fetch on any cache error (miss, Redis down, ...).
+		m.logger.WarnContext(ctx, "JWKS cache miss, fetching from Logto",
+			slog.Any("error", err),
+		)
+	}
+
+	return m.jwkClient.Fetch(ctx, m.jwksURL)
+}
+
+// getJWKSFromCache attempts to read the JWKS from Valkey. On a cache hit the
+// set is returned immediately. On a miss it fetches from Logto, stores the
+// result in Valkey with a TTL, and returns it.
+//
+// jwk.Set is an interface type, so we use GetBytes + jwk.Parse instead of
+// GetJSON (which would fail to unmarshal into a nil interface).
+func (m *Middleware) getJWKSFromCache(ctx context.Context) (jwk.Set, error) {
+	data, readErr := m.cache.GetBytes(ctx, jwksCacheKey)
+	if readErr != nil {
+		return nil, fmt.Errorf("cache read: %w", readErr)
+	}
+	if data != nil {
+		set, parseErr := jwk.Parse(data)
+		if parseErr != nil {
+			return nil, fmt.Errorf("cache parse: %w", parseErr)
+		}
+		m.logger.DebugContext(ctx, "JWKS cache hit")
 		return set, nil
 	}
-	m.jwkSetMu.RUnlock()
 
-	// Slow path: fetch and cache.
-	m.jwkSetMu.Lock()
-	defer m.jwkSetMu.Unlock()
-
-	// Double-check after acquiring write lock.
-	if m.jwkSet != nil && time.Since(m.jwkSetTime) < jwksRefreshInterval {
-		return m.jwkSet, nil
+	m.logger.DebugContext(ctx, "JWKS cache miss, fetching from Logto")
+	set, fetchErr := m.jwkClient.Fetch(ctx, m.jwksURL)
+	if fetchErr != nil {
+		return nil, fmt.Errorf("logto fetch: %w", fetchErr)
 	}
 
-	set, err := m.client.Fetch(ctx, m.jwksURL)
-	if err != nil {
-		return nil, err
+	if storeErr := m.cache.SetJSON(ctx, jwksCacheKey, set, jwksCacheTTL); storeErr != nil {
+		m.logger.WarnContext(ctx, "Failed to store JWKS in cache",
+			slog.Any("error", storeErr),
+		)
 	}
-	m.jwkSet = set
-	m.jwkSetTime = time.Now()
+
 	return set, nil
 }
 
