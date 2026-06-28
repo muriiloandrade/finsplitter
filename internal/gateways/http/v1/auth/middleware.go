@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jwx-go/jwkfetch/v4"
-	"github.com/lestrrat-go/httprc/v3"
 	"github.com/lestrrat-go/jwx/v4/jwk"
 	"github.com/lestrrat-go/jwx/v4/jwt"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
@@ -18,15 +18,7 @@ import (
 	slogctx "github.com/veqryn/slog-context"
 )
 
-const (
-	jwksRefreshInterval = 15 * time.Minute
-	jwksFetchTimeout    = 10 * time.Second
-)
-
-// enableJWKSRefreshOnMiss controls whether the middleware re-fetches the JWKS
-// when no matching key is found. This handles Logto key rotation without a
-// server restart.
-const enableJWKSRefreshOnMiss = true
+const jwksRefreshInterval = 15 * time.Minute
 
 //nolint:gochecknoglobals // Path prefix/suffix lists — fixed at init, not mutable state.
 var (
@@ -71,68 +63,36 @@ type contextKey string
 const userClaimsKey contextKey = "user_claims"
 
 // Middleware validates JWTs issued by Logto using the jwx library.
-// JWKS is fetched and cached via jwkfetch.Cache, which auto-refreshes
-// in the background to handle key rotation.
+// JWKS is fetched on demand and cached in-memory. The cache is
+// refreshed every jwksRefreshInterval to handle key rotation.
 type Middleware struct {
 	oidcEndpoint string
 	appClientID  string
 	userRepo     ports.UserRepository
 	logger       *slog.Logger
 
-	jwksURL  string
-	issuer   string
-	jwkCache *jwkfetch.Cache
+	jwksURL string
+	issuer  string
+	client  *jwkfetch.Client
+
+	jwkSetMu   sync.RWMutex
+	jwkSet     jwk.Set   // cached JWKS, nil until first fetch
+	jwkSetTime time.Time // when jwkSet was last fetched
 }
 
-// NewMiddleware creates a new auth middleware. It initialises a background-
-// refreshed JWKS cache using the Logto OIDC endpoint.
+// NewMiddleware creates a new auth middleware. The JWKS is not fetched
+// until the first authenticated request, so Logto does not need to be
+// ready at startup time.
 func NewMiddleware(oidcEndpoint, appClientID string, userRepo ports.UserRepository, logger *slog.Logger) *Middleware {
 	base := strings.TrimRight(oidcEndpoint, "/")
-	jwksURL := base + "/jwks"
-	issuer := base
-
-	// Use background context for the cache lifecycle so the background
-	// refresh goroutine lives for the entire app lifetime.
-	cache, err := jwkfetch.NewCache(context.Background(), httprc.NewClient())
-	if err != nil {
-		// Should never happen with the default client.
-		logger.Warn("Failed to create JWKS cache, falling back to one-shot fetch",
-			slog.Any("error", err),
-		)
-		return &Middleware{
-			oidcEndpoint: oidcEndpoint,
-			appClientID:  appClientID,
-			userRepo:     userRepo,
-			logger:       logger,
-			jwksURL:      jwksURL,
-			issuer:       issuer,
-		}
-	}
-
-	// Register the JWKS URL in a background goroutine so it doesn't block
-	// app startup. Once Logto is ready the initial fetch succeeds, and the
-	// cache auto-refreshes from then on. Until registration completes,
-	// requests fall back to one-shot fetches.
-	go func() {
-		regCtx, regCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer regCancel()
-		if regErr := cache.Register(regCtx, jwksURL,
-			jwkfetch.WithMinInterval(jwksRefreshInterval),
-		); regErr != nil {
-			logger.Warn("Failed to register JWKS URL in cache",
-				slog.Any("error", regErr),
-			)
-		}
-	}()
-
 	return &Middleware{
 		oidcEndpoint: oidcEndpoint,
 		appClientID:  appClientID,
 		userRepo:     userRepo,
 		logger:       logger,
-		jwksURL:      jwksURL,
-		issuer:       issuer,
-		jwkCache:     cache,
+		jwksURL:      base + "/jwks",
+		issuer:       base,
+		client:       jwkfetch.NewClient(),
 	}
 }
 
@@ -217,23 +177,10 @@ func (m *Middleware) requireAuth(w http.ResponseWriter, r *http.Request, next ht
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// parseAndValidate parses a JWT token string, verifies its signature against
-// the cached JWKS, and validates standard claims (issuer, audience).
-// It handles key rotation by re-fetching the JWKS once when no key matches.
+// parseAndValidate parses a JWT, verifies its signature against the cached
+// JWKS (refreshing if stale), and validates standard claims.
 func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (*UserClaims, error) {
-	tok, err := m.parseWithCache(ctx, tokenString)
-	if err != nil {
-		if enableJWKSRefreshOnMiss && m.jwkCache != nil {
-			// Force a refresh of the JWKS cache — the key may have been
-			// rotated. Retry exactly once.
-			if _, refreshErr := m.jwkCache.Refresh(ctx, m.jwksURL); refreshErr != nil {
-				m.logger.WarnContext(ctx, "Failed to refresh JWKS cache after validation miss",
-					slog.Any("error", refreshErr),
-				)
-			}
-			tok, err = m.parseWithCache(ctx, tokenString)
-		}
-	}
+	tok, err := m.parseWithKeyset(ctx, tokenString)
 	if err != nil {
 		return nil, err
 	}
@@ -250,26 +197,12 @@ func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (
 	}, nil
 }
 
-// lookupJWKS returns a jwk.Set from the cache, or nil if the cache is nil.
-func (m *Middleware) lookupJWKS(ctx context.Context) (jwk.Set, error) {
-	if m.jwkCache == nil {
-		return nil, errors.New("jwks cache not available")
-	}
-	return m.jwkCache.Lookup(ctx, m.jwksURL)
-}
-
-// parseWithCache attempts to parse and validate the token using the cached
-// JWKS. When the cache is nil or a lookup fails, it falls back to a one-shot
-// fetch (e.g. when Logto wasn't ready during the initial registration).
-func (m *Middleware) parseWithCache(ctx context.Context, tokenString string) (jwt.Token, error) {
-	keyset, err := m.lookupJWKS(ctx)
+// parseWithKeyset fetches (or uses the cached) JWKS, then parses and
+// validates the token.
+func (m *Middleware) parseWithKeyset(ctx context.Context, tokenString string) (jwt.Token, error) {
+	keyset, err := m.getJWKS(ctx)
 	if err != nil {
-		// Cache unavailable — fall back to one-shot fetch.
-		client := jwkfetch.NewClient()
-		keyset, err = client.Fetch(ctx, m.jwksURL)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	tok, err := jwt.Parse([]byte(tokenString), jwt.WithKeySet(keyset))
@@ -277,7 +210,6 @@ func (m *Middleware) parseWithCache(ctx context.Context, tokenString string) (jw
 		return nil, err
 	}
 
-	// Validate standard claims.
 	if validateErr := jwt.Validate(tok,
 		jwt.WithIssuer(m.issuer),
 		jwt.WithAudience(m.appClientID),
@@ -286,6 +218,38 @@ func (m *Middleware) parseWithCache(ctx context.Context, tokenString string) (jw
 	}
 
 	return tok, nil
+}
+
+// getJWKS returns the cached JWKS, fetching it from Logto on first call or
+// when the cached set is stale (older than jwksRefreshInterval). This TTL-
+// based approach handles key rotation without error-based cache invalidation,
+// so bad-token requests never trigger unnecessary re-fetches.
+func (m *Middleware) getJWKS(ctx context.Context) (jwk.Set, error) {
+	// Fast path: already cached and fresh.
+	m.jwkSetMu.RLock()
+	if m.jwkSet != nil && time.Since(m.jwkSetTime) < jwksRefreshInterval {
+		set := m.jwkSet
+		m.jwkSetMu.RUnlock()
+		return set, nil
+	}
+	m.jwkSetMu.RUnlock()
+
+	// Slow path: fetch and cache.
+	m.jwkSetMu.Lock()
+	defer m.jwkSetMu.Unlock()
+
+	// Double-check after acquiring write lock.
+	if m.jwkSet != nil && time.Since(m.jwkSetTime) < jwksRefreshInterval {
+		return m.jwkSet, nil
+	}
+
+	set, err := m.client.Fetch(ctx, m.jwksURL)
+	if err != nil {
+		return nil, err
+	}
+	m.jwkSet = set
+	m.jwkSetTime = time.Now()
+	return set, nil
 }
 
 // claimAsString safely extracts a string claim from a jwt.Token.
@@ -316,8 +280,6 @@ func (m *Middleware) Optional() func(http.Handler) http.Handler {
 }
 
 // isPublicPath returns true if the path does not require authentication.
-// Directory-like prefixes (with trailing /) match any sub-path; individual
-// paths use exact matching to avoid unintended matches.
 func isPublicPath(path string) bool {
 	for _, p := range skipPrefixes {
 		if strings.HasPrefix(path, p) {
@@ -333,7 +295,6 @@ func isPublicPath(path string) bool {
 }
 
 // isOptionalPath returns true if the path is authentication-optional.
-// Uses exact matching to avoid unintended matches.
 func isOptionalPath(path string) bool {
 	for _, p := range optionalExact {
 		if path == p {

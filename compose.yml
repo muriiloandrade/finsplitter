@@ -18,6 +18,8 @@ services:
             - .env
         environment:
             - GOEXPERIMENT=jsonv2
+            - LOGTO_ENDPOINT=http://host.docker.internal:3001
+            - LOGTO_OIDC_ENDPOINT=http://host.docker.internal:3001/oidc
         extra_hosts:
             - "host.docker.internal:host-gateway"
         ports:
