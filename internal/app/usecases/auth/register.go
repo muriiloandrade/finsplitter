@@ -12,6 +12,9 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
+// Compile-time check that *logto.Client satisfies LogtoUserCreator.
+var _ LogtoUserCreator = (*logto.Client)(nil)
+
 // RegisterInput carries the data needed to register a new user.
 type RegisterInput struct {
 	Username string
@@ -27,11 +30,11 @@ type RegisterOutput struct {
 // RegisterUseCase orchestrates user registration in Logto and Finsplitter.
 type RegisterUseCase struct {
 	userRepo ports.UserRepository
-	logtoM2M *logto.Client
+	logtoM2M LogtoUserCreator
 }
 
 // NewRegisterUseCase creates a new RegisterUseCase.
-func NewRegisterUseCase(userRepo ports.UserRepository, logtoM2M *logto.Client) *RegisterUseCase {
+func NewRegisterUseCase(userRepo ports.UserRepository, logtoM2M LogtoUserCreator) *RegisterUseCase {
 	return &RegisterUseCase{
 		userRepo: userRepo,
 		logtoM2M: logtoM2M,
