@@ -144,10 +144,8 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 	}
 
 	// Cache with a safety buffer before actual expiry.
-	buffer := time.Minute
-	if tr.ExpiresIn > tokenExpiryBuffer {
-		buffer = time.Duration(tr.ExpiresIn-tokenExpiryBuffer) * time.Second
-	}
+	// Clamp to zero so sub-60s tokens don't get cached past their lifetime.
+	buffer := time.Duration(max(tr.ExpiresIn-tokenExpiryBuffer, 0)) * time.Second
 
 	c.token = &cachedToken{
 		accessToken: tr.AccessToken,

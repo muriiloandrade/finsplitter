@@ -230,6 +230,10 @@ func (m *Middleware) parseWithKeyset(ctx context.Context, tokenString string) (j
 		return nil, err
 	}
 
+	// The audience (aud) claim must match the Logto application's configured
+	// API Resource identifier. By default, Logto uses the application's
+	// client ID. If a custom API Resource is configured in Logto, set
+	// LOGTO_APP_CLIENT_ID to that resource identifier.
 	if validateErr := jwt.Validate(tok,
 		jwt.WithIssuer(m.issuer),
 		jwt.WithAudience(m.appClientID),

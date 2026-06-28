@@ -50,8 +50,13 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 		return nil, fmt.Errorf("create logto user: %w", err)
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("generate user id: %w", err)
+	}
+
 	user := &entity.User{
-		ID:          uuid.Must(uuid.NewV7()),
+		ID:          id,
 		LogtoUserID: logtoUser.ID,
 		Username:    input.Username,
 	}

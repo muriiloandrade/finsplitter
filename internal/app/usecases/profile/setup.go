@@ -48,8 +48,13 @@ func (uc *SetupUseCase) Execute(ctx context.Context, input SetupInput) (*SetupOu
 		return nil, errs.ErrDuplicate
 	}
 
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("generate user id: %w", err)
+	}
+
 	user := &entity.User{
-		ID:          uuid.Must(uuid.NewV7()),
+		ID:          id,
 		LogtoUserID: input.LogtoUserID,
 		Username:    input.Username,
 	}
