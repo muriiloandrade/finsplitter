@@ -22,7 +22,8 @@ type API struct {
 // NewAPI creates an auth API from the given dependencies.
 func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) API {
 	registerUC := auth.NewRegisterUseCase(userRepo, logtoM2M)
-	h := NewHandler(registerUC)
+	meUC := auth.NewMeUseCase(userRepo)
+	h := NewHandler(registerUC, meUC)
 
 	return API{
 		RegisterHandler: h.Register,

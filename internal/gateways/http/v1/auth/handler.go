@@ -11,12 +11,14 @@ import (
 // Handler handles auth-related HTTP requests.
 type Handler struct {
 	registerUC *auth.RegisterUseCase
+	meUC       *auth.MeUseCase
 }
 
 // NewHandler creates a new auth Handler.
-func NewHandler(registerUC *auth.RegisterUseCase) *Handler {
+func NewHandler(registerUC *auth.RegisterUseCase, meUC *auth.MeUseCase) *Handler {
 	return &Handler{
 		registerUC: registerUC,
+		meUC:       meUC,
 	}
 }
 
@@ -74,16 +76,23 @@ type MeResponse struct {
 func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 	claims := GetUserClaims(ctx)
 
-	resp := &MeResponse{}
-
 	if claims == nil {
 		// Not authenticated — return empty response (NeedsSetup defaults to false).
-		return resp, nil
+		return &MeResponse{}, nil
 	}
 
-	resp.Body.Email = claims.Email
-	resp.Body.Username = claims.Username
-	resp.Body.NeedsSetup = claims.Username == ""
+	output, err := h.meUC.Execute(ctx, auth.MeInput{
+		LogtoUserID: claims.Sub,
+		Email:       claims.Email,
+	})
+	if err != nil {
+		return nil, huma.Error500InternalServerError("failed to get user info")
+	}
 
+	resp := &MeResponse{}
+	resp.Body.ID = output.ID
+	resp.Body.Username = output.Username
+	resp.Body.Email = output.Email
+	resp.Body.NeedsSetup = output.NeedsSetup
 	return resp, nil
 }
