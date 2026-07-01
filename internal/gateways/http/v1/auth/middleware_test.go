@@ -349,7 +349,7 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// Test RequireAuth — no token → 401
+// Test RequireAuth — no token → 401.
 func TestRequireAuth_NoToken(t *testing.T) {
 	mw := &Middleware{
 		logger: slog.Default(),
@@ -367,7 +367,7 @@ func TestRequireAuth_NoToken(t *testing.T) {
 	assert.Equal(t, "missing authorization header", body["error"])
 }
 
-// Test RequireAuth — invalid JWT → 401
+// Test RequireAuth — invalid JWT → 401.
 func TestRequireAuth_InvalidToken(t *testing.T) {
 	mockFetcher := newMockjwkFetcher(t)
 	_, jwks := newTestKeySet(t)
@@ -394,7 +394,7 @@ func TestRequireAuth_InvalidToken(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
-// Test RequireAuth — valid JWT but user does not exist → 403
+// Test RequireAuth — valid JWT but user does not exist → 403.
 func TestRequireAuth_UserNotFound(t *testing.T) {
 	mockFetcher := newMockjwkFetcher(t)
 	userRepo := ports.NewMockUserRepository(t)
@@ -433,7 +433,7 @@ func TestRequireAuth_UserNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
-// Test RequireAuth — valid JWT but DB error → 500
+// Test RequireAuth — valid JWT but DB error → 500.
 func TestRequireAuth_DBError(t *testing.T) {
 	mockFetcher := newMockjwkFetcher(t)
 	userRepo := ports.NewMockUserRepository(t)
@@ -472,7 +472,7 @@ func TestRequireAuth_DBError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
-// Test RequireAuth — valid JWT + user exists → 200 + claims in response
+// Test RequireAuth — valid JWT + user exists → 200 + claims in response.
 func TestRequireAuth_Success(t *testing.T) {
 	mockFetcher := newMockjwkFetcher(t)
 	userRepo := ports.NewMockUserRepository(t)

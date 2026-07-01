@@ -151,7 +151,7 @@ func TestGetJSON_UnmarshalError(t *testing.T) {
 	var dest string
 	found, err := client.GetJSON(ctx, "test:unmarshal", &dest)
 	require.Error(t, err, "unmarshal into wrong type should fail")
-	assert.ErrorContains(t, err, "cache unmarshal")
+	require.ErrorContains(t, err, "cache unmarshal")
 	assert.False(t, found, "found should be false on unmarshal error")
 }
 
