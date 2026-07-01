@@ -1,0 +1,13 @@
+{
+  // jwx/v4 depends on encoding/json/v2 which requires GOEXPERIMENT=jsonv2.
+  // Without it gopls can't resolve the jwk/jwt imports in this project.
+  "lsp": {
+    "gopls": {
+      "binary": {
+        "env": {
+          "GOEXPERIMENT": "jsonv2"
+        }
+      }
+    }
+  }
+}

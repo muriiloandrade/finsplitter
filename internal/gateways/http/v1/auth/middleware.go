@@ -51,6 +51,7 @@ var (
 	// but will still populate claims from a valid token if one is present.
 	optionalExact = []string{
 		"/auth/me",
+		"/profile/setup",
 	}
 )
 

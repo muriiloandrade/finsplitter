@@ -119,6 +119,80 @@ func TestGetBytes_KeyNotFound(t *testing.T) {
 	assert.Nil(t, data, "data should be nil for missing key")
 }
 
+func TestNew_InvalidURL(t *testing.T) {
+	ctx := context.Background()
+
+	client, err := cache.New(ctx, "not-a-url")
+	require.Error(t, err, "New with invalid URL should fail")
+	require.Nil(t, client, "client should be nil on error")
+	assert.ErrorContains(t, err, "cache parse url")
+}
+
+func TestSetJSON_MarshalError(t *testing.T) {
+	// json.Marshal fails before any Redis call — no container needed.
+	ctx := context.Background()
+	client, err := cache.New(ctx, "redis://localhost:6379/0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = client.Close() })
+
+	err = client.SetJSON(ctx, "test:marshal", make(chan int), 0)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cache marshal")
+}
+
+func TestGetJSON_UnmarshalError(t *testing.T) {
+	client := newTestClient(t)
+	ctx := context.Background()
+
+	// Store a JSON object, then try to read it into a string — type mismatch.
+	err := client.SetJSON(ctx, "test:unmarshal", map[string]int{"a": 1}, 5*time.Minute)
+	require.NoError(t, err)
+
+	var dest string
+	found, err := client.GetJSON(ctx, "test:unmarshal", &dest)
+	require.Error(t, err, "unmarshal into wrong type should fail")
+	assert.ErrorContains(t, err, "cache unmarshal")
+	assert.False(t, found, "found should be false on unmarshal error")
+}
+
+func TestCache_ClosedClient(t *testing.T) {
+	client := newTestClient(t)
+	ctx := context.Background()
+
+	// Close the client — subsequent operations should all fail.
+	require.NoError(t, client.Close())
+
+	t.Run("SetJSON", func(t *testing.T) {
+		err := client.SetJSON(ctx, "key", "val", 0)
+		require.Error(t, err)
+	})
+
+	t.Run("GetJSON", func(t *testing.T) {
+		found, err := client.GetJSON(ctx, "key", new(string))
+		require.Error(t, err)
+		assert.False(t, found)
+	})
+
+	t.Run("GetBytes", func(t *testing.T) {
+		data, err := client.GetBytes(ctx, "key")
+		require.Error(t, err)
+		assert.Nil(t, data)
+	})
+
+	t.Run("Ping", func(t *testing.T) {
+		err := client.Ping(ctx)
+		require.Error(t, err)
+	})
+}
+
+func TestPing_Success(t *testing.T) {
+	client := newTestClient(t)
+	ctx := context.Background()
+
+	err := client.Ping(ctx)
+	require.NoError(t, err)
+}
+
 func TestConcurrentAccess(t *testing.T) {
 	client := newTestClient(t)
 	ctx := context.Background()
