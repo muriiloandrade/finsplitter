@@ -1,8 +1,8 @@
 -- name: CreateUser :one
 INSERT INTO "user" (
-    id, logto_user_id, username, email, created_date, last_modified_date
+    logto_user_id, username, email, created_date, last_modified_date
 ) VALUES (
-    $1, $2, $3, $4, NOW(), NOW()
+    $1, $2, $3, NOW(), NOW()
 )
 RETURNING id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date;
 

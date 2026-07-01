@@ -14,18 +14,17 @@ import (
 
 const CreateUser = `-- name: CreateUser :one
 INSERT INTO "user" (
-    id, logto_user_id, username, email, created_date, last_modified_date
+    logto_user_id, username, email, created_date, last_modified_date
 ) VALUES (
-    $1, $2, $3, $4, NOW(), NOW()
+    $1, $2, $3, NOW(), NOW()
 )
 RETURNING id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date
 `
 
 type CreateUserParams struct {
-	ID          uuid.UUID `db:"id" json:"id"`
-	LogtoUserID *string   `db:"logto_user_id" json:"logtoUserId"`
-	Username    string    `db:"username" json:"username"`
-	Email       string    `db:"email" json:"email"`
+	LogtoUserID *string `db:"logto_user_id" json:"logtoUserId"`
+	Username    string  `db:"username" json:"username"`
+	Email       string  `db:"email" json:"email"`
 }
 
 type CreateUserRow struct {
@@ -41,12 +40,7 @@ type CreateUserRow struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRow(ctx, CreateUser,
-		arg.ID,
-		arg.LogtoUserID,
-		arg.Username,
-		arg.Email,
-	)
+	row := q.db.QueryRow(ctx, CreateUser, arg.LogtoUserID, arg.Username, arg.Email)
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,

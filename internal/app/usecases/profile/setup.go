@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
@@ -48,13 +47,7 @@ func (uc *SetupUseCase) Execute(ctx context.Context, input SetupInput) (*SetupOu
 		return nil, errs.ErrDuplicate
 	}
 
-	id, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("generate user id: %w", err)
-	}
-
 	user := &entity.User{
-		ID:          id,
 		LogtoUserID: input.LogtoUserID,
 		Username:    input.Username,
 	}

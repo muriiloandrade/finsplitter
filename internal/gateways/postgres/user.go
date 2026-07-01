@@ -42,7 +42,6 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	logger := slogctx.FromCtx(ctx)
 
 	row, err := r.sqlc.CreateUser(ctx, sqlc.CreateUserParams{
-		ID:          user.ID,
 		LogtoUserID: ptr(user.LogtoUserID),
 		Username:    user.Username,
 		Email:       user.Email,
