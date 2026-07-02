@@ -12,19 +12,18 @@ import (
 // MeInput carries the data needed to look up the current user.
 type MeInput struct {
 	LogtoUserID string
-	Email       string
 }
 
-// MeOutput holds the current user's profile information.
+// MeOutput holds the current user's Finsplitter account status.
+// Profile data (name, email, username) is available from JWT claims directly.
 type MeOutput struct {
 	ID         string
-	Username   string
-	Email      string
 	NeedsSetup bool
 }
 
-// MeUseCase returns the current user's profile, determining whether they still
-// need to complete setup based on the existence of a local database record.
+// MeUseCase returns the current user's Finsplitter account status, determining
+// whether they still need to complete setup based on the existence of a local
+// database record.
 type MeUseCase struct {
 	userRepo ports.UserRepository
 }
@@ -37,14 +36,13 @@ func NewMeUseCase(userRepo ports.UserRepository) *MeUseCase {
 }
 
 // Execute looks up the user by their Logto ID. If no local record exists yet
-// the user needs setup, so we return only the email (available from JWT claims).
-// If a record exists we return the full profile and NeedsSetup=false.
+// the user needs setup. If a record exists we return the Finsplitter user ID
+// and NeedsSetup=false.
 func (uc *MeUseCase) Execute(ctx context.Context, input MeInput) (*MeOutput, error) {
 	user, err := uc.userRepo.GetByLogtoUserID(ctx, input.LogtoUserID)
 	if err != nil {
 		if errors.Is(err, errs.ErrNotFound) {
 			return &MeOutput{
-				Email:      input.Email,
 				NeedsSetup: true,
 			}, nil
 		}
@@ -53,8 +51,6 @@ func (uc *MeUseCase) Execute(ctx context.Context, input MeInput) (*MeOutput, err
 
 	return &MeOutput{
 		ID:         user.ID.String(),
-		Username:   user.Username,
-		Email:      input.Email,
 		NeedsSetup: false,
 	}, nil
 }
