@@ -50,6 +50,7 @@ func (uc *SetupUseCase) Execute(ctx context.Context, input SetupInput) (*SetupOu
 	user := &entity.User{
 		LogtoUserID: input.LogtoUserID,
 		Username:    input.Username,
+		Name:        input.Username,
 	}
 
 	if createErr := uc.userRepo.Create(ctx, user); createErr != nil {

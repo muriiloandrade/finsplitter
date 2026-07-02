@@ -14,9 +14,9 @@ import (
 
 const CreateUser = `-- name: CreateUser :one
 INSERT INTO "user" (
-    logto_user_id, username, email, created_date, last_modified_date
+    logto_user_id, username, email, name, phone_number, created_date, last_modified_date
 ) VALUES (
-    $1, $2, $3, NOW(), NOW()
+    $1, $2, $3, $4, $5, NOW(), NOW()
 )
 RETURNING id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date
 `
@@ -25,6 +25,8 @@ type CreateUserParams struct {
 	LogtoUserID *string `db:"logto_user_id" json:"logtoUserId"`
 	Username    string  `db:"username" json:"username"`
 	Email       string  `db:"email" json:"email"`
+	Name        string  `db:"name" json:"name"`
+	PhoneNumber *string `db:"phone_number" json:"phoneNumber"`
 }
 
 type CreateUserRow struct {
@@ -40,7 +42,13 @@ type CreateUserRow struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRow(ctx, CreateUser, arg.LogtoUserID, arg.Username, arg.Email)
+	row := q.db.QueryRow(ctx, CreateUser,
+		arg.LogtoUserID,
+		arg.Username,
+		arg.Email,
+		arg.Name,
+		arg.PhoneNumber,
+	)
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
@@ -69,6 +77,34 @@ func (q *Queries) ExistsByLogtoUserID(ctx context.Context, arg ExistsByLogtoUser
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const FindUsernamesByPrefix = `-- name: FindUsernamesByPrefix :many
+SELECT username FROM "user" WHERE username LIKE $1
+`
+
+type FindUsernamesByPrefixParams struct {
+	Username string `db:"username" json:"username"`
+}
+
+func (q *Queries) FindUsernamesByPrefix(ctx context.Context, arg FindUsernamesByPrefixParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, FindUsernamesByPrefix, arg.Username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, err
+		}
+		items = append(items, username)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const GetUserByID = `-- name: GetUserByID :one

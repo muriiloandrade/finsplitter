@@ -19,4 +19,7 @@ type UserRepository interface {
 	UpdateUsername(ctx context.Context, id uuid.UUID, username string) error
 	// ExistsByLogtoUserID checks whether a user with the given Logto user ID exists.
 	ExistsByLogtoUserID(ctx context.Context, logtoUserID string) (bool, error)
+	// FindUsernamesByPrefix returns usernames that start with the given prefix.
+	// The prefix should include the trailing '%' wildcard for the LIKE query.
+	FindUsernamesByPrefix(ctx context.Context, prefix string) ([]string, error)
 }

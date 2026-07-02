@@ -25,8 +25,10 @@ func NewHandler(registerUC *auth.RegisterUseCase, meUC *auth.MeUseCase) *Handler
 // RegisterRequest is the body for POST /auth/register.
 type RegisterRequest struct {
 	Body struct {
-		Username string `json:"username" required:"true" maxLength:"100" doc:"Desired username"`
+		Name     string `json:"name" required:"true" maxLength:"255" doc:"Display name"`
+		Email    string `json:"email" required:"true" maxLength:"255" doc:"Email address"`
 		Password string `json:"password" required:"true" minLength:"8" maxLength:"128" doc:"Password (min 8 chars)"`
+		Username string `json:"username,omitempty" maxLength:"100" doc:"Desired username (auto-generated from name if omitted)"`
 	}
 }
 
@@ -42,6 +44,8 @@ type RegisterResponse struct {
 // POST /auth/register.
 func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
 	output, err := h.registerUC.Execute(ctx, auth.RegisterInput{
+		Name:     req.Body.Name,
+		Email:    req.Body.Email,
 		Username: req.Body.Username,
 		Password: req.Body.Password,
 	})

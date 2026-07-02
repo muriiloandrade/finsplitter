@@ -45,6 +45,8 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 		LogtoUserID: ptr(user.LogtoUserID),
 		Username:    user.Username,
 		Email:       user.Email,
+		Name:        user.Name,
+		PhoneNumber: ptrNonEmpty(user.PhoneNumber),
 	})
 	if err != nil {
 		logger.ErrorContext(ctx,
@@ -158,6 +160,11 @@ func (r *UserRepository) ExistsByLogtoUserID(ctx context.Context, logtoUserID st
 	return exists, nil
 }
 
+// FindUsernamesByPrefix returns usernames that start with the given LIKE pattern.
+func (r *UserRepository) FindUsernamesByPrefix(ctx context.Context, prefix string) ([]string, error) {
+	return r.sqlc.FindUsernamesByPrefix(ctx, sqlc.FindUsernamesByPrefixParams{Username: prefix})
+}
+
 // userRow is an internal aggregate that carries the fields needed to build a
 // domain User from any sqlc row type (GetUserByIDRow, GetUserByLogtoUserIDRow,
 // CreateUserRow — all share the same shape).
@@ -187,5 +194,13 @@ func mapUserRow(row userRow) *entity.User {
 
 // ptr returns a pointer to the given string.
 func ptr(s string) *string {
+	return &s
+}
+
+// ptrNonEmpty returns a pointer to s when s is non-empty, or nil otherwise.
+func ptrNonEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
 	return &s
 }
