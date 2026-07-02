@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/profile"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
@@ -21,30 +22,23 @@ func TestSetupUseCase_Execute_Success(t *testing.T) {
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
 		Return(false, nil)
 	userRepo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		Return(nil).
+		Create(mock.Anything, "logto_user_1").
+		Return(&entity.User{ID: uuid.Must(uuid.NewV4()), LogtoUserID: "logto_user_1"}, nil).
 		Once()
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "john",
-	})
+	output, err := uc.Execute(context.Background(), "logto_user_1")
 
 	require.NoError(t, err)
 	require.NotNil(t, output)
-	assert.Equal(t, "john", output.Username)
 	assert.NotEmpty(t, output.UserID)
 }
 
-func TestSetupUseCase_Execute_EmptyUsername(t *testing.T) {
+func TestSetupUseCase_Execute_EmptyLogtoUserID(t *testing.T) {
 	userRepo := ports.NewMockUserRepository(t)
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "",
-	})
+	output, err := uc.Execute(context.Background(), "")
 
 	require.Error(t, err)
 	require.ErrorIs(t, err, errs.ErrInvalidInput)
@@ -59,10 +53,7 @@ func TestSetupUseCase_Execute_AlreadyExists(t *testing.T) {
 		Return(true, nil)
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "john",
-	})
+	output, err := uc.Execute(context.Background(), "logto_user_1")
 
 	require.Error(t, err)
 	require.ErrorIs(t, err, errs.ErrDuplicate)
@@ -77,10 +68,7 @@ func TestSetupUseCase_Execute_ExistsError(t *testing.T) {
 		Return(false, errors.New("db unavailable"))
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "john",
-	})
+	output, err := uc.Execute(context.Background(), "logto_user_1")
 
 	require.Error(t, err)
 	require.Nil(t, output)
@@ -93,17 +81,12 @@ func TestSetupUseCase_Execute_CreateDuplicate(t *testing.T) {
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
 		Return(false, nil)
 	userRepo.EXPECT().
-		Create(mock.Anything, mock.MatchedBy(func(u *entity.User) bool {
-			return u.LogtoUserID == "logto_user_1" && u.Username == "john"
-		})).
-		Return(errs.ErrDuplicate).
+		Create(mock.Anything, "logto_user_1").
+		Return(nil, errs.ErrDuplicate).
 		Once()
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "john",
-	})
+	output, err := uc.Execute(context.Background(), "logto_user_1")
 
 	require.Error(t, err)
 	require.ErrorIs(t, err, errs.ErrDuplicate)
@@ -117,15 +100,12 @@ func TestSetupUseCase_Execute_CreateError(t *testing.T) {
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
 		Return(false, nil)
 	userRepo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		Return(errors.New("db unavailable")).
+		Create(mock.Anything, "logto_user_1").
+		Return(nil, errors.New("db unavailable")).
 		Once()
 
 	uc := profile.NewSetupUseCase(userRepo)
-	output, err := uc.Execute(context.Background(), profile.SetupInput{
-		LogtoUserID: "logto_user_1",
-		Username:    "john",
-	})
+	output, err := uc.Execute(context.Background(), "logto_user_1")
 
 	require.Error(t, err)
 	require.Nil(t, output)
