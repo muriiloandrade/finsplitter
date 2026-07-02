@@ -106,7 +106,7 @@ func main() {
 			ReadinessHandler: v1.ReadinessHandler(),
 			CardBrandAPI:     newCardBrandAPI(pgTxManager),
 			AuthAPI:          newAuthAPI(userRepo, logtoM2M),
-			ProfileAPI:       newProfileAPI(userRepo),
+			ProfileAPI:       newProfileAPI(userRepo, logtoM2M),
 			AuthMiddleware:   newAuthMiddleware(logger, cfg, userRepo, redisClient),
 			Logger:           logger,
 		}
@@ -277,8 +277,8 @@ func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandl
 }
 
 // newProfileAPI creates the profile handler API (setup).
-func newProfileAPI(userRepo ports.UserRepository) profileHandler.API {
-	return profileHandler.NewAPI(userRepo)
+func newProfileAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) profileHandler.API {
+	return profileHandler.NewAPI(userRepo, logtoM2M)
 }
 
 func newCardBrandAPI(pgTxManager *postgres.TxManager) cbHandler.API {

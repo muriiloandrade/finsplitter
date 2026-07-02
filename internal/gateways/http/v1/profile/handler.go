@@ -25,7 +25,9 @@ func NewHandler(setupUC *profile.SetupUseCase) *Handler {
 // SetupRequest is the body for POST /profile/setup.
 type SetupRequest struct {
 	Body struct {
-		Username string `json:"username" required:"true" maxLength:"100" doc:"Desired display name"`
+		Username string `json:"username" required:"true" maxLength:"100" doc:"Desired username"`
+		Phone    string `json:"phone,omitempty" maxLength:"20" doc:"Phone number"`
+		Picture  string `json:"picture,omitempty" maxLength:"2048" doc:"Avatar URL"`
 	}
 }
 
@@ -39,13 +41,18 @@ type SetupResponse struct {
 
 // Setup handles profile setup for first-time users.
 // POST /profile/setup.
-func (h *Handler) Setup(ctx context.Context, _ *SetupRequest) (*SetupResponse, error) {
+func (h *Handler) Setup(ctx context.Context, req *SetupRequest) (*SetupResponse, error) {
 	claims := auth.GetUserClaims(ctx)
 	if claims == nil {
 		return nil, huma.Error401Unauthorized("unauthenticated")
 	}
 
-	output, err := h.setupUC.Execute(ctx, claims.Sub)
+	output, err := h.setupUC.Execute(ctx, profile.SetupInput{
+		LogtoUserID: claims.Sub,
+		Username:    req.Body.Username,
+		Phone:       req.Body.Phone,
+		Picture:     req.Body.Picture,
+	})
 	if err != nil {
 		if errors.Is(err, errs.ErrDuplicate) {
 			return nil, huma.Error409Conflict("profile already set up")

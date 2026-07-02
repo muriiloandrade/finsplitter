@@ -7,6 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/profile"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
 // HumaHandler defines the function signature for Huma handlers.
@@ -19,8 +20,8 @@ type API struct {
 }
 
 // NewAPI creates a profile API from the given dependencies.
-func NewAPI(userRepo ports.UserRepository) API {
-	setupUC := profile.NewSetupUseCase(userRepo)
+func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
+	setupUC := profile.NewSetupUseCase(userRepo, logtoClient)
 	h := NewHandler(setupUC)
 
 	return API{
