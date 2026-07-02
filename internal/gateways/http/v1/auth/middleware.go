@@ -99,19 +99,18 @@ type Middleware struct {
 // When the cache client is nil, each request fetches the JWKS from Logto
 // directly (no caching).
 func NewMiddleware(
-	oidcEndpoint, appClientID string,
+	oidcEndpoint, expectedIssuer, appClientID string,
 	userRepo ports.UserRepository,
 	logger *slog.Logger,
 	cacheClient *cache.Client,
 ) *Middleware {
-	base := strings.TrimRight(oidcEndpoint, "/")
 	return &Middleware{
 		oidcEndpoint: oidcEndpoint,
 		appClientID:  appClientID,
 		userRepo:     userRepo,
 		logger:       logger,
-		jwksURL:      base + "/jwks",
-		issuer:       base,
+		jwksURL:      strings.TrimRight(oidcEndpoint, "/") + "/jwks",
+		issuer:       strings.TrimRight(expectedIssuer, "/"),
 		jwkClient:    jwkfetch.NewClient(),
 		cache:        cacheClient,
 	}

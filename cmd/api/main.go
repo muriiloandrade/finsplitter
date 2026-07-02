@@ -246,10 +246,11 @@ func newRedisClient(ctx context.Context, logger *slog.Logger, cfg *config.Config
 
 func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
 	return logto.NewClient(logto.Config{
-		OIDCEndpoint:      cfg.Logto.OIDCEndpoint,
-		ManagementBaseURL: cfg.Logto.ManagementBaseURL,
-		ClientID:          cfg.Logto.MgmtClientID,
-		ClientSecret:      cfg.Logto.MgmtClientSecret,
+		OIDCEndpoint:          cfg.Logto.OIDCEndpoint,
+		ManagementBaseURL:     cfg.Logto.ManagementBaseURL,
+		ManagementAPIResource: cfg.Logto.MgmtAPIResource,
+		ClientID:              cfg.Logto.MgmtClientID,
+		ClientSecret:          cfg.Logto.MgmtClientSecret,
 	}, logto.WithLogger(logger))
 }
 
@@ -262,6 +263,7 @@ func newAuthMiddleware(
 ) *authHandler.Middleware {
 	return authHandler.NewMiddleware(
 		cfg.Logto.OIDCEndpoint,
+		cfg.Logto.OIDCIssuer,
 		cfg.Logto.AppClientID,
 		userRepo,
 		logger,

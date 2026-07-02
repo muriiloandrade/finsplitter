@@ -57,9 +57,11 @@ type Redis struct {
 
 type Logto struct {
 	OIDCEndpoint      string `conf:"env:LOGTO_OIDC_ENDPOINT,default:http://localhost:3001/oidc"`
+	OIDCIssuer        string `conf:"env:LOGTO_ISSUER,default:http://localhost:3001/oidc"`
 	ManagementBaseURL string `conf:"env:LOGTO_ENDPOINT,default:http://localhost:3001"`
 	MgmtClientID      string `conf:"env:LOGTO_MGMT_CLIENT_ID"`
 	MgmtClientSecret  string `conf:"env:LOGTO_MGMT_CLIENT_SECRET"`
+	MgmtAPIResource   string `conf:"env:LOGTO_MGMT_API_RESOURCE"`
 	AppClientID       string `conf:"env:LOGTO_APP_CLIENT_ID"`
 	// AppClientSecret is reserved for future use (e.g. token refresh via
 	// confidential client grant). It is not currently consumed by any code.

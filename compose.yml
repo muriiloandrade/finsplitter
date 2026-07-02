@@ -19,8 +19,9 @@ services:
         environment:
             - GOEXPERIMENT=jsonv2
             - REDIS_URL=redis://valkey:6379/0
-            - LOGTO_ENDPOINT=http://host.docker.internal:3001
-            - LOGTO_OIDC_ENDPOINT=http://host.docker.internal:3001/oidc
+            - LOGTO_ENDPOINT=http://logto:3001
+            - LOGTO_OIDC_ENDPOINT=http://logto:3001/oidc
+            - LOGTO_ISSUER=http://localhost:3001/oidc
         extra_hosts:
             - "host.docker.internal:host-gateway"
         ports:
