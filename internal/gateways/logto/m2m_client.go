@@ -170,6 +170,8 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 type CreateUserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
 }
 
 // CreateUserResponse is the response from creating a user.
@@ -179,7 +181,7 @@ type CreateUserResponse struct {
 }
 
 // CreateUser creates a new user in Logto via the Management API.
-func (c *Client) CreateUser(ctx context.Context, username, password string) (*CreateUserResponse, error) {
+func (c *Client) CreateUser(ctx context.Context, username, password, name, email string) (*CreateUserResponse, error) {
 	token, err := c.getToken(ctx)
 	if err != nil {
 		return nil, err
@@ -188,6 +190,8 @@ func (c *Client) CreateUser(ctx context.Context, username, password string) (*Cr
 	payload := CreateUserRequest{
 		Username: username,
 		Password: password,
+		Name:     name,
+		Email:    email,
 	}
 
 	var result CreateUserResponse
