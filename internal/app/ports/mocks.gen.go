@@ -515,20 +515,31 @@ func (_m *MockUserRepository) EXPECT() *MockUserRepository_Expecter {
 }
 
 // Create provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) Create(ctx context.Context, user *entity.User) error {
-	ret := _mock.Called(ctx, user)
+func (_mock *MockUserRepository) Create(ctx context.Context, logtoUserID string) (*entity.User, error) {
+	ret := _mock.Called(ctx, logtoUserID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *entity.User) error); ok {
-		r0 = returnFunc(ctx, user)
-	} else {
-		r0 = ret.Error(0)
+	var r0 *entity.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entity.User, error)); ok {
+		return returnFunc(ctx, logtoUserID)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entity.User); ok {
+		r0 = returnFunc(ctx, logtoUserID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, logtoUserID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockUserRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
@@ -538,20 +549,20 @@ type MockUserRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - user *entity.User
-func (_e *MockUserRepository_Expecter) Create(ctx any, user any) *MockUserRepository_Create_Call {
-	return &MockUserRepository_Create_Call{Call: _e.mock.On("Create", ctx, user)}
+//   - logtoUserID string
+func (_e *MockUserRepository_Expecter) Create(ctx any, logtoUserID any) *MockUserRepository_Create_Call {
+	return &MockUserRepository_Create_Call{Call: _e.mock.On("Create", ctx, logtoUserID)}
 }
 
-func (_c *MockUserRepository_Create_Call) Run(run func(ctx context.Context, user *entity.User)) *MockUserRepository_Create_Call {
+func (_c *MockUserRepository_Create_Call) Run(run func(ctx context.Context, logtoUserID string)) *MockUserRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *entity.User
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*entity.User)
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
@@ -561,12 +572,12 @@ func (_c *MockUserRepository_Create_Call) Run(run func(ctx context.Context, user
 	return _c
 }
 
-func (_c *MockUserRepository_Create_Call) Return(err error) *MockUserRepository_Create_Call {
-	_c.Call.Return(err)
+func (_c *MockUserRepository_Create_Call) Return(user *entity.User, err error) *MockUserRepository_Create_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *MockUserRepository_Create_Call) RunAndReturn(run func(ctx context.Context, user *entity.User) error) *MockUserRepository_Create_Call {
+func (_c *MockUserRepository_Create_Call) RunAndReturn(run func(ctx context.Context, logtoUserID string) (*entity.User, error)) *MockUserRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -633,74 +644,6 @@ func (_c *MockUserRepository_ExistsByLogtoUserID_Call) Return(b bool, err error)
 }
 
 func (_c *MockUserRepository_ExistsByLogtoUserID_Call) RunAndReturn(run func(ctx context.Context, logtoUserID string) (bool, error)) *MockUserRepository_ExistsByLogtoUserID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindUsernamesByPrefix provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) FindUsernamesByPrefix(ctx context.Context, prefix string) ([]string, error) {
-	ret := _mock.Called(ctx, prefix)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindUsernamesByPrefix")
-	}
-
-	var r0 []string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
-		return returnFunc(ctx, prefix)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
-		r0 = returnFunc(ctx, prefix)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, prefix)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_FindUsernamesByPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUsernamesByPrefix'
-type MockUserRepository_FindUsernamesByPrefix_Call struct {
-	*mock.Call
-}
-
-// FindUsernamesByPrefix is a helper method to define mock.On call
-//   - ctx context.Context
-//   - prefix string
-func (_e *MockUserRepository_Expecter) FindUsernamesByPrefix(ctx any, prefix any) *MockUserRepository_FindUsernamesByPrefix_Call {
-	return &MockUserRepository_FindUsernamesByPrefix_Call{Call: _e.mock.On("FindUsernamesByPrefix", ctx, prefix)}
-}
-
-func (_c *MockUserRepository_FindUsernamesByPrefix_Call) Run(run func(ctx context.Context, prefix string)) *MockUserRepository_FindUsernamesByPrefix_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_FindUsernamesByPrefix_Call) Return(strings []string, err error) *MockUserRepository_FindUsernamesByPrefix_Call {
-	_c.Call.Return(strings, err)
-	return _c
-}
-
-func (_c *MockUserRepository_FindUsernamesByPrefix_Call) RunAndReturn(run func(ctx context.Context, prefix string) ([]string, error)) *MockUserRepository_FindUsernamesByPrefix_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -837,69 +780,6 @@ func (_c *MockUserRepository_GetByLogtoUserID_Call) Return(user *entity.User, er
 }
 
 func (_c *MockUserRepository_GetByLogtoUserID_Call) RunAndReturn(run func(ctx context.Context, logtoUserID string) (*entity.User, error)) *MockUserRepository_GetByLogtoUserID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateUsername provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) UpdateUsername(ctx context.Context, id uuid.UUID, username string) error {
-	ret := _mock.Called(ctx, id, username)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateUsername")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
-		r0 = returnFunc(ctx, id, username)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockUserRepository_UpdateUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUsername'
-type MockUserRepository_UpdateUsername_Call struct {
-	*mock.Call
-}
-
-// UpdateUsername is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uuid.UUID
-//   - username string
-func (_e *MockUserRepository_Expecter) UpdateUsername(ctx any, id any, username any) *MockUserRepository_UpdateUsername_Call {
-	return &MockUserRepository_UpdateUsername_Call{Call: _e.mock.On("UpdateUsername", ctx, id, username)}
-}
-
-func (_c *MockUserRepository_UpdateUsername_Call) Run(run func(ctx context.Context, id uuid.UUID, username string)) *MockUserRepository_UpdateUsername_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_UpdateUsername_Call) Return(err error) *MockUserRepository_UpdateUsername_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockUserRepository_UpdateUsername_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, username string) error) *MockUserRepository_UpdateUsername_Call {
 	_c.Call.Return(run)
 	return _c
 }

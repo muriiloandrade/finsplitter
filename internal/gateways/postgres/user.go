@@ -22,7 +22,6 @@ const (
 	createUserOp       = "postgres.UserRepository.Create"
 	getUserByIDOp      = "postgres.UserRepository.GetByID"
 	getUserByLogtoIDOp = "postgres.UserRepository.GetByLogtoUserID"
-	updateUsernameOp   = "postgres.UserRepository.UpdateUsername"
 	existsByLogtoIDOp  = "postgres.UserRepository.ExistsByLogtoUserID"
 )
 
@@ -38,15 +37,11 @@ func NewUserRepository(db *TxManager) ports.UserRepository {
 	}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
+func (r *UserRepository) Create(ctx context.Context, logtoUserID string) (*entity.User, error) {
 	logger := slogctx.FromCtx(ctx)
 
 	row, err := r.sqlc.CreateUser(ctx, sqlc.CreateUserParams{
-		LogtoUserID: ptr(user.LogtoUserID),
-		Username:    user.Username,
-		Email:       user.Email,
-		Name:        user.Name,
-		PhoneNumber: ptrNonEmpty(user.PhoneNumber),
+		LogtoUserID: ptr(logtoUserID),
 	})
 	if err != nil {
 		logger.ErrorContext(ctx,
@@ -57,18 +52,12 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			return errs.ErrDuplicate
+			return nil, errs.ErrDuplicate
 		}
-		return fmt.Errorf("create user: %w", err)
+		return nil, fmt.Errorf("create user: %w", err)
 	}
 
-	user.ID = row.ID
-	user.CreatedDate = row.CreatedDate.Time
-	user.LastModifiedDate = row.LastModifiedDate.Time
-	if row.Email != "" {
-		user.Email = row.Email
-	}
-	return nil
+	return newUserFromRow(row.ID, row.LogtoUserID, row.CreatedDate, row.LastModifiedDate), nil
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
@@ -87,14 +76,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 		return nil, fmt.Errorf("get user by id: %w", err)
 	}
 
-	return mapUserRow(userRow{
-		ID:               row.ID,
-		Username:         row.Username,
-		Email:            row.Email,
-		LogtoUserID:      row.LogtoUserID,
-		CreatedDate:      row.CreatedDate,
-		LastModifiedDate: row.LastModifiedDate,
-	}), nil
+	return newUserFromRow(row.ID, row.LogtoUserID, row.CreatedDate, row.LastModifiedDate), nil
 }
 
 func (r *UserRepository) GetByLogtoUserID(ctx context.Context, logtoUserID string) (*entity.User, error) {
@@ -115,32 +97,7 @@ func (r *UserRepository) GetByLogtoUserID(ctx context.Context, logtoUserID strin
 		return nil, fmt.Errorf("get user by logto_user_id: %w", err)
 	}
 
-	return mapUserRow(userRow{
-		ID:               row.ID,
-		Username:         row.Username,
-		Email:            row.Email,
-		LogtoUserID:      row.LogtoUserID,
-		CreatedDate:      row.CreatedDate,
-		LastModifiedDate: row.LastModifiedDate,
-	}), nil
-}
-
-func (r *UserRepository) UpdateUsername(ctx context.Context, id uuid.UUID, username string) error {
-	logger := slogctx.FromCtx(ctx)
-
-	err := r.sqlc.UpdateUsername(ctx, sqlc.UpdateUsernameParams{
-		ID:       id,
-		Username: username,
-	})
-	if err != nil {
-		logger.ErrorContext(ctx,
-			"Failed to update username",
-			slog.String("operation", updateUsernameOp),
-			slog.Any("error", err),
-		)
-		return fmt.Errorf("update username: %w", err)
-	}
-	return nil
+	return newUserFromRow(row.ID, row.LogtoUserID, row.CreatedDate, row.LastModifiedDate), nil
 }
 
 func (r *UserRepository) ExistsByLogtoUserID(ctx context.Context, logtoUserID string) (bool, error) {
@@ -160,47 +117,22 @@ func (r *UserRepository) ExistsByLogtoUserID(ctx context.Context, logtoUserID st
 	return exists, nil
 }
 
-// FindUsernamesByPrefix returns usernames that start with the given LIKE pattern.
-func (r *UserRepository) FindUsernamesByPrefix(ctx context.Context, prefix string) ([]string, error) {
-	return r.sqlc.FindUsernamesByPrefix(ctx, sqlc.FindUsernamesByPrefixParams{Username: prefix})
-}
-
-// userRow is an internal aggregate that carries the fields needed to build a
-// domain User from any sqlc row type (GetUserByIDRow, GetUserByLogtoUserIDRow,
-// CreateUserRow — all share the same shape).
-type userRow struct {
-	ID               uuid.UUID
-	Username         string
-	Email            string
-	LogtoUserID      *string
-	CreatedDate      pgtype.Timestamptz
-	LastModifiedDate pgtype.Timestamptz
-}
-
-// mapUserRow maps a userRow aggregate to the domain User entity.
-func mapUserRow(row userRow) *entity.User {
+// newUserFromRow builds a domain User from the fields shared by all sqlc user row types.
+func newUserFromRow(id uuid.UUID, logtoUserID *string, createdDate, lastModifiedDate pgtype.Timestamptz) *entity.User {
 	user := &entity.User{
-		ID:               row.ID,
-		Username:         row.Username,
-		Email:            row.Email,
-		CreatedDate:      row.CreatedDate.Time,
-		LastModifiedDate: row.LastModifiedDate.Time,
+		ID:          id,
+		CreatedDate: createdDate.Time,
 	}
-	if row.LogtoUserID != nil {
-		user.LogtoUserID = *row.LogtoUserID
+	if lastModifiedDate.Valid {
+		user.LastModifiedDate = lastModifiedDate.Time
+	}
+	if logtoUserID != nil {
+		user.LogtoUserID = *logtoUserID
 	}
 	return user
 }
 
 // ptr returns a pointer to the given string.
 func ptr(s string) *string {
-	return &s
-}
-
-// ptrNonEmpty returns a pointer to s when s is non-empty, or nil otherwise.
-func ptrNonEmpty(s string) *string {
-	if s == "" {
-		return nil
-	}
 	return &s
 }
