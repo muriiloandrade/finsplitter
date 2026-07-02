@@ -69,13 +69,17 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 type MeResponse struct {
 	Body struct {
 		ID         string `json:"id,omitempty" doc:"Finsplitter user ID"`
-		Username   string `json:"username,omitempty" doc:"User display name"`
-		Email      string `json:"email,omitempty" doc:"User email"`
+		Username   string `json:"username,omitempty" doc:"Username (from Logto)"`
+		Email      string `json:"email,omitempty" doc:"Email (from Logto)"`
+		Name       string `json:"name,omitempty" doc:"Display name (from Logto)"`
+		Phone      string `json:"phone,omitempty" doc:"Phone number (from Logto)"`
+		Picture    string `json:"picture,omitempty" doc:"Avatar URL (from Logto)"`
 		NeedsSetup bool   `json:"needs_setup" doc:"Whether the user needs to complete profile setup"`
 	}
 }
 
 // Me returns the current user's auth status and profile info.
+// Profile data (username, email) is read from JWT claims, not the local DB.
 // GET /auth/me.
 func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 	claims := GetUserClaims(ctx)
@@ -87,7 +91,6 @@ func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 
 	output, err := h.meUC.Execute(ctx, auth.MeInput{
 		LogtoUserID: claims.Sub,
-		Email:       claims.Email,
 	})
 	if err != nil {
 		return nil, huma.Error500InternalServerError("failed to get user info")
@@ -95,8 +98,11 @@ func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 
 	resp := &MeResponse{}
 	resp.Body.ID = output.ID
-	resp.Body.Username = output.Username
-	resp.Body.Email = output.Email
+	resp.Body.Username = claims.Username
+	resp.Body.Email = claims.Email
+	resp.Body.Name = claims.Name
+	resp.Body.Phone = claims.Phone
+	resp.Body.Picture = claims.Picture
 	resp.Body.NeedsSetup = output.NeedsSetup
 	return resp, nil
 }
