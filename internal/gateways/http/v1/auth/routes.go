@@ -17,17 +17,20 @@ type HumaHandler[I, O any] func(context.Context, *I) (*O, error)
 type API struct {
 	RegisterHandler HumaHandler[RegisterRequest, RegisterResponse]
 	MeHandler       HumaHandler[struct{}, MeResponse]
+	SignInHandler   HumaHandler[SignInRequest, SignInResponse]
 }
 
 // NewAPI creates an auth API from the given dependencies.
 func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) API {
 	registerUC := auth.NewRegisterUseCase(userRepo, logtoM2M)
 	meUC := auth.NewMeUseCase(userRepo)
-	h := NewHandler(registerUC, meUC)
+	signInUC := auth.NewSignInUseCase(logtoM2M)
+	h := NewHandler(registerUC, meUC, signInUC)
 
 	return API{
 		RegisterHandler: h.Register,
 		MeHandler:       h.Me,
+		SignInHandler:   h.SignIn,
 	}
 }
 
@@ -54,4 +57,15 @@ func (a API) RegisterRoutes(api huma.API) {
 			http.StatusForbidden,
 		},
 	}, a.MeHandler)
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		Path:        "/auth/sign-in",
+		Description: "Sign in with email and password, returns OIDC tokens",
+		Tags:        []string{"Auth"},
+		Errors: []int{
+			http.StatusUnauthorized,
+			http.StatusInternalServerError,
+		},
+	}, a.SignInHandler)
 }

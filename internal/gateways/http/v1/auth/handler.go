@@ -12,15 +12,21 @@ import (
 type Handler struct {
 	registerUC *auth.RegisterUseCase
 	meUC       *auth.MeUseCase
+	signInUC   *auth.SignInUseCase
 }
 
 // NewHandler creates a new auth Handler.
-func NewHandler(registerUC *auth.RegisterUseCase, meUC *auth.MeUseCase) *Handler {
+func NewHandler(registerUC *auth.RegisterUseCase, meUC *auth.MeUseCase, signInUC *auth.SignInUseCase) *Handler {
 	return &Handler{
 		registerUC: registerUC,
 		meUC:       meUC,
+		signInUC:   signInUC,
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Register
+// ---------------------------------------------------------------------------
 
 // RegisterRequest is the body for POST /auth/register.
 type RegisterRequest struct {
@@ -65,6 +71,10 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 	return resp, nil
 }
 
+// ---------------------------------------------------------------------------
+// Me
+// ---------------------------------------------------------------------------
+
 // MeResponse is the response for GET /auth/me.
 type MeResponse struct {
 	Body struct {
@@ -104,5 +114,49 @@ func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 	resp.Body.Phone = claims.Phone
 	resp.Body.Picture = claims.Picture
 	resp.Body.NeedsSetup = output.NeedsSetup
+	return resp, nil
+}
+
+// ---------------------------------------------------------------------------
+// SignIn
+// ---------------------------------------------------------------------------
+
+// SignInRequest is the body for POST /auth/sign-in.
+type SignInRequest struct {
+	Body struct {
+		Email    string `json:"email" required:"true" maxLength:"255" doc:"Email address"`
+		Password string `json:"password" required:"true" minLength:"1" maxLength:"128" doc:"Account password"`
+	}
+}
+
+// SignInResponse is the response for POST /auth/sign-in.
+type SignInResponse struct {
+	Body struct {
+		AccessToken  string `json:"access_token" doc:"OIDC access token for API authorization"`
+		IDToken      string `json:"id_token" doc:"OIDC ID token with user claims"`
+		RefreshToken string `json:"refresh_token,omitempty" doc:"OIDC refresh token for token renewal"`
+		ExpiresIn    int    `json:"expires_in" doc:"Token lifetime in seconds"`
+	}
+}
+
+// SignIn authenticates a user and returns OIDC tokens via Logto's ROPC grant.
+// POST /auth/sign-in.
+func (h *Handler) SignIn(ctx context.Context, req *SignInRequest) (*SignInResponse, error) {
+	output, err := h.signInUC.Execute(ctx, auth.SignInInput{
+		Email:    req.Body.Email,
+		Password: req.Body.Password,
+	})
+	if err != nil {
+		if errors.Is(err, auth.ErrSignInInvalidCredentials) {
+			return nil, huma.Error401Unauthorized("invalid email or password")
+		}
+		return nil, huma.Error500InternalServerError("sign-in failed")
+	}
+
+	resp := &SignInResponse{}
+	resp.Body.AccessToken = output.AccessToken
+	resp.Body.IDToken = output.IDToken
+	resp.Body.RefreshToken = output.RefreshToken
+	resp.Body.ExpiresIn = output.ExpiresIn
 	return resp, nil
 }

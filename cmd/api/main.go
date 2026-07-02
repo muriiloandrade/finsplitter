@@ -251,6 +251,8 @@ func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
 		ManagementAPIResource: cfg.Logto.MgmtAPIResource,
 		ClientID:              cfg.Logto.MgmtClientID,
 		ClientSecret:          cfg.Logto.MgmtClientSecret,
+		AppClientID:           cfg.Logto.AppClientID,
+		AppClientSecret:       cfg.Logto.AppClientSecret,
 	}, logto.WithLogger(logger))
 }
 

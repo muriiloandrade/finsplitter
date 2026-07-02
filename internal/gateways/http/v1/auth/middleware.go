@@ -45,6 +45,7 @@ var (
 	// skipExact are exact paths that do NOT require authentication.
 	skipExact = []string{
 		"/auth/register",
+		"/auth/sign-in",
 	}
 
 	// optionalExact are exact paths that do NOT require authentication
