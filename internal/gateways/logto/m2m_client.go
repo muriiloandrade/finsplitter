@@ -171,7 +171,7 @@ type CreateUserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Name     string `json:"name,omitempty"`
-	Email    string `json:"email,omitempty"`
+	Email    string `json:"primaryEmail,omitempty"`
 }
 
 // CreateUserResponse is the response from creating a user.
@@ -213,5 +213,47 @@ func (c *Client) CreateUser(ctx context.Context, username, password, name, email
 		return nil, ErrM2MUnauthorized
 	default:
 		return nil, fmt.Errorf("create user: status %d", resp.StatusCode())
+	}
+}
+
+// UpdateUserRequest is the body for updating a user via Management API.
+// Only non-zero fields are sent — Logto ignores omitted fields.
+type UpdateUserRequest struct {
+	Username string `json:"username,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Phone    string `json:"primaryPhone,omitempty"`
+	Avatar   string `json:"avatar,omitempty"`
+}
+
+// UpdateUser updates a user's profile in Logto via the Management API.
+func (c *Client) UpdateUser(ctx context.Context, userID, username, phone, picture string) error {
+	token, err := c.getToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	payload := UpdateUserRequest{
+		Username: username,
+		Phone:    phone,
+		Avatar:   picture,
+	}
+
+	resp, err := c.httpClient.R(ctx).
+		SetAuthToken(token).
+		SetBody(payload).
+		Patch("/users/" + userID)
+	if err != nil {
+		return fmt.Errorf("update user request: %w", err)
+	}
+
+	switch resp.StatusCode() {
+	case http.StatusOK, http.StatusNoContent:
+		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("%w: user %s", ErrUserNotFound, userID)
+	case http.StatusUnauthorized:
+		return ErrM2MUnauthorized
+	default:
+		return fmt.Errorf("update user: status %d", resp.StatusCode())
 	}
 }
