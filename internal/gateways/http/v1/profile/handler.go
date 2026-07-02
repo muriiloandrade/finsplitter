@@ -26,6 +26,7 @@ func NewHandler(setupUC *profile.SetupUseCase) *Handler {
 type SetupRequest struct {
 	Body struct {
 		Username string `json:"username" required:"true" maxLength:"100" doc:"Desired username"`
+		Name     string `json:"name,omitempty" maxLength:"200" doc:"Display name"`
 		Phone    string `json:"phone,omitempty" maxLength:"20" doc:"Phone number"`
 		Picture  string `json:"picture,omitempty" maxLength:"2048" doc:"Avatar URL"`
 	}
@@ -50,6 +51,7 @@ func (h *Handler) Setup(ctx context.Context, req *SetupRequest) (*SetupResponse,
 	output, err := h.setupUC.Execute(ctx, profile.SetupInput{
 		LogtoUserID: claims.Sub,
 		Username:    req.Body.Username,
+		Name:        req.Body.Name,
 		Phone:       req.Body.Phone,
 		Picture:     req.Body.Picture,
 	})

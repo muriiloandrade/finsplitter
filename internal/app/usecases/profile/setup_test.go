@@ -21,9 +21,9 @@ type mockLogtoUpdater struct {
 }
 
 func (m *mockLogtoUpdater) UpdateUser(
-	ctx context.Context, userID, username, phone, picture string,
+	ctx context.Context, userID, username, name, phone, picture string,
 ) error {
-	args := m.Called(ctx, userID, username, phone, picture)
+	args := m.Called(ctx, userID, username, name, phone, picture)
 	return args.Error(0)
 }
 
@@ -31,7 +31,7 @@ func TestSetupUseCase_Execute_Success(t *testing.T) {
 	userRepo := ports.NewMockUserRepository(t)
 	logtoClient := new(mockLogtoUpdater)
 
-	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "+551199999999", "https://example.com/avatar.jpg").
+	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "John Doe", "+551199999999", "https://example.com/avatar.jpg").
 		Return(nil)
 	userRepo.EXPECT().
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
@@ -45,6 +45,7 @@ func TestSetupUseCase_Execute_Success(t *testing.T) {
 	output, err := uc.Execute(context.Background(), profile.SetupInput{
 		LogtoUserID: "logto_user_1",
 		Username:    "john",
+		Name:        "John Doe",
 		Phone:       "+551199999999",
 		Picture:     "https://example.com/avatar.jpg",
 	})
@@ -109,7 +110,7 @@ func TestSetupUseCase_Execute_LogtoUpdateError(t *testing.T) {
 	userRepo := ports.NewMockUserRepository(t)
 	logtoClient := new(mockLogtoUpdater)
 
-	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "").
+	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "", "").
 		Return(errors.New("logto unavailable"))
 	userRepo.EXPECT().
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
@@ -129,7 +130,7 @@ func TestSetupUseCase_Execute_CreateDuplicate(t *testing.T) {
 	userRepo := ports.NewMockUserRepository(t)
 	logtoClient := new(mockLogtoUpdater)
 
-	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "").
+	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "", "").
 		Return(nil)
 	userRepo.EXPECT().
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").
@@ -143,6 +144,7 @@ func TestSetupUseCase_Execute_CreateDuplicate(t *testing.T) {
 	output, err := uc.Execute(context.Background(), profile.SetupInput{
 		LogtoUserID: "logto_user_1",
 		Username:    "john",
+		Name:        "",
 	})
 
 	require.Error(t, err)
@@ -154,7 +156,7 @@ func TestSetupUseCase_Execute_CreateError(t *testing.T) {
 	userRepo := ports.NewMockUserRepository(t)
 	logtoClient := new(mockLogtoUpdater)
 
-	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "").
+	logtoClient.On("UpdateUser", mock.Anything, "logto_user_1", "john", "", "", "").
 		Return(nil)
 	userRepo.EXPECT().
 		ExistsByLogtoUserID(mock.Anything, "logto_user_1").

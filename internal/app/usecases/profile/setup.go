@@ -12,13 +12,14 @@ import (
 // LogtoUserUpdater updates user profile fields in Logto via the Management API.
 // Satisfied by *logto.Client in production.
 type LogtoUserUpdater interface {
-	UpdateUser(ctx context.Context, userID, username, phone, picture string) error
+	UpdateUser(ctx context.Context, userID, username, name, phone, picture string) error
 }
 
 // SetupInput carries the data needed to complete profile setup.
 type SetupInput struct {
 	LogtoUserID string
 	Username    string
+	Name        string
 	Phone       string
 	Picture     string
 }
@@ -64,6 +65,7 @@ func (uc *SetupUseCase) Execute(ctx context.Context, input SetupInput) (*SetupOu
 		ctx,
 		input.LogtoUserID,
 		input.Username,
+		input.Name,
 		input.Phone,
 		input.Picture,
 	); updateErr != nil {

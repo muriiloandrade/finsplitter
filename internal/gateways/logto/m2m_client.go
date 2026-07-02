@@ -226,7 +226,7 @@ type UpdateUserRequest struct {
 }
 
 // UpdateUser updates a user's profile in Logto via the Management API.
-func (c *Client) UpdateUser(ctx context.Context, userID, username, phone, picture string) error {
+func (c *Client) UpdateUser(ctx context.Context, userID, username, name, phone, picture string) error {
 	token, err := c.getToken(ctx)
 	if err != nil {
 		return err
@@ -234,6 +234,7 @@ func (c *Client) UpdateUser(ctx context.Context, userID, username, phone, pictur
 
 	payload := UpdateUserRequest{
 		Username: username,
+		Name:     name,
 		Phone:    phone,
 		Avatar:   picture,
 	}
