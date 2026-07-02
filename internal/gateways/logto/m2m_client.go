@@ -13,10 +13,11 @@ import (
 
 // Config holds Logto M2M client configuration.
 type Config struct {
-	OIDCEndpoint      string
-	ManagementBaseURL string
-	ClientID          string
-	ClientSecret      string
+	OIDCEndpoint          string
+	ManagementBaseURL     string
+	ManagementAPIResource string
+	ClientID              string
+	ClientSecret          string
 }
 
 // cachedToken holds an access token with its expiry.
@@ -124,9 +125,15 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 		return c.token.accessToken, nil
 	}
 
+	resource := c.cfg.ManagementAPIResource
+	if resource == "" {
+		resource = c.cfg.ManagementBaseURL + "/api"
+	}
+
 	formData := map[string]string{
 		"grant_type":    "client_credentials",
-		"resource":      c.cfg.ManagementBaseURL + "/api",
+		"resource":      resource,
+		"scope":         "all",
 		"client_id":     c.cfg.ClientID,
 		"client_secret": c.cfg.ClientSecret,
 	}
