@@ -14,49 +14,29 @@ import (
 
 const CreateUser = `-- name: CreateUser :one
 INSERT INTO "user" (
-    logto_user_id, username, email, name, phone_number, created_date, last_modified_date
+    logto_user_id, created_date, last_modified_date
 ) VALUES (
-    $1, $2, $3, $4, $5, NOW(), NOW()
+    $1, NOW(), NOW()
 )
-RETURNING id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date
+RETURNING id, logto_user_id, created_date, last_modified_date
 `
 
 type CreateUserParams struct {
 	LogtoUserID *string `db:"logto_user_id" json:"logtoUserId"`
-	Username    string  `db:"username" json:"username"`
-	Email       string  `db:"email" json:"email"`
-	Name        string  `db:"name" json:"name"`
-	PhoneNumber *string `db:"phone_number" json:"phoneNumber"`
 }
 
 type CreateUserRow struct {
 	ID               uuid.UUID          `db:"id" json:"id"`
-	Name             string             `db:"name" json:"name"`
-	Email            string             `db:"email" json:"email"`
-	PhoneNumber      *string            `db:"phone_number" json:"phoneNumber"`
-	Username         string             `db:"username" json:"username"`
-	PasswordHash     *string            `db:"password_hash" json:"passwordHash"`
 	LogtoUserID      *string            `db:"logto_user_id" json:"logtoUserId"`
 	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
 	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRow(ctx, CreateUser,
-		arg.LogtoUserID,
-		arg.Username,
-		arg.Email,
-		arg.Name,
-		arg.PhoneNumber,
-	)
+	row := q.db.QueryRow(ctx, CreateUser, arg.LogtoUserID)
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
-		&i.Email,
-		&i.PhoneNumber,
-		&i.Username,
-		&i.PasswordHash,
 		&i.LogtoUserID,
 		&i.CreatedDate,
 		&i.LastModifiedDate,
@@ -79,36 +59,8 @@ func (q *Queries) ExistsByLogtoUserID(ctx context.Context, arg ExistsByLogtoUser
 	return exists, err
 }
 
-const FindUsernamesByPrefix = `-- name: FindUsernamesByPrefix :many
-SELECT username FROM "user" WHERE username LIKE $1
-`
-
-type FindUsernamesByPrefixParams struct {
-	Username string `db:"username" json:"username"`
-}
-
-func (q *Queries) FindUsernamesByPrefix(ctx context.Context, arg FindUsernamesByPrefixParams) ([]string, error) {
-	rows, err := q.db.Query(ctx, FindUsernamesByPrefix, arg.Username)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var username string
-		if err := rows.Scan(&username); err != nil {
-			return nil, err
-		}
-		items = append(items, username)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const GetUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date
+SELECT id, logto_user_id, created_date, last_modified_date
 FROM "user"
 WHERE id = $1
 `
@@ -119,11 +71,6 @@ type GetUserByIDParams struct {
 
 type GetUserByIDRow struct {
 	ID               uuid.UUID          `db:"id" json:"id"`
-	Name             string             `db:"name" json:"name"`
-	Email            string             `db:"email" json:"email"`
-	PhoneNumber      *string            `db:"phone_number" json:"phoneNumber"`
-	Username         string             `db:"username" json:"username"`
-	PasswordHash     *string            `db:"password_hash" json:"passwordHash"`
 	LogtoUserID      *string            `db:"logto_user_id" json:"logtoUserId"`
 	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
 	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
@@ -134,11 +81,6 @@ func (q *Queries) GetUserByID(ctx context.Context, arg GetUserByIDParams) (GetUs
 	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
-		&i.Email,
-		&i.PhoneNumber,
-		&i.Username,
-		&i.PasswordHash,
 		&i.LogtoUserID,
 		&i.CreatedDate,
 		&i.LastModifiedDate,
@@ -147,7 +89,7 @@ func (q *Queries) GetUserByID(ctx context.Context, arg GetUserByIDParams) (GetUs
 }
 
 const GetUserByLogtoUserID = `-- name: GetUserByLogtoUserID :one
-SELECT id, name, email, phone_number, username, password_hash, logto_user_id, created_date, last_modified_date
+SELECT id, logto_user_id, created_date, last_modified_date
 FROM "user"
 WHERE logto_user_id = $1
 `
@@ -158,11 +100,6 @@ type GetUserByLogtoUserIDParams struct {
 
 type GetUserByLogtoUserIDRow struct {
 	ID               uuid.UUID          `db:"id" json:"id"`
-	Name             string             `db:"name" json:"name"`
-	Email            string             `db:"email" json:"email"`
-	PhoneNumber      *string            `db:"phone_number" json:"phoneNumber"`
-	Username         string             `db:"username" json:"username"`
-	PasswordHash     *string            `db:"password_hash" json:"passwordHash"`
 	LogtoUserID      *string            `db:"logto_user_id" json:"logtoUserId"`
 	CreatedDate      pgtype.Timestamptz `db:"created_date" json:"createdDate"`
 	LastModifiedDate pgtype.Timestamptz `db:"last_modified_date" json:"lastModifiedDate"`
@@ -173,30 +110,9 @@ func (q *Queries) GetUserByLogtoUserID(ctx context.Context, arg GetUserByLogtoUs
 	var i GetUserByLogtoUserIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
-		&i.Email,
-		&i.PhoneNumber,
-		&i.Username,
-		&i.PasswordHash,
 		&i.LogtoUserID,
 		&i.CreatedDate,
 		&i.LastModifiedDate,
 	)
 	return i, err
-}
-
-const UpdateUsername = `-- name: UpdateUsername :exec
-UPDATE "user"
-SET username = $2, last_modified_date = NOW()
-WHERE id = $1
-`
-
-type UpdateUsernameParams struct {
-	ID       uuid.UUID `db:"id" json:"id"`
-	Username string    `db:"username" json:"username"`
-}
-
-func (q *Queries) UpdateUsername(ctx context.Context, arg UpdateUsernameParams) error {
-	_, err := q.db.Exec(ctx, UpdateUsername, arg.ID, arg.Username)
-	return err
 }
