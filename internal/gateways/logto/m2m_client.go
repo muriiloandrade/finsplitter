@@ -11,13 +11,19 @@ import (
 	"github.com/muriiloandrade/finsplitter/pkg/httpclient"
 )
 
-// Config holds Logto M2M client configuration.
+// Config holds Logto client configuration.
 type Config struct {
 	OIDCEndpoint          string
 	ManagementBaseURL     string
 	ManagementAPIResource string
 	ClientID              string
 	ClientSecret          string
+
+	// AppClientID and AppClientSecret are the OIDC application credentials
+	// used for ROPC (resource owner password credentials) authentication.
+	// They correspond to LOGTO_APP_CLIENT_ID / LOGTO_APP_CLIENT_SECRET.
+	AppClientID     string
+	AppClientSecret string
 }
 
 // cachedToken holds an access token with its expiry.

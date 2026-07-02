@@ -8,4 +8,8 @@ var (
 
 	// ErrUserAlreadyExists is returned when the user already has a local record.
 	ErrUserAlreadyExists = errors.New("user already exists locally")
+
+	// ErrSignInInvalidCredentials is returned when the email or password is
+	// invalid during sign-in.
+	ErrSignInInvalidCredentials = errors.New("invalid email or password")
 )
