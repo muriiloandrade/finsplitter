@@ -119,11 +119,11 @@ code-check: format lint
 
 test:
 	@echo "==> Running unit tests (short mode, skips integration)"
-	@GOEXPERIMENT=jsonv2 go test -short -count=1 ./...
+	@GOEXPERIMENT=jsonv2 go test -short ./...
 
 test-int:
 	@echo "==> Running all non-e2e tests (unit + integration)"
-	@GOEXPERIMENT=jsonv2 go test -count=1 ./...
+	@GOEXPERIMENT=jsonv2 go test ./...
 
 test-e2e:
 	@echo "==> Running e2e tests"
