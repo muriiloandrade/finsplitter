@@ -46,7 +46,7 @@ func NewSignInUseCase(logtoAuth LogtoUserAuthenticator) *SignInUseCase {
 // Execute authenticates the user with Logto using the provided credentials
 // and returns OIDC tokens.
 func (uc *SignInUseCase) Execute(ctx context.Context, input SignInInput) (*SignInOutput, error) {
-	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
+	if strings.TrimSpace(input.Email) == "" || strings.TrimSpace(input.Password) == "" {
 		return nil, errs.ErrInvalidCredentials
 	}
 
