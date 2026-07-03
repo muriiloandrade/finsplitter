@@ -42,6 +42,10 @@ type TestDB struct {
 func NewTestDB(t *testing.T) *TestDB {
 	t.Helper()
 
+	if testing.Short() {
+		t.Skip("Skipping testcontainers test in short mode")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 

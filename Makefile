@@ -118,7 +118,11 @@ code-check: format lint
 	@echo "==> Code check complete"
 
 test:
-	@echo "==> Running unit tests"
+	@echo "==> Running unit tests (short mode, skips integration)"
+	@GOEXPERIMENT=jsonv2 go test -short ./...
+
+test-int:
+	@echo "==> Running all non-e2e tests (unit + integration)"
 	@GOEXPERIMENT=jsonv2 go test ./...
 
 test-e2e:
@@ -224,7 +228,9 @@ help:
 	@echo "  run-network-host           Run the app using host network."
 	@echo "  run-network-compose        Run the app using docker compose network."
 	@echo "  code-check                 Run linters and formatters."
-	@echo "  test                       Run unit tests."
+	@echo "  test                       Run unit tests (short mode, skips integration)."
+	@echo "  test-int                   Run all non-e2e tests (unit + integration)."
+	@echo "  test-e2e                   Run end-to-end auth tests (requires Docker)."
 	@echo "  test-watch                 Run unit tests in watch mode (not implemented)."
 	@echo "  test-cov                   Run test coverage report."
 	@echo "  tools                      Install necessary development tools."
