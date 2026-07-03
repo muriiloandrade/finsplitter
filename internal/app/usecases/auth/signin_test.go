@@ -20,19 +20,19 @@ type mockLogtoAuthenticator struct {
 
 func (m *mockLogtoAuthenticator) AuthenticateUser(
 	ctx context.Context, email, password string,
-) (*logto.LogtoTokenResponse, error) {
+) (*logto.TokenResponse, error) {
 	args := m.Called(ctx, email, password)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*logto.LogtoTokenResponse), args.Error(1)
+	return args.Get(0).(*logto.TokenResponse), args.Error(1)
 }
 
 func TestSignInUseCase_Execute_Success(t *testing.T) {
 	logtoAuth := new(mockLogtoAuthenticator)
 
 	logtoAuth.On("AuthenticateUser", mock.Anything, "john@example.com", "secret123").
-		Return(&logto.LogtoTokenResponse{
+		Return(&logto.TokenResponse{
 			AccessToken:  "access_token_123",
 			IDToken:      "id_token_456",
 			RefreshToken: "refresh_token_789",

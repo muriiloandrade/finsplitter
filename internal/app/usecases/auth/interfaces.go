@@ -15,5 +15,5 @@ type LogtoUserCreator interface {
 // LogtoUserAuthenticator authenticates users via Logto's OIDC ROPC grant.
 // Satisfied by *logto.Client in production.
 type LogtoUserAuthenticator interface {
-	AuthenticateUser(ctx context.Context, email, password string) (*logto.LogtoTokenResponse, error)
+	AuthenticateUser(ctx context.Context, email, password string) (*logto.TokenResponse, error)
 }

@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-// LogtoTokenResponse holds the response from Logto's OIDC token endpoint
+// TokenResponse holds the response from Logto's OIDC token endpoint
 // when authenticating a user via the Resource Owner Password Credentials grant.
-type LogtoTokenResponse struct {
+type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	IDToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
@@ -27,7 +27,7 @@ type LogtoTokenResponse struct {
 // client can use to authenticate subsequent requests to Finsplitter.
 func (c *Client) AuthenticateUser(
 	ctx context.Context, email, password string,
-) (*LogtoTokenResponse, error) {
+) (*TokenResponse, error) {
 	if c.cfg.AppClientID == "" {
 		return nil, fmt.Errorf("authenticate user: %w", ErrAppClientNotConfigured)
 	}
@@ -41,7 +41,7 @@ func (c *Client) AuthenticateUser(
 		"client_secret": c.cfg.AppClientSecret,
 	}
 
-	var result LogtoTokenResponse
+	var result TokenResponse
 	resp, err := c.httpClient.R(ctx).
 		SetFormData(formData).
 		SetResult(&result).

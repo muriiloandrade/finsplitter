@@ -3,6 +3,7 @@ package auth_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -53,7 +54,7 @@ func newTestSignInHandler(t *testing.T, mockUC *integrationMockSignIn) *chi.Mux 
 			Password: req.Body.Password,
 		})
 		if err != nil {
-			if err == errs.ErrInvalidCredentials {
+			if errors.Is(err, errs.ErrInvalidCredentials) {
 				return nil, huma.Error401Unauthorized("invalid email or password")
 			}
 			return nil, huma.Error500InternalServerError("sign-in failed")
