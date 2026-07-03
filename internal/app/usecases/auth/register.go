@@ -56,7 +56,7 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 	logtoUser, err := uc.logtoM2M.CreateUser(ctx, username, input.Password, input.Name, input.Email)
 	if err != nil {
 		if errors.Is(err, logto.ErrUserExists) {
-			return nil, ErrUsernameTaken
+			return nil, errs.ErrUsernameTaken
 		}
 		return nil, fmt.Errorf("create logto user: %w", err)
 	}
@@ -64,7 +64,7 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 	user, createErr := uc.userRepo.Create(ctx, logtoUser.ID)
 	if createErr != nil {
 		if errors.Is(createErr, errs.ErrDuplicate) {
-			return nil, ErrUserAlreadyExists
+			return nil, errs.ErrUserAlreadyExists
 		}
 		return nil, fmt.Errorf("create finsplitter user: %w", createErr)
 	}

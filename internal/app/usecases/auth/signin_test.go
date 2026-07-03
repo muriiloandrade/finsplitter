@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	auth "github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
+	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -66,7 +67,7 @@ func TestSignInUseCase_Execute_InvalidCredentials(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, auth.ErrSignInInvalidCredentials)
+	require.ErrorIs(t, err, errs.ErrInvalidCredentials)
 	require.Nil(t, output)
 }
 
@@ -94,7 +95,7 @@ func TestSignInUseCase_Execute_EmptyEmail(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, auth.ErrSignInInvalidCredentials)
+	require.ErrorIs(t, err, errs.ErrInvalidCredentials)
 	require.Nil(t, output)
 }
 
@@ -106,6 +107,6 @@ func TestSignInUseCase_Execute_EmptyPassword(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, auth.ErrSignInInvalidCredentials)
+	require.ErrorIs(t, err, errs.ErrInvalidCredentials)
 	require.Nil(t, output)
 }

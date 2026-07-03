@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	openapi "github.com/muriiloandrade/finsplitter/api"
 	authUC "github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
+	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	authHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -52,7 +53,7 @@ func newTestSignInHandler(t *testing.T, mockUC *integrationMockSignIn) *chi.Mux 
 			Password: req.Body.Password,
 		})
 		if err != nil {
-			if err == authUC.ErrSignInInvalidCredentials {
+			if err == errs.ErrInvalidCredentials {
 				return nil, huma.Error401Unauthorized("invalid email or password")
 			}
 			return nil, huma.Error500InternalServerError("sign-in failed")
@@ -112,7 +113,7 @@ func TestSignInIntegration_InvalidCredentials(t *testing.T) {
 	mockUC := new(integrationMockSignIn)
 	mockUC.On("Execute", mock.Anything, authUC.SignInInput{
 		Email: "wrong@example.com", Password: "badpass",
-	}).Return(nil, authUC.ErrSignInInvalidCredentials)
+	}).Return(nil, errs.ErrInvalidCredentials)
 
 	router := newTestSignInHandler(t, mockUC)
 

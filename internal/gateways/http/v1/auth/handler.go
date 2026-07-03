@@ -6,6 +6,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
+	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 )
 
 // Handler handles auth-related HTTP requests.
@@ -56,10 +57,10 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 		Password: req.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, auth.ErrUsernameTaken) {
+		if errors.Is(err, errs.ErrUsernameTaken) {
 			return nil, huma.Error409Conflict("username already taken")
 		}
-		if errors.Is(err, auth.ErrUserAlreadyExists) {
+		if errors.Is(err, errs.ErrUserAlreadyExists) {
 			return nil, huma.Error409Conflict("user already registered")
 		}
 		return nil, huma.Error500InternalServerError("registration failed")
@@ -147,7 +148,7 @@ func (h *Handler) SignIn(ctx context.Context, req *SignInRequest) (*SignInRespon
 		Password: req.Body.Password,
 	})
 	if err != nil {
-		if errors.Is(err, auth.ErrSignInInvalidCredentials) {
+		if errors.Is(err, errs.ErrInvalidCredentials) {
 			return nil, huma.Error401Unauthorized("invalid email or password")
 		}
 		return nil, huma.Error500InternalServerError("sign-in failed")

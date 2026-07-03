@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
@@ -46,13 +47,13 @@ func NewSignInUseCase(logtoAuth LogtoUserAuthenticator) *SignInUseCase {
 // and returns OIDC tokens.
 func (uc *SignInUseCase) Execute(ctx context.Context, input SignInInput) (*SignInOutput, error) {
 	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
-		return nil, ErrSignInInvalidCredentials
+		return nil, errs.ErrInvalidCredentials
 	}
 
 	tokenResp, err := uc.logtoAuth.AuthenticateUser(ctx, input.Email, input.Password)
 	if err != nil {
 		if errors.Is(err, logto.ErrInvalidCredentials) {
-			return nil, ErrSignInInvalidCredentials
+			return nil, errs.ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("authenticate user: %w", err)
 	}

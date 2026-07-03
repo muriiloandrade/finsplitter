@@ -95,7 +95,7 @@ func TestRegisterUseCase_Execute_LogtoUserExists(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, auth.ErrUsernameTaken)
+	require.ErrorIs(t, err, errs.ErrUsernameTaken)
 	require.Nil(t, output)
 }
 
@@ -138,7 +138,7 @@ func TestRegisterUseCase_Execute_LocalDuplicate(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.ErrorIs(t, err, auth.ErrUserAlreadyExists)
+	require.ErrorIs(t, err, errs.ErrUserAlreadyExists)
 	require.Nil(t, output)
 }
 
