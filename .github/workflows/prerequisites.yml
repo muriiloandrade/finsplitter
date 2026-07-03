@@ -32,11 +32,11 @@ jobs:
                   cache: true
 
             - name: Verify dependencies
-              run: go mod verify
+              run: GOEXPERIMENT=jsonv2 go mod verify
 
             - name: Verify go mod tidy
               run: |
-                  go mod tidy
+                  GOEXPERIMENT=jsonv2 go mod tidy
                   test -z "$(git status --porcelain go.mod go.sum)"
 
             - name: Verify SQLC generation

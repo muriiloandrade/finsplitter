@@ -16,6 +16,12 @@ services:
             target: setup
         env_file:
             - .env
+        environment:
+            - GOEXPERIMENT=jsonv2
+            - REDIS_URL=redis://valkey:6379/0
+            - LOGTO_ENDPOINT=http://logto:3001
+            - LOGTO_OIDC_ENDPOINT=http://logto:3001/oidc
+            - LOGTO_ISSUER=http://localhost:3001/oidc
         extra_hosts:
             - "host.docker.internal:host-gateway"
         ports:
@@ -30,6 +36,30 @@ services:
                   action: rebuild
                 - path: go.sum
                   action: rebuild
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        networks:
+            - finsplitter
+    logto:
+        profiles:
+            - infra
+        container_name: logto
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        image: svhd/logto:${TAG-latest}
+        entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
+        ports:
+            - "${LOGTO_PORT:-3001}:3001"
+            - "${LOGTO_PORT_MGMT:-3002}:3002"
+        environment:
+            - TRUST_PROXY_HEADER=1
+            - DB_URL=${LOGTO_DB_URL}
+            - ENDPOINT=${LOGTO_ENDPOINT}
+            - ADMIN_ENDPOINT=${LOGTO_ADMIN_ENDPOINT}
+        env_file:
+            - .env
         networks:
             - finsplitter
 

@@ -37,6 +37,7 @@ GOLANGCI_LINT_VERSION := v2.11.3-alpine@sha256:b1c3de5862ad0a95b4e45a993b0f00415
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
+	-e GOEXPERIMENT=jsonv2 \
 	-v $(shell go env GOMODCACHE):/home/.cache/mod \
 	-e GOMODCACHE=/home/.cache/mod \
 	-v ~/.cache/golangci-lint:/home/.cache/golangci-lint \
@@ -81,9 +82,9 @@ stop-dev stop-debug: stop-%:
 stop-%: stop-infra
 	@echo "==> Stopping containers in $* mode"
 	@if [ "$*" = "debug" ]; then \
-		docker compose --profile debug --env-file .env down --rmi local -v --remove-orphans; \
+		docker compose --profile infra --profile debug --env-file .env down --rmi local -v --remove-orphans; \
 	else \
-		docker compose --profile backend --env-file .env down --rmi local -v --remove-orphans; \
+		docker compose --profile infra --profile backend --env-file .env down --rmi local -v --remove-orphans; \
 	fi
 
 build:
@@ -118,14 +119,19 @@ code-check: format lint
 
 test:
 	@echo "==> Running unit tests"
-	@go test ./...
+	@GOEXPERIMENT=jsonv2 go test ./...
+
+test-e2e:
+	@echo "==> Running e2e tests"
+	@GOEXPERIMENT=jsonv2 go test -tags=e2e -v -count=1 -run "^TestE2E" \
+	  ./internal/gateways/http/v1/auth/...
 
 test-watch:
 	@echo "==> Running unit tests in watch mode - IMPLEMENT ME"
 
 test-cov:
 	@echo "==> Running test coverage report"
-	@go test -coverprofile=coverage.out $$(go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
+	@GOEXPERIMENT=jsonv2 go test -coverprofile=coverage.out $$(GOEXPERIMENT=jsonv2 go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
 	@echo ""
 	@echo "==> Coverage by package:"
 	@go tool cover -func=coverage.out | grep -v "^total:" | grep -v "mocks.gen.go" | grep -v "/testutils/"
