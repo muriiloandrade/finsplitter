@@ -66,6 +66,11 @@ func GetUserClaims(ctx context.Context) *entity.UserClaims {
 	return claims
 }
 
+// WithUserClaims returns a new context with the given UserClaims attached.
+func WithUserClaims(ctx context.Context, claims *entity.UserClaims) context.Context {
+	return context.WithValue(ctx, userClaimsKey, claims)
+}
+
 type contextKey string
 
 const userClaimsKey contextKey = "user_claims"

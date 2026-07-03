@@ -171,6 +171,15 @@ func TestCardBrandRepository_List(t *testing.T) {
 			},
 			wantCount: 1,
 		},
+		{
+			name: "returns empty when filter matches nothing",
+			filter: ports.ListCardBrandFilterOptions{
+				Name:       strPtr("NonExistentBrand"),
+				PageSize:   10,
+				PageNumber: 1,
+			},
+			wantCount: 0,
+		},
 	}
 
 	for _, tt := range tests {

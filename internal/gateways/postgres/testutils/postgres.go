@@ -42,6 +42,10 @@ type TestDB struct {
 func NewTestDB(t *testing.T) *TestDB {
 	t.Helper()
 
+	if testing.Short() {
+		t.Skip("Skipping testcontainers test in short mode")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -83,7 +87,7 @@ func (tdb *TestDB) Close(ctx context.Context) error {
 func StartTestDB(ctx context.Context) (*TestDB, error) {
 	// Start PostgreSQL container with proper wait strategy
 	pgContainer, err := tcpgres.Run(ctx,
-		"postgres:18.2-trixie",
+		"postgres:18.4-trixie",
 		tcpgres.WithDatabase(testDBName),
 		tcpgres.WithUsername(testDBUser),
 		tcpgres.WithPassword(testDBPassword),
