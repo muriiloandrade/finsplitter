@@ -281,7 +281,11 @@ func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandl
 }
 
 // newProfileAPI creates the profile handler API (setup).
-func newProfileAPI(userRepo ports.UserRepository, logtoM2M *logto.Client, claimsPr ports.ClaimsProvider) profileHandler.API {
+func newProfileAPI(
+	userRepo ports.UserRepository,
+	logtoM2M *logto.Client,
+	claimsPr ports.ClaimsProvider,
+) profileHandler.API {
 	return profileHandler.NewAPI(userRepo, logtoM2M, claimsPr)
 }
 

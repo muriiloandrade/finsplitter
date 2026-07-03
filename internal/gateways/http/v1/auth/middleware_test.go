@@ -17,6 +17,7 @@ import (
 	"github.com/lestrrat-go/jwx/v4/jwk"
 	"github.com/lestrrat-go/jwx/v4/jwt"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -722,4 +723,235 @@ func TestTryPopulateClaims_ValidToken(t *testing.T) {
 	assert.Equal(t, "user-456", claims.Sub)
 	assert.Equal(t, "alice", claims.Username)
 	assert.Equal(t, "alice@example.com", claims.Email)
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Claims method
+// ────────────────────────────────────────────────────────────────────────────
+
+func TestClaims(t *testing.T) {
+	mw := &Middleware{}
+	ctx := context.WithValue(context.Background(), userClaimsKey, &entity.UserClaims{
+		Sub:      "sub-1",
+		Username: "testuser",
+		Email:    "test@example.com",
+	})
+
+	got := mw.Claims(ctx)
+	require.NotNil(t, got)
+	assert.Equal(t, "sub-1", got.Sub)
+	assert.Equal(t, "testuser", got.Username)
+	assert.Equal(t, "test@example.com", got.Email)
+}
+
+func TestClaims_Nil(t *testing.T) {
+	mw := &Middleware{}
+	got := mw.Claims(context.Background())
+	assert.Nil(t, got, "Claims should return nil when no claims in context")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// NewMiddleware
+// ────────────────────────────────────────────────────────────────────────────
+
+func TestNewMiddleware(t *testing.T) {
+	logger := slog.Default()
+	mw := NewMiddleware(
+		"https://logto.example.com/oidc",
+		"https://logto.example.com/oidc",
+		"test-client-id",
+		nil, // userRepo
+		logger,
+		nil, // cacheClient
+	)
+
+	assert.Equal(t, "https://logto.example.com/oidc", mw.oidcEndpoint)
+	assert.Equal(t, "test-client-id", mw.appClientID)
+	assert.Equal(t, logger, mw.logger)
+	assert.Equal(t, "https://logto.example.com/oidc/jwks", mw.jwksURL)
+	assert.Equal(t, "https://logto.example.com/oidc", mw.issuer)
+	assert.Nil(t, mw.cache, "cache should be nil when nil is passed")
+	assert.NotNil(t, mw.jwkClient, "jwkClient should be created")
+}
+
+func TestNewMiddleware_TrailingSlash(t *testing.T) {
+	// Verify that trailing slashes on the endpoint and issuer are stripped
+	// from the jwksURL and issuer fields.
+	mw := NewMiddleware(
+		"https://logto.example.com/oidc/",
+		"https://logto.example.com/oidc/",
+		"test-client-id",
+		nil, nil, nil,
+	)
+	assert.Equal(t, "https://logto.example.com/oidc/jwks", mw.jwksURL,
+		"should not have double slash")
+	assert.Equal(t, "https://logto.example.com/oidc", mw.issuer,
+		"should trim trailing slash")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// parseAndValidate — error paths
+// ────────────────────────────────────────────────────────────────────────────
+
+func TestParseAndValidate_MissingSubject(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	privateKey, jwks := newTestKeySet(t)
+
+	mw := &Middleware{
+		jwkClient:   mockFetcher,
+		cache:       nil,
+		logger:      slog.Default(),
+		jwksURL:     "http://test.local/jwks",
+		issuer:      "http://test.local",
+		appClientID: "test-client",
+	}
+
+	// Token without the "sub" claim.
+	noSubToken := newTestSignedToken(t, privateKey, map[string]any{
+		"iss":      mw.issuer,
+		"aud":      mw.appClientID,
+		"username": "nobody",
+	})
+
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
+
+	claims, err := mw.parseAndValidate(context.Background(), noSubToken)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing subject claim")
+	assert.Nil(t, claims)
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// parseWithKeyset — error paths
+// ────────────────────────────────────────────────────────────────────────────
+
+func TestParseWithKeyset_JWKSFetchError(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+
+	mw := &Middleware{
+		jwkClient: mockFetcher,
+		cache:     nil,
+		logger:    slog.Default(),
+		jwksURL:   "http://test.local/jwks",
+	}
+
+	expectedErr := errors.New("network unreachable")
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(nil, expectedErr)
+
+	_, err := mw.parseWithKeyset(context.Background(), "some.token.here")
+	require.ErrorIs(t, err, expectedErr)
+}
+
+func TestParseWithKeyset_InvalidSignature(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	// A valid-looking token signed with a DIFFERENT key.
+	_, jwks := newTestKeySet(t)
+
+	// Create a second key pair that the JWKS does NOT contain.
+	rogueKey, _ := newTestKeySet(t)
+	rogueToken := newTestSignedToken(t, rogueKey, map[string]any{
+		"sub": "user-123",
+		"iss": "http://test.local",
+		"aud": "test-client",
+	})
+
+	mw := &Middleware{
+		jwkClient:   mockFetcher,
+		cache:       nil,
+		logger:      slog.Default(),
+		jwksURL:     "http://test.local/jwks",
+		issuer:      "http://test.local",
+		appClientID: "test-client",
+	}
+
+	// The JWKS returned only has `otherKey`, not `rogueKey` — so signature
+	// verification will fail.
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
+
+	_, err := mw.parseWithKeyset(context.Background(), rogueToken)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "signature")
+}
+
+func TestParseWithKeyset_WrongIssuer(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	privateKey, jwks := newTestKeySet(t)
+
+	mw := &Middleware{
+		jwkClient:   mockFetcher,
+		cache:       nil,
+		logger:      slog.Default(),
+		jwksURL:     "http://test.local/jwks",
+		issuer:      "http://expected-issuer.local",
+		appClientID: "test-client",
+	}
+
+	// Token has a different issuer than expected.
+	token := newTestSignedToken(t, privateKey, map[string]any{
+		"sub": "user-123",
+		"iss": "http://wrong-issuer.local",
+		"aud": "test-client",
+	})
+
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
+
+	_, err := mw.parseWithKeyset(context.Background(), token)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"iss"`)
+}
+
+func TestParseWithKeyset_WrongAudience(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	privateKey, jwks := newTestKeySet(t)
+
+	mw := &Middleware{
+		jwkClient:   mockFetcher,
+		cache:       nil,
+		logger:      slog.Default(),
+		jwksURL:     "http://test.local/jwks",
+		issuer:      "http://test.local",
+		appClientID: "test-client",
+	}
+
+	// Token has a different audience than expected.
+	token := newTestSignedToken(t, privateKey, map[string]any{
+		"sub": "user-123",
+		"iss": "http://test.local",
+		"aud": "wrong-client",
+	})
+
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
+
+	_, err := mw.parseWithKeyset(context.Background(), token)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"aud"`)
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// getJWKSFromCache — store error degrades gracefully
+// ────────────────────────────────────────────────────────────────────────────
+
+func TestGetJWKSFromCache_MissThenStoreThenHit(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	mw, _, _ := newTestMiddleware(t)
+	ctx := context.Background()
+
+	expected := newTestJWKS(t)
+
+	// Replace the mockFetcher on mw (newTestMiddleware creates a new one).
+	mw.jwkClient = mockFetcher
+
+	// Cache miss → fetcher returns JWKS → stored in cache.
+	mockFetcher.EXPECT().Fetch(ctx, mw.jwksURL).Return(expected, nil).Once()
+
+	got, err := mw.getJWKSFromCache(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, got)
+	mockFetcher.AssertNumberOfCalls(t, "Fetch", 1)
+
+	// Second call should be a cache hit (store above succeeded).
+	got2, err := mw.getJWKSFromCache(ctx)
+	require.NoError(t, err)
+	assert.NotNil(t, got2)
+	mockFetcher.AssertNumberOfCalls(t, "Fetch", 1) // still 1
 }

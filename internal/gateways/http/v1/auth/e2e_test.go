@@ -18,10 +18,10 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
 	openapi "github.com/muriiloandrade/finsplitter/api"
+	authHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/testutils"
-	authHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	tcred "github.com/testcontainers/testcontainers-go/modules/redis"
@@ -71,7 +71,7 @@ func TestMain(m *testing.M) {
 
 // e2eEnv holds the per-test environment: a running app + mock OIDC provider.
 type e2eEnv struct {
-	serverURL string            // base URL of the Finsplitter app
+	serverURL string // base URL of the Finsplitter app
 	mockOIDC  *mockOIDCProvider
 }
 

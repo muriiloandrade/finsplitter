@@ -66,12 +66,6 @@ func GetUserClaims(ctx context.Context) *entity.UserClaims {
 	return claims
 }
 
-// Claims returns the authenticated user's claims from the context.
-// Implements ports.ClaimsProvider.
-func (m *Middleware) Claims(ctx context.Context) *entity.UserClaims {
-	return GetUserClaims(ctx)
-}
-
 type contextKey string
 
 const userClaimsKey contextKey = "user_claims"
@@ -115,6 +109,12 @@ func NewMiddleware(
 		jwkClient:    jwkfetch.NewClient(),
 		cache:        cacheClient,
 	}
+}
+
+// Claims returns the authenticated user's claims from the context.
+// Implements ports.ClaimsProvider.
+func (m *Middleware) Claims(ctx context.Context) *entity.UserClaims {
+	return GetUserClaims(ctx)
 }
 
 // Protected returns a chi middleware that enforces JWT authentication.
@@ -308,23 +308,6 @@ func claimAsString(tok jwt.Token, key string) string {
 	}
 	s, _ := v.(string)
 	return s
-}
-
-// Optional returns a chi middleware that extracts claims if a token is
-// present but allows unauthenticated requests through.
-func (m *Middleware) Optional() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := extractBearerToken(r)
-			if token != "" {
-				if claims, err := m.parseAndValidate(r.Context(), token); err == nil {
-					ctx := context.WithValue(r.Context(), userClaimsKey, claims)
-					r = r.WithContext(ctx)
-				}
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 // isPublicPath returns true if the path does not require authentication.

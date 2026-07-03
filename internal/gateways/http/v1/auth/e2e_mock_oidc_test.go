@@ -47,12 +47,12 @@ const mockOIDCKeyID = "mock-oidc-key-1"
 // the signing key carries a stable kid ("mock-oidc-key-1") that is included
 // in both the JWT header and the JWKS response.
 type mockOIDCProvider struct {
-	server   *http.Server
-	listener net.Listener
-	users    map[string]*oidcUser // keyed by email
-	privKey  *ecdsa.PrivateKey    // raw key for signing JWTs
-	signingJWK jwk.Key            // private JWK with kid (for signing, keeps kid in header)
-	publicJWK  jwk.Key            // public JWK with kid (served via JWKS endpoint)
+	server     *http.Server
+	listener   net.Listener
+	users      map[string]*oidcUser // keyed by email
+	privKey    *ecdsa.PrivateKey    // raw key for signing JWTs
+	signingJWK jwk.Key              // private JWK with kid (for signing, keeps kid in header)
+	publicJWK  jwk.Key              // public JWK with kid (served via JWKS endpoint)
 	issuer     string
 	audience   string
 	mu         sync.RWMutex
