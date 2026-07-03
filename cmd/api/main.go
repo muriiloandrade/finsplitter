@@ -10,13 +10,18 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	cbUCs "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/config"
 	_http "github.com/muriiloandrade/finsplitter/internal/gateways/http"
 	v1 "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1"
+	authHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 	cbHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	profileHandler "github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/profile"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
+	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/metrics"
@@ -40,6 +45,7 @@ const (
 	readHeaderTimeout       = 30 * time.Second
 )
 
+//nolint:gocognit // Main function is inherently complex due to DI wiring.
 func main() {
 	// Create a CLI app
 	cli := humacli.New(func(hooks humacli.Hooks, _ *CLIOptions) {
@@ -90,12 +96,20 @@ func main() {
 			ConnPool: dbPool,
 		}
 
+		userRepo := postgres.NewUserRepository(pgTxManager)
+		redisClient := newRedisClient(ctx, logger, cfg)
+		logtoM2M := newLogtoM2MClient(logger, cfg)
 		router := _http.NewRouter(logger)
+
+		authMw := newAuthMiddleware(logger, cfg, userRepo, redisClient)
 
 		apiV1 := v1.API{
 			LivenessHandler:  v1.LivenessHandler(),
 			ReadinessHandler: v1.ReadinessHandler(),
 			CardBrandAPI:     newCardBrandAPI(pgTxManager),
+			AuthAPI:          newAuthAPI(userRepo, logtoM2M),
+			ProfileAPI:       newProfileAPI(userRepo, logtoM2M, authMw),
+			AuthMiddleware:   authMw,
 			Logger:           logger,
 		}
 
@@ -123,6 +137,9 @@ func main() {
 			timeoutCtx, cancel := context.WithTimeout(context.Background(), gracefulShutdownTimeout)
 			defer cancel()
 			defer dbPool.Close()
+			if redisClient != nil {
+				defer redisClient.Close()
+			}
 			if err = server.Shutdown(timeoutCtx); err != nil {
 				logger.Error("Failed to stop server", slog.Any("error", err))
 			}
@@ -212,6 +229,64 @@ func initializeOpenTelemetry(
 	}
 
 	return nil, nil, nil
+}
+
+// newRedisClient creates a cache client connected to Valkey/Redis.
+// If the connection fails it logs a warning and returns nil, allowing the
+// application to degrade gracefully (JWKS fetched on every request).
+func newRedisClient(ctx context.Context, logger *slog.Logger, cfg *config.Config) *cache.Client {
+	client, err := cache.New(ctx, cfg.Redis.URL)
+	if err != nil {
+		logger.WarnContext(ctx,
+			"Redis unavailable, auth middleware will fetch JWKS on every request",
+			slog.Any("error", err),
+		)
+		return nil
+	}
+	return client
+}
+
+func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
+	return logto.NewClient(logto.Config{
+		OIDCEndpoint:          cfg.Logto.OIDCEndpoint,
+		ManagementBaseURL:     cfg.Logto.ManagementBaseURL,
+		ManagementAPIResource: cfg.Logto.MgmtAPIResource,
+		ClientID:              cfg.Logto.MgmtClientID,
+		ClientSecret:          cfg.Logto.MgmtClientSecret,
+		AppClientID:           cfg.Logto.AppClientID,
+		AppClientSecret:       cfg.Logto.AppClientSecret,
+	}, logto.WithLogger(logger))
+}
+
+// newAuthMiddleware builds the JWT validation middleware.
+func newAuthMiddleware(
+	logger *slog.Logger,
+	cfg *config.Config,
+	userRepo ports.UserRepository,
+	cacheClient *cache.Client,
+) *authHandler.Middleware {
+	return authHandler.NewMiddleware(
+		cfg.Logto.OIDCEndpoint,
+		cfg.Logto.OIDCIssuer,
+		cfg.Logto.AppClientID,
+		userRepo,
+		logger,
+		cacheClient,
+	)
+}
+
+// newAuthAPI creates the auth handler API (register, me).
+func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandler.API {
+	return authHandler.NewAPI(userRepo, logtoM2M)
+}
+
+// newProfileAPI creates the profile handler API (setup).
+func newProfileAPI(
+	userRepo ports.UserRepository,
+	logtoM2M *logto.Client,
+	claimsPr ports.ClaimsProvider,
+) profileHandler.API {
+	return profileHandler.NewAPI(userRepo, logtoM2M, claimsPr)
 }
 
 func newCardBrandAPI(pgTxManager *postgres.TxManager) cbHandler.API {

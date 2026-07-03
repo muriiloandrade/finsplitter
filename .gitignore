@@ -46,3 +46,10 @@ go.work
 !internal/gateways/postgres/**/*.sql
 
 **/.DS_Store
+
+### Worktrees ###
+.worktrees/
+worktrees/
+
+### OpenCode ###
+.opencode/package*.json

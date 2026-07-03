@@ -29,6 +29,27 @@ services:
         networks:
             - finsplitter
 
+    valkey:
+        profiles:
+            - infra
+        image: valkey/valkey:9.1.0-trixie@sha256:4963247afc4cd33c7d3b2d2816b9f7f8eeebab148d29056c2ca4d7cbc966f2d9
+        container_name: finsplitter-valkey
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "valkey-cli", "ping"]
+            start_period: 5s
+            interval: 10s
+            retries: 5
+            timeout: 3s
+        ports:
+            - "${VALKEY_PORT:-6379}:6379"
+        networks:
+            - finsplitter
+        volumes:
+            - valkey-data:/data
+
 volumes:
     database:
+        driver: local
+    valkey-data:
         driver: local
