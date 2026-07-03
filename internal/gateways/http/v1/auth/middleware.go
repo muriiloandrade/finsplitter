@@ -14,6 +14,7 @@ import (
 	"github.com/lestrrat-go/jwx/v4/jwk"
 	"github.com/lestrrat-go/jwx/v4/jwt"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	slogctx "github.com/veqryn/slog-context"
@@ -56,24 +57,19 @@ var (
 	}
 )
 
-// UserClaims holds the JWT claims extracted from the Logto token.
-// Name, phone, and picture are populated via Logto's Custom JWT script.
-type UserClaims struct {
-	Sub      string `json:"sub"`
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Phone    string `json:"phone,omitempty"`
-	Picture  string `json:"picture,omitempty"`
-}
-
 // GetUserClaims retrieves UserClaims from the context. Returns nil if not present.
-func GetUserClaims(ctx context.Context) *UserClaims {
-	claims, ok := ctx.Value(userClaimsKey).(*UserClaims)
+func GetUserClaims(ctx context.Context) *entity.UserClaims {
+	claims, ok := ctx.Value(userClaimsKey).(*entity.UserClaims)
 	if !ok {
 		return nil
 	}
 	return claims
+}
+
+// Claims returns the authenticated user's claims from the context.
+// Implements ports.ClaimsProvider.
+func (m *Middleware) Claims(ctx context.Context) *entity.UserClaims {
+	return GetUserClaims(ctx)
 }
 
 type contextKey string
@@ -204,7 +200,7 @@ func (m *Middleware) requireAuth(w http.ResponseWriter, r *http.Request, next ht
 
 // parseAndValidate parses a JWT, verifies its signature against the cached
 // JWKS (refreshing if stale), and validates standard claims.
-func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (*UserClaims, error) {
+func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (*entity.UserClaims, error) {
 	tok, err := m.parseWithKeyset(ctx, tokenString)
 	if err != nil {
 		return nil, err
@@ -215,7 +211,7 @@ func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (
 		return nil, errors.New("token missing subject claim")
 	}
 
-	return &UserClaims{
+	return &entity.UserClaims{
 		Sub:      sub,
 		Username: claimAsString(tok, "username"),
 		Email:    claimAsString(tok, "email"),

@@ -5,20 +5,22 @@ import (
 	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/profile"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
-	"github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth"
 )
 
 // Handler handles profile-related HTTP requests.
 type Handler struct {
-	setupUC *profile.SetupUseCase
+	setupUC  *profile.SetupUseCase
+	claimsPr ports.ClaimsProvider
 }
 
 // NewHandler creates a new profile Handler.
-func NewHandler(setupUC *profile.SetupUseCase) *Handler {
+func NewHandler(setupUC *profile.SetupUseCase, claimsPr ports.ClaimsProvider) *Handler {
 	return &Handler{
-		setupUC: setupUC,
+		setupUC:  setupUC,
+		claimsPr: claimsPr,
 	}
 }
 
@@ -43,7 +45,7 @@ type SetupResponse struct {
 // Setup handles profile setup for first-time users.
 // POST /profile/setup.
 func (h *Handler) Setup(ctx context.Context, req *SetupRequest) (*SetupResponse, error) {
-	claims := auth.GetUserClaims(ctx)
+	claims := h.claimsPr.Claims(ctx)
 	if claims == nil {
 		return nil, huma.Error401Unauthorized("unauthenticated")
 	}

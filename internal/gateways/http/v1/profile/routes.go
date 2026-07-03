@@ -20,9 +20,11 @@ type API struct {
 }
 
 // NewAPI creates a profile API from the given dependencies.
-func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
+// claimsProvider is used to extract the authenticated user's identity from
+// the request context (set by the auth middleware).
+func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client, claimsPr ports.ClaimsProvider) API {
 	setupUC := profile.NewSetupUseCase(userRepo, logtoClient)
-	h := NewHandler(setupUC)
+	h := NewHandler(setupUC, claimsPr)
 
 	return API{
 		SetupHandler: h.Setup,
