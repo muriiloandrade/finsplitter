@@ -127,7 +127,7 @@ test-int:
 
 test-e2e:
 	@echo "==> Running e2e tests"
-	@GOEXPERIMENT=jsonv2 go test -tags=e2e -v -count=1 -run "^TestE2E" \
+	@GOEXPERIMENT=jsonv2 go test -tags=e2e -v -run "^TestE2E" \
 	  ./internal/gateways/http/v1/auth/...
 
 test-watch:
