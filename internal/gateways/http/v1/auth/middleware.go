@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
+	"github.com/muriiloandrade/finsplitter/pkg/httpclient"
 	slogctx "github.com/veqryn/slog-context"
 )
 
@@ -53,6 +53,7 @@ var (
 		"/auth/register",
 		"/auth/device",
 		"/auth/device/poll",
+		"/auth/device/refresh",
 	}
 
 	// optionalExact are exact paths that do NOT require authentication
@@ -99,7 +100,7 @@ type Middleware struct {
 	jwkClient jwkFetcher // used to fetch JWKS from Logto
 	cache     *cache.Client
 
-	httpClient *http.Client
+	httpClient *httpclient.Client
 }
 
 // NewMiddleware creates a new auth middleware. The JWKS is not fetched
@@ -125,9 +126,9 @@ func NewMiddleware(
 		userInfoURL:  strings.TrimRight(oidcEndpoint, "/") + "/me",
 		jwkClient:    jwkfetch.NewClient(),
 		cache:        cacheClient,
-		httpClient: &http.Client{
-			Timeout: userInfoHTTPTimeout,
-		},
+		httpClient: httpclient.New(
+			httpclient.WithTimeout(userInfoHTTPTimeout),
+		),
 	}
 }
 
@@ -262,6 +263,16 @@ func (m *Middleware) claimsFromToken(tok jwt.Token) (*entity.UserClaims, error) 
 	}, nil
 }
 
+// userInfoClient returns the HTTP client for UserInfo calls, falling back to
+// a one-off client with the standard timeout when the middleware was
+// constructed without one (e.g. in unit tests that don't test this path).
+func (m *Middleware) userInfoClient() *httpclient.Client {
+	if m.httpClient != nil {
+		return m.httpClient
+	}
+	return httpclient.New(httpclient.WithTimeout(userInfoHTTPTimeout))
+}
+
 // parseViaUserInfo validates the token by calling Logto's /oidc/me endpoint.
 // This is the fallback for opaque access tokens (e.g. device flow).
 func (m *Middleware) parseViaUserInfo(ctx context.Context, tokenString string) (*entity.UserClaims, error) {
@@ -269,32 +280,19 @@ func (m *Middleware) parseViaUserInfo(ctx context.Context, tokenString string) (
 		return nil, errors.New("userinfo endpoint not configured")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.userInfoURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("userinfo request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+tokenString)
-
-	client := m.httpClient
-	if client == nil {
-		client = http.DefaultClient
-	}
-
-	resp, err := client.Do(req)
+	var ui userInfoResponse
+	resp, err := m.userInfoClient().R(ctx).
+		SetHeader("Authorization", "Bearer "+tokenString).
+		SetResult(&ui).
+		Get(m.userInfoURL)
 	if err != nil {
 		return nil, fmt.Errorf("userinfo call: %w", err)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("userinfo: status %d: %s", resp.StatusCode, string(body))
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("userinfo: status %d", resp.StatusCode())
 	}
 
-	var ui userInfoResponse
-	if decodeErr := json.NewDecoder(resp.Body).Decode(&ui); decodeErr != nil {
-		return nil, fmt.Errorf("userinfo decode: %w", decodeErr)
-	}
 	if ui.Sub == "" {
 		return nil, errors.New("userinfo: missing sub claim")
 	}
