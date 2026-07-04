@@ -58,6 +58,9 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 		if errors.Is(err, logto.ErrUserExists) {
 			return nil, errs.ErrUsernameTaken
 		}
+		if errors.Is(err, logto.ErrEmailAlreadyInUse) {
+			return nil, errs.ErrUserAlreadyExists
+		}
 		return nil, fmt.Errorf("create logto user: %w", err)
 	}
 
@@ -76,19 +79,16 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 }
 
 // slugify converts a display name into a Logto-compatible username.
-// Logto accepts lowercase alphanumeric and underscores.
-// Examples: "John Doe" → "john_doe", "  Hello   World! " → "hello_world".
+// Logto accepts only lowercase alphanumeric characters.
+// Examples: "John Doe" → "johndoe", "  Hello   World! " → "helloworld".
+// Returns empty string when no valid characters remain, which causes the
+// username field to be omitted entirely from the Management API request.
 func slugify(s string) string {
 	var b strings.Builder
-	prevSep := true // trim leading separators
 	for _, r := range strings.ToLower(strings.TrimSpace(s)) {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			b.WriteRune(r)
-			prevSep = false
-		} else if !prevSep {
-			b.WriteRune('_')
-			prevSep = true
 		}
 	}
-	return strings.TrimRight(b.String(), "_")
+	return b.String()
 }

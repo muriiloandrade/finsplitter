@@ -179,7 +179,7 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 
 // CreateUserRequest is the body for creating a user via Management API.
 type CreateUserRequest struct {
-	Username string `json:"username"`
+	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
 	Name     string `json:"name,omitempty"`
 	Email    string `json:"primaryEmail,omitempty"`
