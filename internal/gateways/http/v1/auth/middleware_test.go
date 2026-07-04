@@ -222,8 +222,10 @@ func TestIsPublicPath(t *testing.T) {
 		{"openapi prefix", "/openapi.json", true},
 		{"openapi sub-path", "/openapi/v3", true},
 
-		// Exact match
+		// Exact matches
 		{"register exact", "/auth/register", true},
+		{"device auth exact", "/auth/device/auth", true},
+		{"device poll exact", "/auth/device/poll", true},
 
 		// Should not match
 		{"health without trailing slash", "/health", false},

@@ -10,27 +10,35 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
+var (
+	_ deviceAuthUseCase = (*auth.RequestDeviceAuthUseCase)(nil)
+	_ devicePollUseCase = (*auth.PollDeviceTokenUseCase)(nil)
+)
+
 // HumaHandler defines the function signature for Huma handlers.
 type HumaHandler[I, O any] func(context.Context, *I) (*O, error)
 
 // API holds the auth handler references and registers routes.
 type API struct {
-	RegisterHandler HumaHandler[RegisterRequest, RegisterResponse]
-	MeHandler       HumaHandler[struct{}, MeResponse]
-	SignInHandler   HumaHandler[SignInRequest, SignInResponse]
+	RegisterHandler   HumaHandler[RegisterRequest, RegisterResponse]
+	MeHandler         HumaHandler[struct{}, MeResponse]
+	DeviceAuthHandler HumaHandler[RequestDeviceAuthRequest, RequestDeviceAuthResponse]
+	DevicePollHandler HumaHandler[PollDeviceTokenRequest, PollDeviceTokenResponse]
 }
 
 // NewAPI creates an auth API from the given dependencies.
-func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) API {
+func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client, logtoDevice auth.LogtoDeviceFlowClient) API {
 	registerUC := auth.NewRegisterUseCase(userRepo, logtoM2M)
 	meUC := auth.NewMeUseCase(userRepo)
-	signInUC := auth.NewSignInUseCase(logtoM2M)
-	h := NewHandler(registerUC, meUC, signInUC)
+	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(logtoDevice)
+	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoDevice)
+	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC)
 
 	return API{
-		RegisterHandler: h.Register,
-		MeHandler:       h.Me,
-		SignInHandler:   h.SignIn,
+		RegisterHandler:   h.Register,
+		MeHandler:         h.Me,
+		DeviceAuthHandler: h.DeviceAuth,
+		DevicePollHandler: h.DevicePoll,
 	}
 }
 
@@ -58,14 +66,29 @@ func (a API) RegisterRoutes(api huma.API) {
 		},
 	}, a.MeHandler)
 
+	// Device authorization flow — both endpoints are public (no JWT required).
 	huma.Register(api, huma.Operation{
 		Method:      http.MethodPost,
-		Path:        "/auth/sign-in",
-		Description: "Sign in with email and password, returns OIDC tokens",
+		Path:        "/auth/device/auth",
+		Description: "Request a device code for passwordless authentication",
 		Tags:        []string{"Auth"},
 		Errors: []int{
-			http.StatusUnauthorized,
+			http.StatusUnprocessableEntity,
 			http.StatusInternalServerError,
 		},
-	}, a.SignInHandler)
+	}, a.DeviceAuthHandler)
+
+	huma.Register(api, huma.Operation{
+		Method:      http.MethodPost,
+		Path:        "/auth/device/poll",
+		Description: "Poll for OIDC tokens after user completes device auth",
+		Tags:        []string{"Auth"},
+		Errors: []int{
+			http.StatusBadRequest,
+			http.StatusUnauthorized,
+			http.StatusForbidden,
+			http.StatusUnprocessableEntity,
+			http.StatusInternalServerError,
+		},
+	}, a.DevicePollHandler)
 }
