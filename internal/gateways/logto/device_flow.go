@@ -125,3 +125,56 @@ func (c *Client) PollDeviceToken(ctx context.Context, deviceCode string) (*Devic
 		return nil, fmt.Errorf("poll device token: status %d", resp.StatusCode())
 	}
 }
+
+// DeviceTokenRefreshResponse maps Logto's /oidc/token response for
+// grant_type=refresh_token.
+type DeviceTokenRefreshResponse struct {
+	AccessToken  string `json:"access_token"`
+	IDToken      string `json:"id_token,omitempty"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	Scope        string `json:"scope,omitempty"`
+
+	// Error fields set on invalid/expired refresh token responses.
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}
+
+// RefreshDeviceToken exchanges a refresh token for new access and refresh tokens.
+//
+// Logto rotates refresh tokens, so callers MUST store the returned
+// refresh_token for subsequent refreshes.
+func (c *Client) RefreshDeviceToken(ctx context.Context, refreshToken string) (*DeviceTokenRefreshResponse, error) {
+	if c.cfg.DeviceAppClientID == "" {
+		return nil, fmt.Errorf("refresh device token: %w", ErrAppClientNotConfigured)
+	}
+
+	formData := map[string]string{
+		"client_id":     c.cfg.DeviceAppClientID,
+		"grant_type":    "refresh_token",
+		"refresh_token": refreshToken,
+	}
+
+	var result DeviceTokenRefreshResponse
+	resp, err := c.httpClient.R(ctx).
+		SetFormData(formData).
+		SetResult(&result).
+		SetResultError(&result).
+		Post(c.cfg.OIDCEndpoint + "/token")
+	if err != nil {
+		return nil, fmt.Errorf("refresh device token: %w", err)
+	}
+
+	if resp.StatusCode() == http.StatusOK {
+		return &result, nil
+	}
+
+	// Handle error responses (invalid_grant, expired_token, etc.)
+	switch result.Error {
+	case "invalid_grant":
+		return nil, ErrDeviceCodeExpired
+	default:
+		return nil, fmt.Errorf("refresh device token: %s", result.Error)
+	}
+}
