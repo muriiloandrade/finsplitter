@@ -24,6 +24,11 @@ type Config struct {
 	// They correspond to LOGTO_APP_CLIENT_ID / LOGTO_APP_CLIENT_SECRET.
 	AppClientID     string
 	AppClientSecret string
+
+	// DeviceAppClientID is the client ID of the Logto Native App used for
+	// the Device Authorization Grant (device flow).
+	// It corresponds to LOGTO_DEVICE_APP_CLIENT_ID.
+	DeviceAppClientID string
 }
 
 // cachedToken holds an access token with its expiry.
@@ -175,7 +180,7 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 // CreateUserRequest is the body for creating a user via Management API.
 type CreateUserRequest struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password,omitempty"`
 	Name     string `json:"name,omitempty"`
 	Email    string `json:"primaryEmail,omitempty"`
 }
@@ -187,6 +192,7 @@ type CreateUserResponse struct {
 }
 
 // CreateUser creates a new user in Logto via the Management API.
+// When password is empty, Logto creates a passwordless user.
 func (c *Client) CreateUser(ctx context.Context, username, password, name, email string) (*CreateUserResponse, error) {
 	token, err := c.getToken(ctx)
 	if err != nil {
@@ -215,6 +221,8 @@ func (c *Client) CreateUser(ctx context.Context, username, password, name, email
 		return &result, nil
 	case http.StatusConflict:
 		return nil, ErrUserExists
+	case http.StatusUnprocessableEntity:
+		return nil, ErrEmailAlreadyInUse
 	case http.StatusUnauthorized:
 		return nil, ErrM2MUnauthorized
 	default:
