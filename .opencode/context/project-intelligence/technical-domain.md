@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.4 | Updated: 2026-07-02 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.5 | Updated: 2026-07-04 -->
 
 # Technical Domain
 
@@ -56,7 +56,7 @@ internal/
 └── gateways/
     ├── http/v1/             # Huma v2 HTTP handlers (auth/, card-brand/, profile/)
     ├── postgres/            # pgx + sqlc + migrations
-    └── logto/               # Logto M2M Management API client
+    └── logto/               # Logto clients (M2M Management API + device flow)
 pkg/
 ├── cache/                   # Valkey/Redis + OTel instrumentation
 ├── httpclient/              # Resty v3 wrapper
@@ -127,7 +127,7 @@ finsplitter/
 |--------|---------|----------|-----------|
 | PostgreSQL | Persistent storage | pgx (TCP) | Internal |
 | Valkey/Redis | Caching, sessions | RESP (TCP) | Internal |
-| Logto | Authentication, OIDC | HTTP (REST/OIDC) | Internal |
+| Logto | Authentication, OIDC | HTTP (REST/OIDC, device auth, UserInfo) | Internal |
 | Grafana Tempo | Trace storage | OTLP (HTTP/gRPC) | Outbound |
 | Grafana Loki | Log aggregation | OTLP (HTTP) | Outbound |
 | Prometheus/Grafana | Metrics visualization | OTLP (HTTP) | Outbound |
@@ -224,16 +224,22 @@ opts, _ := telemetry.NewOptions(
 tracer, _, _ := tracing.NewTracerProvider(ctx, opts, 1.0)
 ```
 
-### Auth Middleware (jwx + JWKS Cache)
+### Auth Middleware (jwx + JWKS Cache + UserInfo Fallback)
 ```go
-// Middleware validates JWTs via Logto JWKS. Cached in Valkey with 15min TTL.
-// Graceful degradation: cache failure → direct Logto fetch.
+// Middleware validates tokens via two strategies:
+// 1. JWT parsing + JWKS verification (for standard JWTs from M2M/SPA apps)
+// 2. UserInfo fallback (for opaque tokens from device authorization flow)
+// JWKS cached in Valkey with 15min TTL. Graceful degradation: cache failure → direct fetch.
 // Interface extracted for testability (jwkFetcher → mockjwkFetcher).
 type Middleware struct {
     jwkClient jwkFetcher       // *jwkfetch.Client in production
     cache     *cache.Client    // Valkey-backed; nil = no caching
+    userInfoURL string         // Logto /oidc/me for opaque token validation
+    httpClient  *http.Client   // HTTP client for UserInfo calls
 }
-// Optional/auth paths controlled via skipPrefixes / skipExact / optionalExact.
+// Public paths controlled via skipPrefixes / skipExact / optionalExact.
+// Opaque token detection: if token has no dots (non-JWT), skips JWKS parse
+// and goes directly to UserInfo endpoint.
 ```
 
 ### Use Case with UserRepository
@@ -245,6 +251,64 @@ func (uc *MeUseCase) Execute(ctx context.Context, input MeInput) (*MeOutput, err
     }
     // ... return full profile with NeedsSetup=false
 }
+```
+
+---
+
+### Device Flow — resty v3 Error Parsing
+
+```go
+// resty v3 uses SetResult for 2xx and SetResultError for non-2xx.
+// Both must be set to capture error details on 4xx responses.
+var result DeviceTokenResponse
+resp, err := c.httpClient.R(ctx).
+    SetFormData(formData).
+    SetResult(&result).
+    SetResultError(&result).  // Required: populates result.Error on 4xx
+    Post(c.cfg.OIDCEndpoint + "/token")
+
+if resp.IsStatusFailure() {
+    switch result.Error {
+    case "authorization_pending":
+        return nil, ErrDeviceCodePending
+    case "expired_token":
+        return nil, ErrDeviceCodeExpired
+    }
+}
+```
+
+### Device Flow — Public Handler Pattern
+
+```go
+// Device auth endpoints are fully public (no JWT required):
+//   POST /auth/device       — initiate flow, returns device_code + user_code
+//   POST /auth/device/poll  — poll for tokens after user approves in browser
+// Registration is also public:
+//   POST /auth/register     — passwordless, user then authenticates via device flow
+//
+// Middleware skips these via skipExact:
+var skipExact = []string{
+    "/auth/register",
+    "/auth/device",
+    "/auth/device/poll",
+}
+```
+
+### Consumer-Defined Interface Pattern
+
+```go
+// Interfaces are defined by the consumer (use case), not the producer (gateway).
+// The use case declares what it needs; the concrete gateway satisfies it.
+// Compile-time check in the gateway package ensures satisfaction.
+
+// In use case package (consumer-owned):
+type LogtoDeviceFlowClient interface {
+    RequestDeviceCode(ctx context.Context) (*logto.DeviceCodeResponse, error)
+    PollDeviceToken(ctx context.Context, deviceCode string) (*logto.DeviceTokenResponse, error)
+}
+
+// In gateway package — compile-time satisfaction check:
+var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 ```
 
 ---
@@ -291,14 +355,19 @@ func (uc *MeUseCase) Execute(ctx context.Context, input MeInput) (*MeOutput, err
 - SSL/TLS for DB (`PG_SSL_MODE=require`)
 - No sensitive data in logs
 - Proper error messages (don't leak internals)
-- JWT validation via jwx/jwkfetch with Logto JWKS (15min cached TTL)
+- Token validation via two strategies:
+  1. **JWT+JWKS** (jwx/jwkfetch with Logto JWKS, 15min cached TTL) — for standard JWTs from M2M/SPA clients
+  2. **UserInfo fallback** (Logto `/oidc/me` endpoint) — for opaque access tokens from device authorization flow
 - Auth middleware: prefix skip for public paths, exact match for auth paths
 - Bearer token extraction; optional paths populate claims but never reject
+- Device flow endpoints (`/auth/device`, `/auth/device/poll`, `/auth/register`) are fully public (no auth)
 - `LOGTO_APP_CLIENT_ID` must match Logto API Resource identifier (aud claim)
 - Logto M2M client credentials grant with token caching (60s safety buffer)
 - JWKS TTL-based cache (15min) — cache errors degrade gracefully to direct fetch
 - Unregistered users (JWT w/o DB record) receive 403 "needs setup"
-- `/auth/me` uses optional auth — returns email for pre-fill when NeedsSetup=true
+- `/auth/me` and `/profile/setup` use optional auth — returns limited info when no token present
+- Device flow uses Logto Native App client (`LOGTO_DEVICE_APP_CLIENT_ID`) separate from Traditional App client
+- Password authentication disabled (must use device authorization grant)
 
 ---
 
@@ -322,9 +391,9 @@ func (uc *MeUseCase) Execute(ctx context.Context, input MeInput) (*MeOutput, err
 - **Config**: `internal/config/config.go`
 - **Domain Errors**: `internal/domain/errs/errs.go`
 - **Auth Middleware**: `internal/gateways/http/v1/auth/middleware.go`
-- **Auth Use Cases**: `internal/app/usecases/auth/` (register, me, errors)
+- **Auth Use Cases**: `internal/app/usecases/auth/` (register, device_auth, device_poll, me, errors)
 - **Profile Use Cases**: `internal/app/usecases/profile/` (setup)
-- **Logto Client**: `internal/gateways/logto/m2m_client.go`
+- **Logto Clients**: `internal/gateways/logto/m2m_client.go` (Management API), `internal/gateways/logto/device_flow.go` (device authorization grant)
 - **Cache Client**: `pkg/cache/client.go`
 - **Telemetry**: `pkg/telemetry/` (options, tracing, metrics, logging)
 - **Migration**: `internal/gateways/postgres/migrations/`
