@@ -34,7 +34,7 @@ func TestHandler_Register_Success(t *testing.T) {
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -59,7 +59,7 @@ func TestHandler_Register_UsernameTaken(t *testing.T) {
 		Return(nil, logto.ErrUserExists)
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -91,7 +91,7 @@ func TestHandler_Register_UserAlreadyExists(t *testing.T) {
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -119,7 +119,7 @@ func TestHandler_Register_GenericError(t *testing.T) {
 		Return(nil, errors.New("unexpected logto error"))
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -144,7 +144,7 @@ func TestHandler_Register_GenericError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Me_NoClaims(t *testing.T) {
-	h := NewHandler(nil, nil, nil, nil)
+	h := NewHandler(nil, nil, nil, nil, nil)
 
 	resp, err := h.Me(context.Background(), &struct{}{})
 
@@ -164,7 +164,7 @@ func TestHandler_Me_Success(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub:      "logto_sub_1",
@@ -199,7 +199,7 @@ func TestHandler_Me_NeedsSetup(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_new",
@@ -224,7 +224,7 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_1",
@@ -241,4 +241,101 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 	assert.Contains(t, statusErr.Error(), "failed to get user info")
 
 	mockUserRepo.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// Device Refresh
+// ---------------------------------------------------------------------------
+
+func TestHandler_DeviceRefresh_Success(t *testing.T) {
+	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+
+	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
+		RefreshToken: "valid_refresh_token",
+	}).Return(&authUC.RefreshDeviceTokenOutput{
+		AccessToken:  "new_access",
+		IDToken:      "new_id",
+		RefreshToken: "new_refresh",
+		ExpiresIn:    3600,
+	}, nil)
+
+	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "valid_refresh_token"
+
+	resp, err := h.DeviceRefresh(context.Background(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, "new_access", resp.Body.AccessToken)
+	assert.Equal(t, "new_id", resp.Body.IDToken)
+	assert.Equal(t, "new_refresh", resp.Body.RefreshToken)
+	assert.Equal(t, 3600, resp.Body.ExpiresIn)
+}
+
+func TestHandler_DeviceRefresh_ExpiredToken(t *testing.T) {
+	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+
+	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
+		RefreshToken: "expired_refresh",
+	}).Return(nil, logto.ErrDeviceCodeExpired)
+
+	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "expired_refresh"
+
+	resp, err := h.DeviceRefresh(context.Background(), req)
+	require.Error(t, err)
+	assert.Nil(t, resp)
+
+	var statusErr huma.StatusError
+	require.ErrorAs(t, err, &statusErr)
+	assert.Equal(t, 400, statusErr.GetStatus())
+	assert.Contains(t, statusErr.Error(), "refresh token expired or invalid")
+}
+
+func TestHandler_DeviceRefresh_EmptyToken(t *testing.T) {
+	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+
+	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
+		RefreshToken: "",
+	}).Return(nil, errs.ErrInvalidInput)
+
+	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = ""
+
+	resp, err := h.DeviceRefresh(context.Background(), req)
+	require.Error(t, err)
+	assert.Nil(t, resp)
+
+	var statusErr huma.StatusError
+	require.ErrorAs(t, err, &statusErr)
+	assert.Equal(t, 422, statusErr.GetStatus())
+	assert.Contains(t, statusErr.Error(), "refresh_token is required")
+}
+
+func TestHandler_DeviceRefresh_GenericError(t *testing.T) {
+	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+
+	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
+		RefreshToken: "some_token",
+	}).Return(nil, errors.New("logto unavailable"))
+
+	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "some_token"
+
+	resp, err := h.DeviceRefresh(context.Background(), req)
+	require.Error(t, err)
+	assert.Nil(t, resp)
+
+	var statusErr huma.StatusError
+	require.ErrorAs(t, err, &statusErr)
+	assert.Equal(t, 500, statusErr.GetStatus())
+	assert.Contains(t, statusErr.Error(), "token refresh failed")
 }

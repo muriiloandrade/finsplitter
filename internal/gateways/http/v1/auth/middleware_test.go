@@ -226,6 +226,7 @@ func TestIsPublicPath(t *testing.T) {
 		{"register exact", "/auth/register", true},
 		{"device auth exact", "/auth/device", true},
 		{"device poll exact", "/auth/device/poll", true},
+		{"device refresh exact", "/auth/device/refresh", true},
 
 		// Should not match
 		{"health without trailing slash", "/health", false},
