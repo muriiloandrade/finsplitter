@@ -16,7 +16,7 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// DeviceAuth (POST /auth/device/auth)
+// DeviceAuth (POST /auth/device)
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeviceAuth_Success(t *testing.T) {

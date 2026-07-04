@@ -72,7 +72,7 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 	}
 
 	resp := &RegisterResponse{}
-	resp.Body.Message = "Account created. Use POST /auth/device/auth to receive a verification code."
+	resp.Body.Message = "Account created. Use POST /auth/device to receive a verification code."
 	resp.Body.UserID = output.UserID
 	return resp, nil
 }

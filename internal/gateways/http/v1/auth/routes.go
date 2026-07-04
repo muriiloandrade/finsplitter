@@ -45,10 +45,13 @@ func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client, logtoDevice a
 // RegisterRoutes registers auth routes on the given Huma API.
 func (a API) RegisterRoutes(api huma.API) {
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		Path:        "/auth/register",
-		Description: "Register a new user in Logto and Finsplitter",
-		Tags:        []string{"Auth"},
+		Method:  http.MethodPost,
+		Path:    "/auth/register",
+		Summary: "Create a new passwordless user",
+		Description: "Registers a new user in Logto via the Management API and persists a local ID-only link. " +
+			"The user is created without a password and must authenticate via the device flow. " +
+			"Returns the Finsplitter user ID and instructions for the next step.",
+		Tags: []string{"Auth"},
 		Errors: []int{
 			http.StatusConflict,
 			http.StatusInternalServerError,
@@ -56,10 +59,16 @@ func (a API) RegisterRoutes(api huma.API) {
 	}, a.RegisterHandler)
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodGet,
-		Path:        "/auth/me",
-		Description: "Get current user profile from JWT claims",
-		Tags:        []string{"Auth"},
+		Method:  http.MethodGet,
+		Path:    "/auth/me",
+		Summary: "Get the current user's profile",
+		Description: "Returns profile information (email, name, username, phone, picture, Finsplitter user ID) " +
+			"by reading identity data from the JWT access token claims. " +
+			"When no token is provided the response contains empty fields (NeedsSetup defaults to false). " +
+			"A newly authenticated user whose Finsplitter record does not yet exist will have NeedsSetup=true " +
+			"and must call PATCH /profile/setup to complete registration.",
+		Tags:     []string{"Auth"},
+		Security: []map[string][]string{{}, {"bearerAuth": {}}},
 		Errors: []int{
 			http.StatusUnauthorized,
 			http.StatusForbidden,
@@ -68,10 +77,14 @@ func (a API) RegisterRoutes(api huma.API) {
 
 	// Device authorization flow — both endpoints are public (no JWT required).
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		Path:        "/auth/device/auth",
-		Description: "Request a device code for passwordless authentication",
-		Tags:        []string{"Auth"},
+		Method:  http.MethodPost,
+		Path:    "/auth/device",
+		Summary: "Initiate device authorization flow",
+		Description: "Starts the OAuth2 Device Authorization Grant (RFC 8628) flow. " +
+			"Accepts an email address and returns a device_code, user_code, and verification_uri. " +
+			"The user must visit verification_uri in a browser to approve the request. " +
+			"Use POST /auth/device/poll with the device_code to obtain JWT tokens after approval.",
+		Tags: []string{"Auth"},
 		Errors: []int{
 			http.StatusUnprocessableEntity,
 			http.StatusInternalServerError,
@@ -79,10 +92,14 @@ func (a API) RegisterRoutes(api huma.API) {
 	}, a.DeviceAuthHandler)
 
 	huma.Register(api, huma.Operation{
-		Method:      http.MethodPost,
-		Path:        "/auth/device/poll",
-		Description: "Poll for OIDC tokens after user completes device auth",
-		Tags:        []string{"Auth"},
+		Method:  http.MethodPost,
+		Path:    "/auth/device/poll",
+		Summary: "Poll for OIDC tokens after user approval",
+		Description: "Polls Logto's token endpoint after the user approves the device authorization in the browser. " +
+			"Returns JWT access_token, id_token, and refresh_token on success. " +
+			"Returns 401 (authorization_pending) while the user has not yet approved, " +
+			"400 (device_code_expired) if the code has timed out, and 403 (access_denied) if rejected.",
+		Tags: []string{"Auth"},
 		Errors: []int{
 			http.StatusBadRequest,
 			http.StatusUnauthorized,

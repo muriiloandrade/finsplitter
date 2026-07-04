@@ -223,7 +223,7 @@ func TestE2E_DeviceFlow_RegisterAuthMe(t *testing.T) {
 	assert.NotEmpty(t, reg.Message, "registration message")
 
 	// --- Request device code ---
-	daBody := env.postOK(t, "/auth/device/auth", `{
+	daBody := env.postOK(t, "/auth/device", `{
 		"email":"john@example.com"
 	}`)
 
@@ -290,7 +290,7 @@ func TestE2E_DeviceFlow_PollPending(t *testing.T) {
 	env := newE2EEnv(t)
 
 	// Request device code.
-	daBody := env.postOK(t, "/auth/device/auth", `{"email":"user@example.com"}`)
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
 
 	var da struct {
 		DeviceCode string `json:"device_code"`
@@ -314,7 +314,7 @@ func TestE2E_DeviceFlow_PollExpired(t *testing.T) {
 	env := newE2EEnv(t)
 
 	// Request device code.
-	daBody := env.postOK(t, "/auth/device/auth", `{"email":"user@example.com"}`)
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
 
 	var da struct {
 		DeviceCode string `json:"device_code"`
@@ -341,7 +341,7 @@ func TestE2E_DeviceFlow_PollDenied(t *testing.T) {
 	env := newE2EEnv(t)
 
 	// Request device code.
-	daBody := env.postOK(t, "/auth/device/auth", `{"email":"user@example.com"}`)
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
 
 	var da struct {
 		DeviceCode string `json:"device_code"`

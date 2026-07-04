@@ -224,7 +224,7 @@ func TestIsPublicPath(t *testing.T) {
 
 		// Exact matches
 		{"register exact", "/auth/register", true},
-		{"device auth exact", "/auth/device/auth", true},
+		{"device auth exact", "/auth/device", true},
 		{"device poll exact", "/auth/device/poll", true},
 
 		// Should not match

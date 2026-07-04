@@ -14,14 +14,14 @@ import (
 // Request types
 // ---------------------------------------------------------------------------
 
-// RequestDeviceAuthRequest is the body for POST /auth/device/auth.
+// RequestDeviceAuthRequest is the body for POST /auth/device.
 type RequestDeviceAuthRequest struct {
 	Body struct {
 		Email string `json:"email" required:"true" maxLength:"255" doc:"Email address"`
 	}
 }
 
-// RequestDeviceAuthResponse is the response for POST /auth/device/auth.
+// RequestDeviceAuthResponse is the response for POST /auth/device.
 type RequestDeviceAuthResponse struct {
 	Body struct {
 		DeviceCode              string `json:"device_code" doc:"Device code for polling"`
@@ -67,7 +67,7 @@ type devicePollUseCase interface {
 // ---------------------------------------------------------------------------
 
 // DeviceAuth initiates the device authorization flow.
-// POST /auth/device/auth.
+// POST /auth/device.
 func (h *Handler) DeviceAuth(ctx context.Context, req *RequestDeviceAuthRequest) (*RequestDeviceAuthResponse, error) {
 	output, err := h.deviceAuthUC.Execute(ctx, auth.RequestDeviceAuthInput{
 		Email: req.Body.Email,
