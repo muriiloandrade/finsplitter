@@ -20,8 +20,16 @@ packages:
   github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand:
     config:
       all: true
+  github.com/muriiloandrade/finsplitter/internal/app/usecases/auth:
+    config:
+      all: false
+    interfaces:
+      LogtoDeviceFlowClient:
+      LogtoUserCreator:
   github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth:
     config:
       all: false
     interfaces:
       jwkFetcher:
+      deviceAuthUseCase:
+      devicePollUseCase:

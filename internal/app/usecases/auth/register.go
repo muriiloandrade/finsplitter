@@ -20,7 +20,6 @@ type RegisterInput struct {
 	Name     string
 	Email    string
 	Username string // optional — auto-generated from Name when empty
-	Password string
 }
 
 // RegisterOutput holds the result of a successful registration.
@@ -53,7 +52,8 @@ func (uc *RegisterUseCase) Execute(ctx context.Context, input RegisterInput) (*R
 		username = slugify(input.Name)
 	}
 
-	logtoUser, err := uc.logtoM2M.CreateUser(ctx, username, input.Password, input.Name, input.Email)
+	// Passwordless registration: empty string tells Logto to create a passwordless user.
+	logtoUser, err := uc.logtoM2M.CreateUser(ctx, username, "", input.Name, input.Email)
 	if err != nil {
 		if errors.Is(err, logto.ErrUserExists) {
 			return nil, errs.ErrUsernameTaken
