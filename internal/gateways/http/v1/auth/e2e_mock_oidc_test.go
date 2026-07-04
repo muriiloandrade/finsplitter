@@ -70,6 +70,7 @@ type mockOIDCProvider struct {
 	listener           net.Listener
 	users              map[string]*oidcUser   // keyed by email
 	deviceCodes        map[string]*deviceCode // keyed by device_code
+	refreshTokens      map[string]*oidcUser   // keyed by refresh_token
 	deviceAuthClientID string                 // expected client_id for device auth
 	privKey            *ecdsa.PrivateKey      // raw key for signing JWTs
 	signingJWK         jwk.Key                // private JWK with kid (for signing, keeps kid in header)
@@ -123,6 +124,7 @@ func newMockOIDCProvider(audience string) (*mockOIDCProvider, error) {
 	m := &mockOIDCProvider{
 		users:              make(map[string]*oidcUser),
 		deviceCodes:        make(map[string]*deviceCode),
+		refreshTokens:      make(map[string]*oidcUser),
 		deviceAuthClientID: "test-device-client-id",
 		signingJWK:         signingJWK,
 		publicJWK:          pubJWK,
@@ -245,6 +247,14 @@ func (m *mockOIDCProvider) AddUser(email, password, name, username string) strin
 	return id
 }
 
+// newRefreshToken generates a unique refresh token and stores it for the user.
+// Returns the raw token string. The caller must hold m.mu.
+func (m *mockOIDCProvider) newRefreshToken(user *oidcUser) string {
+	rt := uuid.Must(uuid.NewV4()).String()
+	m.refreshTokens[rt] = user
+	return rt
+}
+
 // createToken signs a JWT with the mock's private key containing the
 // standard OIDC claims expected by Finsplitter's auth middleware.
 func (m *mockOIDCProvider) createToken(user *oidcUser) (string, error) {
@@ -333,6 +343,8 @@ func (m *mockOIDCProvider) handleToken(w http.ResponseWriter, r *http.Request) {
 		m.handleM2MToken(w, r)
 	case "urn:ietf:params:oauth:grant-type:device_code":
 		m.handleDeviceCodeToken(w, r)
+	case "refresh_token":
+		m.handleRefreshTokenGrant(w, r)
 	default:
 		http.Error(w, "unsupported grant_type", http.StatusBadRequest)
 	}
@@ -431,10 +443,12 @@ func (m *mockOIDCProvider) handleDeviceCodeToken(w http.ResponseWriter, r *http.
 			return
 		}
 
+		rt := m.newRefreshToken(user)
+
 		writeJSON(w, http.StatusOK, map[string]interface{}{
 			"access_token":  token,
 			"id_token":      token,
-			"refresh_token": "mock_refresh_token",
+			"refresh_token": rt,
 			"expires_in":    3600,
 			"token_type":    "Bearer",
 		})
@@ -443,6 +457,43 @@ func (m *mockOIDCProvider) handleDeviceCodeToken(w http.ResponseWriter, r *http.
 			"error": "invalid_grant",
 		})
 	}
+}
+
+func (m *mockOIDCProvider) handleRefreshTokenGrant(w http.ResponseWriter, r *http.Request) {
+	refreshToken := r.FormValue("refresh_token")
+	if refreshToken == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
+		return
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	user, ok := m.refreshTokens[refreshToken]
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid_grant",
+		})
+		return
+	}
+
+	token, err := m.createToken(user)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "token creation failed"})
+		return
+	}
+
+	// Rotate refresh token.
+	delete(m.refreshTokens, refreshToken)
+	newRT := m.newRefreshToken(user)
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"access_token":  token,
+		"id_token":      token,
+		"refresh_token": newRT,
+		"expires_in":    3600,
+		"token_type":    "Bearer",
+	})
 }
 
 func (m *mockOIDCProvider) handleJWKS(w http.ResponseWriter, r *http.Request) {

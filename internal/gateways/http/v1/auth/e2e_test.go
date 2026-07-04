@@ -431,3 +431,93 @@ func TestE2E_DeviceFlow_EmptyDeviceCode(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode, "empty code: %s", string(body))
 }
+
+// TestE2E_DeviceFlow_RefreshToken covers the full token refresh cycle:
+// register → device auth → approve → poll → refresh → use new token for /auth/me.
+func TestE2E_DeviceFlow_RefreshToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	// --- Register ---
+	email := fmt.Sprintf("refresh-%d@example.com", time.Now().UnixNano())
+	regBody := env.postOK(t, "/auth/register", fmt.Sprintf(`{
+		"name":"Refresh Tester","email":"%s"
+	}`, email))
+
+	var reg struct {
+		UserID string `json:"user_id"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(regBody), &reg))
+	assert.NotEmpty(t, reg.UserID)
+
+	// --- Request device code ---
+	daBody := env.postOK(t, "/auth/device", fmt.Sprintf(`{"email":"%s"}`, email))
+
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+	assert.NotEmpty(t, da.DeviceCode)
+
+	// --- Approve ---
+	approved := env.mockOIDC.ApproveDeviceCode(da.DeviceCode, email)
+	require.True(t, approved)
+
+	// --- Poll for tokens ---
+	pollBody := env.postOK(t, "/auth/device/poll", fmt.Sprintf(`{"device_code":"%s"}`, da.DeviceCode))
+
+	var poll struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(pollBody), &poll))
+	require.NotEmpty(t, poll.AccessToken, "access_token")
+	require.NotEmpty(t, poll.RefreshToken, "refresh_token")
+
+	firstRefresh := poll.RefreshToken
+
+	// --- Refresh tokens ---
+	refreshBody := env.postOK(t, "/auth/device/refresh", fmt.Sprintf(`{"refresh_token":"%s"}`, firstRefresh))
+
+	var refresh struct {
+		AccessToken  string `json:"access_token"`
+		IDToken      string `json:"id_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int    `json:"expires_in"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(refreshBody), &refresh))
+	require.NotEmpty(t, refresh.AccessToken, "new access_token")
+	require.NotEmpty(t, refresh.IDToken, "new id_token")
+	require.NotEmpty(t, refresh.RefreshToken, "new refresh_token")
+	require.NotEqual(t, firstRefresh, refresh.RefreshToken, "refresh token should rotate")
+	require.Greater(t, refresh.ExpiresIn, 0, "expires_in")
+
+	// --- Use new token to access /auth/me ---
+	meBody := env.getOK(t, "/auth/me", refresh.AccessToken)
+
+	var me struct {
+		ID    string `json:"id"`
+		Email string `json:"email"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(meBody), &me))
+	assert.NotEmpty(t, me.ID, "finsplitter user id")
+	assert.Equal(t, email, me.Email)
+}
+
+// TestE2E_DeviceFlow_RefreshExpired verifies that refreshing an expired or
+// unknown refresh token returns 400.
+func TestE2E_DeviceFlow_RefreshExpired(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	resp := env.post(t, "/auth/device/refresh", `{"refresh_token":"this-token-does-not-exist"}`)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "bad refresh: %s", string(body))
+}
