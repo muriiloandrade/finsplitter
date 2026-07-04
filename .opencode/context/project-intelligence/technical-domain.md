@@ -365,7 +365,8 @@ var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 - Logto M2M client credentials grant with token caching (60s safety buffer)
 - JWKS TTL-based cache (15min) — cache errors degrade gracefully to direct fetch
 - Unregistered users (JWT w/o DB record) receive 403 "needs setup"
-- `/auth/me` and `/profile/setup` use optional auth — returns limited info when no token present
+- `/auth/me` is optional auth; `/profile/setup` uses optional auth (handler verifies claims internally) — both return limited info when no token present
+- `PATCH /profile/setup` is idempotent — returns 409 if user already fully registered
 - Device flow uses Logto Native App client (`LOGTO_DEVICE_APP_CLIENT_ID`) separate from Traditional App client
 - Password authentication disabled (must use device authorization grant)
 

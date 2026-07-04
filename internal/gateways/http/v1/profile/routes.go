@@ -34,13 +34,13 @@ func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client, claimsPr p
 // RegisterRoutes registers profile routes on the given Huma API.
 func (a API) RegisterRoutes(api huma.API) {
 	huma.Register(api, huma.Operation{
-		Method:  http.MethodPost,
+		Method:  http.MethodPatch,
 		Path:    "/profile/setup",
 		Summary: "Complete initial profile setup",
 		Description: "Completes the profile for a newly authenticated user whose Finsplitter record does not yet exist. " +
 			"Sets the user's display name, phone number, and avatar URL in Logto via the Management API, " +
 			"then persists a Finsplitter user record linked to the Logto identity. " +
-			"Returns 409 Conflict if the user is already fully registered.",
+			"Idempotent: returns 409 Conflict if the user is already fully registered.",
 		Tags:     []string{"Profile"},
 		Security: []map[string][]string{{}, {"bearerAuth": {}}},
 		Errors: []int{

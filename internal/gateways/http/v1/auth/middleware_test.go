@@ -616,7 +616,7 @@ func TestProtected_SetupPath_WithValidToken(t *testing.T) {
 		"email":    "setup@example.com",
 	})
 
-	req := httptest.NewRequest(http.MethodPost, "/profile/setup", nil)
+	req := httptest.NewRequest(http.MethodPatch, "/profile/setup", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -633,7 +633,7 @@ func TestProtected_SetupPath_NoToken(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	req := httptest.NewRequest(http.MethodPost, "/profile/setup", nil)
+	req := httptest.NewRequest(http.MethodPatch, "/profile/setup", nil)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
