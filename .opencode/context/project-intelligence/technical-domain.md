@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.6 | Updated: 2026-07-04 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.7 | Updated: 2026-07-04 -->
 
 # Technical Domain
 
@@ -277,6 +277,39 @@ if resp.IsStatusFailure() {
 }
 ```
 
+### Auth Handler Pattern — Concrete Use Case Types
+
+```go
+// The auth handler uses concrete *usecase.UseCase types directly — no local
+// interfaces. Use cases already have their own interfaces for I/O (e.g.
+// LogtoDeviceFlowClient, UserRepository); wrapping them again at the handler
+// layer adds indirection without benefit.
+
+type Handler struct {
+    registerUC      *auth.RegisterUseCase
+    meUC            *auth.MeUseCase
+    deviceAuthUC    *auth.RequestDeviceAuthUseCase
+    devicePollUC    *auth.PollDeviceTokenUseCase
+    deviceRefreshUC *auth.RefreshDeviceTokenUseCase
+}
+
+func NewHandler(
+    registerUC *auth.RegisterUseCase,
+    meUC       *auth.MeUseCase,
+    deviceAuthUC *auth.RequestDeviceAuthUseCase,
+    devicePollUC *auth.PollDeviceTokenUseCase,
+    deviceRefreshUC *auth.RefreshDeviceTokenUseCase,
+) *Handler {
+    return &Handler{
+        registerUC:      registerUC,
+        meUC:            meUC,
+        deviceAuthUC:    deviceAuthUC,
+        devicePollUC:    devicePollUC,
+        deviceRefreshUC: deviceRefreshUC,
+    }
+}
+```
+
 ### Device Flow — Public Handler Pattern
 
 ```go
@@ -313,6 +346,9 @@ type LogtoDeviceFlowClient interface {
 // In gateway package — compile-time satisfaction check:
 var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 ```
+
+> **Where this pattern applies**: use case ⟷ gateway boundary.  
+> **Where it does NOT apply**: handler ⟷ use case boundary. Handlers use concrete `*usecase.UseCase` types directly. Extra interfaces at the handler layer add indirection without benefit (use cases already have their own interfaces for IO). See [Auth Handler Pattern — Concrete Use Case Types](#auth-handler-pattern--concrete-use-case-types) below.
 
 ---
 
@@ -384,7 +420,7 @@ var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 5. Define ports in `internal/app/ports/foo_repo.go`
 6. Implement repo in `internal/gateways/postgres/foo.go`
 7. Create use cases in `internal/app/usecases/foo/`
-8. Create handlers in `internal/gateways/http/v1/foo/`
+8. Create handlers in `internal/gateways/http/v1/foo/` using concrete `*usecase.UseCase` types (no local interfaces)
 9. Wire in `cmd/api/main.go`
 10. `make generate-mocks` + write tests
 
