@@ -130,7 +130,7 @@ func buildApp(t *testing.T, mockOIDC *mockOIDCProvider) *chi.Mux {
 	)
 
 	// --- Auth API (handler + use cases) ---
-	authAPI := authHandler.NewAPI(userRepo, logtoClient, logtoClient)
+	authAPI := authHandler.NewAPI(userRepo, logtoClient)
 
 	// --- Router ---
 	router := chi.NewRouter()

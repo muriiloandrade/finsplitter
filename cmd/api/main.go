@@ -276,9 +276,9 @@ func newAuthMiddleware(
 	)
 }
 
-// newAuthAPI creates the auth handler API (register, me).
-func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandler.API {
-	return authHandler.NewAPI(userRepo, logtoM2M, logtoM2M)
+// newAuthAPI creates the auth handler API (register, me, device auth).
+func newAuthAPI(userRepo ports.UserRepository, logtoClient *logto.Client) authHandler.API {
+	return authHandler.NewAPI(userRepo, logtoClient)
 }
 
 // newProfileAPI creates the profile handler API (setup).

@@ -27,11 +27,13 @@ type API struct {
 }
 
 // NewAPI creates an auth API from the given dependencies.
-func NewAPI(userRepo ports.UserRepository, logtoM2M *logto.Client, logtoDevice auth.LogtoDeviceFlowClient) API {
-	registerUC := auth.NewRegisterUseCase(userRepo, logtoM2M)
+// logtoClient satisfies both LogtoUserCreator (for registration) and
+// LogtoDeviceFlowClient (for device auth) via compile-time interface checks.
+func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
+	registerUC := auth.NewRegisterUseCase(userRepo, logtoClient)
 	meUC := auth.NewMeUseCase(userRepo)
-	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(logtoDevice)
-	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoDevice)
+	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(logtoClient)
+	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoClient)
 	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC)
 
 	return API{
