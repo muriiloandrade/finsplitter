@@ -172,7 +172,7 @@ func (m *mockOIDCProvider) SetDeviceAuthClientID(id string) {
 
 // NewDeviceCode creates a new device code in the pending state and returns
 // the device code and user code.
-func (m *mockOIDCProvider) NewDeviceCode() (deviceCode, userCode string) {
+func (m *mockOIDCProvider) NewDeviceCode() (string, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -189,11 +189,11 @@ func (m *mockOIDCProvider) NewDeviceCode() (deviceCode, userCode string) {
 
 // ApproveDeviceCode marks a device code as approved by a user. Returns false
 // if the device code does not exist or is not in pending state.
-func (m *mockOIDCProvider) ApproveDeviceCode(deviceCode, userEmail string) bool {
+func (m *mockOIDCProvider) ApproveDeviceCode(code, userEmail string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	dc, ok := m.deviceCodes[deviceCode]
+	dc, ok := m.deviceCodes[code]
 	if !ok || dc.state != deviceCodePending {
 		return false
 	}
@@ -407,6 +407,10 @@ func (m *mockOIDCProvider) handleDeviceCodeToken(w http.ResponseWriter, r *http.
 	case deviceCodeDenied:
 		writeJSON(w, http.StatusBadRequest, map[string]string{
 			"error": "access_denied",
+		})
+	case deviceCodeExpired:
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "expired_token",
 		})
 	case deviceCodeApproved:
 		// Look up the user by email and issue a token.
