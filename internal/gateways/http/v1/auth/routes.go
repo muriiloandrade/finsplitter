@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	_ deviceAuthUseCase = (*auth.RequestDeviceAuthUseCase)(nil)
-	_ devicePollUseCase = (*auth.PollDeviceTokenUseCase)(nil)
+	_ deviceAuthUseCase    = (*auth.RequestDeviceAuthUseCase)(nil)
+	_ devicePollUseCase    = (*auth.PollDeviceTokenUseCase)(nil)
+	_ deviceRefreshUseCase = (*auth.RefreshDeviceTokenUseCase)(nil)
 )
 
 // HumaHandler defines the function signature for Huma handlers.
@@ -20,10 +21,11 @@ type HumaHandler[I, O any] func(context.Context, *I) (*O, error)
 
 // API holds the auth handler references and registers routes.
 type API struct {
-	RegisterHandler   HumaHandler[RegisterRequest, RegisterResponse]
-	MeHandler         HumaHandler[struct{}, MeResponse]
-	DeviceAuthHandler HumaHandler[RequestDeviceAuthRequest, RequestDeviceAuthResponse]
-	DevicePollHandler HumaHandler[PollDeviceTokenRequest, PollDeviceTokenResponse]
+	RegisterHandler      HumaHandler[RegisterRequest, RegisterResponse]
+	MeHandler            HumaHandler[struct{}, MeResponse]
+	DeviceAuthHandler    HumaHandler[RequestDeviceAuthRequest, RequestDeviceAuthResponse]
+	DevicePollHandler    HumaHandler[PollDeviceTokenRequest, PollDeviceTokenResponse]
+	DeviceRefreshHandler HumaHandler[DeviceRefreshRequest, DeviceRefreshResponse]
 }
 
 // NewAPI creates an auth API from the given dependencies.
@@ -34,13 +36,15 @@ func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
 	meUC := auth.NewMeUseCase(userRepo)
 	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(logtoClient)
 	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoClient)
-	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC)
+	deviceRefreshUC := auth.NewRefreshDeviceTokenUseCase(logtoClient)
+	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC, deviceRefreshUC)
 
 	return API{
-		RegisterHandler:   h.Register,
-		MeHandler:         h.Me,
-		DeviceAuthHandler: h.DeviceAuth,
-		DevicePollHandler: h.DevicePoll,
+		RegisterHandler:      h.Register,
+		MeHandler:            h.Me,
+		DeviceAuthHandler:    h.DeviceAuth,
+		DevicePollHandler:    h.DevicePoll,
+		DeviceRefreshHandler: h.DeviceRefresh,
 	}
 }
 
@@ -110,4 +114,21 @@ func (a API) RegisterRoutes(api huma.API) {
 			http.StatusInternalServerError,
 		},
 	}, a.DevicePollHandler)
+
+	// Device token refresh — public endpoint (the refresh token is the credential).
+	huma.Register(api, huma.Operation{
+		Method:  http.MethodPost,
+		Path:    "/auth/device/refresh",
+		Summary: "Refresh OIDC tokens",
+		Description: "Exchanges a refresh token (obtained from POST /auth/device/poll) " +
+			"for new access and refresh tokens. Logto rotates refresh tokens, so " +
+			"clients must store the returned refresh_token for subsequent refreshes. " +
+			"This endpoint is public (no JWT required) — the refresh token is the credential.",
+		Tags: []string{"Auth"},
+		Errors: []int{
+			http.StatusBadRequest,
+			http.StatusUnprocessableEntity,
+			http.StatusInternalServerError,
+		},
+	}, a.DeviceRefreshHandler)
 }

@@ -33,3 +33,4 @@ packages:
       jwkFetcher:
       deviceAuthUseCase:
       devicePollUseCase:
+      deviceRefreshUseCase:

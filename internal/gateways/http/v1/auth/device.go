@@ -62,6 +62,10 @@ type devicePollUseCase interface {
 	Execute(ctx context.Context, input auth.PollDeviceTokenInput) (*auth.PollDeviceTokenOutput, error)
 }
 
+type deviceRefreshUseCase interface {
+	Execute(ctx context.Context, input auth.RefreshDeviceTokenInput) (*auth.RefreshDeviceTokenOutput, error)
+}
+
 // ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
@@ -112,6 +116,52 @@ func (h *Handler) DevicePoll(ctx context.Context, req *PollDeviceTokenRequest) (
 	}
 
 	resp := &PollDeviceTokenResponse{}
+	resp.Body.AccessToken = output.AccessToken
+	resp.Body.IDToken = output.IDToken
+	resp.Body.RefreshToken = output.RefreshToken
+	resp.Body.ExpiresIn = output.ExpiresIn
+	return resp, nil
+}
+
+// ---------------------------------------------------------------------------
+// Device Token Refresh
+// ---------------------------------------------------------------------------
+
+// DeviceRefreshRequest is the body for POST /auth/device/refresh.
+type DeviceRefreshRequest struct {
+	Body struct {
+		RefreshToken string `json:"refresh_token" required:"true" doc:"The refresh token obtained from device auth"`
+	}
+}
+
+// DeviceRefreshResponse is the response for POST /auth/device/refresh.
+type DeviceRefreshResponse struct {
+	Body struct {
+		AccessToken  string `json:"access_token" doc:"New JWT access token"`
+		IDToken      string `json:"id_token,omitempty" doc:"New ID token"`
+		RefreshToken string `json:"refresh_token" doc:"New refresh token (rotated — replace your stored copy)"`
+		ExpiresIn    int    `json:"expires_in" doc:"Token lifetime in seconds"`
+	}
+}
+
+// DeviceRefresh refreshes OIDC tokens using a refresh token.
+// The refresh token is obtained from POST /auth/device/poll after user approval.
+// POST /auth/device/refresh.
+func (h *Handler) DeviceRefresh(ctx context.Context, req *DeviceRefreshRequest) (*DeviceRefreshResponse, error) {
+	output, err := h.deviceRefreshUC.Execute(ctx, auth.RefreshDeviceTokenInput{
+		RefreshToken: req.Body.RefreshToken,
+	})
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidInput) {
+			return nil, huma.Error422UnprocessableEntity("refresh_token is required")
+		}
+		if errors.Is(err, logto.ErrDeviceCodeExpired) {
+			return nil, huma.Error400BadRequest("refresh token expired or invalid")
+		}
+		return nil, huma.Error500InternalServerError("token refresh failed")
+	}
+
+	resp := &DeviceRefreshResponse{}
 	resp.Body.AccessToken = output.AccessToken
 	resp.Body.IDToken = output.IDToken
 	resp.Body.RefreshToken = output.RefreshToken

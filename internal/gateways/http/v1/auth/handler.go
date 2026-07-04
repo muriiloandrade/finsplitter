@@ -11,10 +11,11 @@ import (
 
 // Handler handles auth-related HTTP requests.
 type Handler struct {
-	registerUC   *auth.RegisterUseCase
-	meUC         *auth.MeUseCase
-	deviceAuthUC deviceAuthUseCase
-	devicePollUC devicePollUseCase
+	registerUC      *auth.RegisterUseCase
+	meUC            *auth.MeUseCase
+	deviceAuthUC    deviceAuthUseCase
+	devicePollUC    devicePollUseCase
+	deviceRefreshUC deviceRefreshUseCase
 }
 
 // NewHandler creates a new auth Handler.
@@ -23,12 +24,14 @@ func NewHandler(
 	meUC *auth.MeUseCase,
 	deviceAuthUC deviceAuthUseCase,
 	devicePollUC devicePollUseCase,
+	deviceRefreshUC deviceRefreshUseCase,
 ) *Handler {
 	return &Handler{
-		registerUC:   registerUC,
-		meUC:         meUC,
-		deviceAuthUC: deviceAuthUC,
-		devicePollUC: devicePollUC,
+		registerUC:      registerUC,
+		meUC:            meUC,
+		deviceAuthUC:    deviceAuthUC,
+		devicePollUC:    devicePollUC,
+		deviceRefreshUC: deviceRefreshUC,
 	}
 }
 
