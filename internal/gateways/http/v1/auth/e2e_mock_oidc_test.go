@@ -20,6 +20,25 @@ import (
 	"github.com/lestrrat-go/jwx/v4/jwt"
 )
 
+// deviceCodeState tracks the lifecycle of a device authorization code.
+type deviceCodeState string
+
+const (
+	deviceCodePending  deviceCodeState = "pending"
+	deviceCodeExpired  deviceCodeState = "expired"
+	deviceCodeDenied   deviceCodeState = "denied"
+	deviceCodeApproved deviceCodeState = "approved"
+)
+
+// deviceCode represents a device authorization code in the mock provider.
+type deviceCode struct {
+	code      string
+	state     deviceCodeState
+	userCode  string
+	userEmail string // set when the code is approved
+	expiresAt time.Time
+}
+
 // oidcUser represents a user stored in the mock OIDC provider's in-memory store.
 type oidcUser struct {
 	ID       string
@@ -47,15 +66,17 @@ const mockOIDCKeyID = "mock-oidc-key-1"
 // the signing key carries a stable kid ("mock-oidc-key-1") that is included
 // in both the JWT header and the JWKS response.
 type mockOIDCProvider struct {
-	server     *http.Server
-	listener   net.Listener
-	users      map[string]*oidcUser // keyed by email
-	privKey    *ecdsa.PrivateKey    // raw key for signing JWTs
-	signingJWK jwk.Key              // private JWK with kid (for signing, keeps kid in header)
-	publicJWK  jwk.Key              // public JWK with kid (served via JWKS endpoint)
-	issuer     string
-	audience   string
-	mu         sync.RWMutex
+	server             *http.Server
+	listener           net.Listener
+	users              map[string]*oidcUser   // keyed by email
+	deviceCodes        map[string]*deviceCode // keyed by device_code
+	deviceAuthClientID string                 // expected client_id for device auth
+	privKey            *ecdsa.PrivateKey      // raw key for signing JWTs
+	signingJWK         jwk.Key                // private JWK with kid (for signing, keeps kid in header)
+	publicJWK          jwk.Key                // public JWK with kid (served via JWKS endpoint)
+	issuer             string
+	audience           string
+	mu                 sync.RWMutex
 }
 
 // newMockOIDCProvider creates a new mock OIDC provider, starts the HTTP server,
@@ -100,15 +121,18 @@ func newMockOIDCProvider(audience string) (*mockOIDCProvider, error) {
 	}
 
 	m := &mockOIDCProvider{
-		users:      make(map[string]*oidcUser),
-		signingJWK: signingJWK,
-		publicJWK:  pubJWK,
-		issuer:     baseURL + "/oidc",
-		audience:   audience,
-		listener:   listener,
+		users:              make(map[string]*oidcUser),
+		deviceCodes:        make(map[string]*deviceCode),
+		deviceAuthClientID: "test-device-client-id",
+		signingJWK:         signingJWK,
+		publicJWK:          pubJWK,
+		issuer:             baseURL + "/oidc",
+		audience:           audience,
+		listener:           listener,
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/oidc/device/auth", m.handleDeviceAuth)
 	mux.HandleFunc("/oidc/token", m.handleToken)
 	mux.HandleFunc("/oidc/jwks", m.handleJWKS)
 	mux.HandleFunc("/api/users", m.handleCreateUser)
@@ -139,6 +163,69 @@ func (m *mockOIDCProvider) OIDCEndpoint() string {
 // ManagementBaseURL returns the base URL for Management API calls.
 func (m *mockOIDCProvider) ManagementBaseURL() string {
 	return m.URL()
+}
+
+// SetDeviceAuthClientID overrides the default client ID for device auth.
+func (m *mockOIDCProvider) SetDeviceAuthClientID(id string) {
+	m.deviceAuthClientID = id
+}
+
+// NewDeviceCode creates a new device code in the pending state and returns
+// the device code and user code.
+func (m *mockOIDCProvider) NewDeviceCode() (deviceCode, userCode string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	dc := uuid.Must(uuid.NewV4()).String()
+	uc := uuid.Must(uuid.NewV4()).String()[:8]
+	m.deviceCodes[dc] = &deviceCode{
+		code:      dc,
+		state:     deviceCodePending,
+		userCode:  uc,
+		expiresAt: time.Now().Add(5 * time.Minute),
+	}
+	return dc, uc
+}
+
+// ApproveDeviceCode marks a device code as approved by a user. Returns false
+// if the device code does not exist or is not in pending state.
+func (m *mockOIDCProvider) ApproveDeviceCode(deviceCode, userEmail string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	dc, ok := m.deviceCodes[deviceCode]
+	if !ok || dc.state != deviceCodePending {
+		return false
+	}
+	dc.state = deviceCodeApproved
+	dc.userEmail = userEmail
+	return true
+}
+
+// ExpireDeviceCode marks a device code as expired.
+func (m *mockOIDCProvider) ExpireDeviceCode(deviceCode string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	dc, ok := m.deviceCodes[deviceCode]
+	if !ok {
+		return false
+	}
+	dc.state = deviceCodeExpired
+	return true
+}
+
+// DenyDeviceCode marks a device code as denied by user.
+func (m *mockOIDCProvider) DenyDeviceCode(deviceCode string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	dc, ok := m.deviceCodes[deviceCode]
+	if !ok {
+		return false
+	}
+	dc.state = deviceCodeDenied
+	return true
 }
 
 // AddUser adds a user to the mock's in-memory store and returns the
@@ -199,6 +286,34 @@ func (m *mockOIDCProvider) createToken(user *oidcUser) (string, error) {
 
 // --- HTTP handlers ---------------------------------------------------------
 
+func (m *mockOIDCProvider) handleDeviceAuth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	clientID := r.FormValue("client_id")
+	if clientID != m.deviceAuthClientID {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid client"})
+		return
+	}
+
+	dc, uc := m.NewDeviceCode()
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"device_code":               dc,
+		"user_code":                 uc,
+		"verification_uri":          fmt.Sprintf("%s/device", m.URL()),
+		"verification_uri_complete": fmt.Sprintf("%s/device?user_code=%s", m.URL(), uc),
+		"expires_in":                300,
+		"interval":                  5,
+	})
+}
+
 func (m *mockOIDCProvider) handleToken(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -216,6 +331,8 @@ func (m *mockOIDCProvider) handleToken(w http.ResponseWriter, r *http.Request) {
 		m.handleROPCToken(w, r)
 	case "client_credentials":
 		m.handleM2MToken(w, r)
+	case "urn:ietf:params:oauth:grant-type:device_code":
+		m.handleDeviceCodeToken(w, r)
 	default:
 		http.Error(w, "unsupported grant_type", http.StatusBadRequest)
 	}
@@ -255,6 +372,73 @@ func (m *mockOIDCProvider) handleM2MToken(w http.ResponseWriter, _ *http.Request
 		"expires_in":   3600,
 		"token_type":   "Bearer",
 	})
+}
+
+func (m *mockOIDCProvider) handleDeviceCodeToken(w http.ResponseWriter, r *http.Request) {
+	deviceCode := r.FormValue("device_code")
+	if deviceCode == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
+		return
+	}
+
+	m.mu.RLock()
+	dc, ok := m.deviceCodes[deviceCode]
+	m.mu.RUnlock()
+
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid_grant",
+		})
+		return
+	}
+
+	if time.Now().After(dc.expiresAt) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "expired_token",
+		})
+		return
+	}
+
+	switch dc.state {
+	case deviceCodePending:
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "authorization_pending",
+		})
+	case deviceCodeDenied:
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "access_denied",
+		})
+	case deviceCodeApproved:
+		// Look up the user by email and issue a token.
+		m.mu.RLock()
+		user, ok := m.users[dc.userEmail]
+		m.mu.RUnlock()
+
+		if !ok {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error": "user_not_found",
+			})
+			return
+		}
+
+		token, err := m.createToken(user)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "token creation failed"})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"access_token":  token,
+			"id_token":      token,
+			"refresh_token": "mock_refresh_token",
+			"expires_in":    3600,
+			"token_type":    "Bearer",
+		})
+	default:
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid_grant",
+		})
+	}
 }
 
 func (m *mockOIDCProvider) handleJWKS(w http.ResponseWriter, r *http.Request) {
