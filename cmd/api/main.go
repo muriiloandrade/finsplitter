@@ -255,6 +255,7 @@ func newLogtoM2MClient(logger *slog.Logger, cfg *config.Config) *logto.Client {
 		ClientSecret:          cfg.Logto.MgmtClientSecret,
 		AppClientID:           cfg.Logto.AppClientID,
 		AppClientSecret:       cfg.Logto.AppClientSecret,
+		DeviceAppClientID:     cfg.Logto.DeviceAppClientID,
 	}, logto.WithLogger(logger))
 }
 
@@ -277,7 +278,7 @@ func newAuthMiddleware(
 
 // newAuthAPI creates the auth handler API (register, me).
 func newAuthAPI(userRepo ports.UserRepository, logtoM2M *logto.Client) authHandler.API {
-	return authHandler.NewAPI(userRepo, logtoM2M)
+	return authHandler.NewAPI(userRepo, logtoM2M, logtoM2M)
 }
 
 // newProfileAPI creates the profile handler API (setup).
