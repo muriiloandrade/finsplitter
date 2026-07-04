@@ -10,11 +10,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
-var (
-	_ deviceAuthUseCase    = (*auth.RequestDeviceAuthUseCase)(nil)
-	_ devicePollUseCase    = (*auth.PollDeviceTokenUseCase)(nil)
-	_ deviceRefreshUseCase = (*auth.RefreshDeviceTokenUseCase)(nil)
-)
+
 
 // HumaHandler defines the function signature for Huma handlers.
 type HumaHandler[I, O any] func(context.Context, *I) (*O, error)

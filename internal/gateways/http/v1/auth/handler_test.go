@@ -248,18 +248,19 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeviceRefresh_Success(t *testing.T) {
-	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
-		RefreshToken: "valid_refresh_token",
-	}).Return(&authUC.RefreshDeviceTokenOutput{
-		AccessToken:  "new_access",
-		IDToken:      "new_id",
-		RefreshToken: "new_refresh",
-		ExpiresIn:    3600,
-	}, nil)
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "valid_refresh_token").
+		Return(&logto.DeviceTokenRefreshResponse{
+			AccessToken:  "new_access",
+			IDToken:      "new_id",
+			RefreshToken: "new_refresh",
+			ExpiresIn:    3600,
+			TokenType:    "Bearer",
+		}, nil)
 
-	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "valid_refresh_token"
@@ -275,13 +276,13 @@ func TestHandler_DeviceRefresh_Success(t *testing.T) {
 }
 
 func TestHandler_DeviceRefresh_ExpiredToken(t *testing.T) {
-	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
-		RefreshToken: "expired_refresh",
-	}).Return(nil, logto.ErrDeviceCodeExpired)
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "expired_refresh").
+		Return(nil, logto.ErrDeviceCodeExpired)
 
-	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "expired_refresh"
@@ -297,13 +298,11 @@ func TestHandler_DeviceRefresh_ExpiredToken(t *testing.T) {
 }
 
 func TestHandler_DeviceRefresh_EmptyToken(t *testing.T) {
-	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
-		RefreshToken: "",
-	}).Return(nil, errs.ErrInvalidInput)
-
-	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+	// Empty token is caught by the use case before calling the Logto client.
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = ""
@@ -319,13 +318,13 @@ func TestHandler_DeviceRefresh_EmptyToken(t *testing.T) {
 }
 
 func TestHandler_DeviceRefresh_GenericError(t *testing.T) {
-	mockRefreshUseCase := newMockdeviceRefreshUseCase(t)
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockRefreshUseCase.EXPECT().Execute(mock.Anything, authUC.RefreshDeviceTokenInput{
-		RefreshToken: "some_token",
-	}).Return(nil, errors.New("logto unavailable"))
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "some_token").
+		Return(nil, errors.New("logto unavailable"))
 
-	h := NewHandler(nil, nil, nil, nil, mockRefreshUseCase)
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "some_token"

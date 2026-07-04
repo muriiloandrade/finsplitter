@@ -13,18 +13,18 @@ import (
 type Handler struct {
 	registerUC      *auth.RegisterUseCase
 	meUC            *auth.MeUseCase
-	deviceAuthUC    deviceAuthUseCase
-	devicePollUC    devicePollUseCase
-	deviceRefreshUC deviceRefreshUseCase
+	deviceAuthUC    *auth.RequestDeviceAuthUseCase
+	devicePollUC    *auth.PollDeviceTokenUseCase
+	deviceRefreshUC *auth.RefreshDeviceTokenUseCase
 }
 
 // NewHandler creates a new auth Handler.
 func NewHandler(
 	registerUC *auth.RegisterUseCase,
 	meUC *auth.MeUseCase,
-	deviceAuthUC deviceAuthUseCase,
-	devicePollUC devicePollUseCase,
-	deviceRefreshUC deviceRefreshUseCase,
+	deviceAuthUC *auth.RequestDeviceAuthUseCase,
+	devicePollUC *auth.PollDeviceTokenUseCase,
+	deviceRefreshUC *auth.RefreshDeviceTokenUseCase,
 ) *Handler {
 	return &Handler{
 		registerUC:      registerUC,

@@ -31,6 +31,3 @@ packages:
       all: false
     interfaces:
       jwkFetcher:
-      deviceAuthUseCase:
-      devicePollUseCase:
-      deviceRefreshUseCase:

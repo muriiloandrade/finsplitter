@@ -8,7 +8,6 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
-	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
@@ -20,20 +19,20 @@ import (
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeviceAuth_Success(t *testing.T) {
-	mockAuthUC := newMockdeviceAuthUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthUC.EXPECT().Execute(mock.Anything, auth.RequestDeviceAuthInput{
-		Email: "user@example.com",
-	}).Return(&auth.RequestDeviceAuthOutput{
-		DeviceCode:              "dc_123",
-		UserCode:                "ABCD-EFGH",
-		VerificationURI:         "http://localhost:3001/device",
-		VerificationURIComplete: "http://localhost:3001/device?user_code=ABCD-EFGH",
-		ExpiresIn:               1800,
-		Interval:                5,
-	}, nil)
+	mockLogtoDevice.EXPECT().RequestDeviceCode(mock.Anything).
+		Return(&logto.DeviceCodeResponse{
+			DeviceCode:              "dc_123",
+			UserCode:                "ABCD-EFGH",
+			VerificationURI:         "http://localhost:3001/device",
+			VerificationURIComplete: "http://localhost:3001/device?user_code=ABCD-EFGH",
+			ExpiresIn:               1800,
+			Interval:                5,
+		}, nil)
 
-	h := &Handler{deviceAuthUC: mockAuthUC}
+	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(mockLogtoDevice)
+	h := &Handler{deviceAuthUC: deviceAuthUC}
 
 	req := &RequestDeviceAuthRequest{}
 	req.Body.Email = "user@example.com"
@@ -51,13 +50,11 @@ func TestHandler_DeviceAuth_Success(t *testing.T) {
 }
 
 func TestHandler_DeviceAuth_InvalidInput(t *testing.T) {
-	mockAuthUC := newMockdeviceAuthUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthUC.EXPECT().Execute(mock.Anything, auth.RequestDeviceAuthInput{
-		Email: "",
-	}).Return(nil, errs.ErrInvalidInput)
-
-	h := &Handler{deviceAuthUC: mockAuthUC}
+	// Empty email is caught by the use case before calling the Logto client.
+	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(mockLogtoDevice)
+	h := &Handler{deviceAuthUC: deviceAuthUC}
 
 	req := &RequestDeviceAuthRequest{}
 	req.Body.Email = ""
@@ -73,13 +70,13 @@ func TestHandler_DeviceAuth_InvalidInput(t *testing.T) {
 }
 
 func TestHandler_DeviceAuth_GenericError(t *testing.T) {
-	mockAuthUC := newMockdeviceAuthUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthUC.EXPECT().Execute(mock.Anything, auth.RequestDeviceAuthInput{
-		Email: "user@example.com",
-	}).Return(nil, errors.New("logto unavailable"))
+	mockLogtoDevice.EXPECT().RequestDeviceCode(mock.Anything).
+		Return(nil, errors.New("logto unavailable"))
 
-	h := &Handler{deviceAuthUC: mockAuthUC}
+	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(mockLogtoDevice)
+	h := &Handler{deviceAuthUC: deviceAuthUC}
 
 	req := &RequestDeviceAuthRequest{}
 	req.Body.Email = "user@example.com"
@@ -99,18 +96,19 @@ func TestHandler_DeviceAuth_GenericError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DevicePoll_Success(t *testing.T) {
-	mockPollUC := newMockdevicePollUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockPollUC.EXPECT().Execute(mock.Anything, auth.PollDeviceTokenInput{
-		DeviceCode: "dc_123",
-	}).Return(&auth.PollDeviceTokenOutput{
-		AccessToken:  "access_abc",
-		IDToken:      "id_def",
-		RefreshToken: "refresh_ghi",
-		ExpiresIn:    3600,
-	}, nil)
+	mockLogtoDevice.EXPECT().PollDeviceToken(mock.Anything, "dc_123").
+		Return(&logto.DeviceTokenResponse{
+			AccessToken:  "access_abc",
+			IDToken:      "id_def",
+			RefreshToken: "refresh_ghi",
+			ExpiresIn:    3600,
+			TokenType:    "Bearer",
+		}, nil)
 
-	h := &Handler{devicePollUC: mockPollUC}
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
 
 	req := &PollDeviceTokenRequest{}
 	req.Body.DeviceCode = "dc_123"
@@ -126,13 +124,13 @@ func TestHandler_DevicePoll_Success(t *testing.T) {
 }
 
 func TestHandler_DevicePoll_Pending(t *testing.T) {
-	mockPollUC := newMockdevicePollUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockPollUC.EXPECT().Execute(mock.Anything, auth.PollDeviceTokenInput{
-		DeviceCode: "dc_pending",
-	}).Return(nil, logto.ErrDeviceCodePending)
+	mockLogtoDevice.EXPECT().PollDeviceToken(mock.Anything, "dc_pending").
+		Return(nil, logto.ErrDeviceCodePending)
 
-	h := &Handler{devicePollUC: mockPollUC}
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
 
 	req := &PollDeviceTokenRequest{}
 	req.Body.DeviceCode = "dc_pending"
@@ -148,13 +146,13 @@ func TestHandler_DevicePoll_Pending(t *testing.T) {
 }
 
 func TestHandler_DevicePoll_Expired(t *testing.T) {
-	mockPollUC := newMockdevicePollUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockPollUC.EXPECT().Execute(mock.Anything, auth.PollDeviceTokenInput{
-		DeviceCode: "dc_expired",
-	}).Return(nil, logto.ErrDeviceCodeExpired)
+	mockLogtoDevice.EXPECT().PollDeviceToken(mock.Anything, "dc_expired").
+		Return(nil, logto.ErrDeviceCodeExpired)
 
-	h := &Handler{devicePollUC: mockPollUC}
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
 
 	req := &PollDeviceTokenRequest{}
 	req.Body.DeviceCode = "dc_expired"
@@ -170,13 +168,13 @@ func TestHandler_DevicePoll_Expired(t *testing.T) {
 }
 
 func TestHandler_DevicePoll_AccessDenied(t *testing.T) {
-	mockPollUC := newMockdevicePollUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockPollUC.EXPECT().Execute(mock.Anything, auth.PollDeviceTokenInput{
-		DeviceCode: "dc_denied",
-	}).Return(nil, logto.ErrDeviceCodeAccessDenied)
+	mockLogtoDevice.EXPECT().PollDeviceToken(mock.Anything, "dc_denied").
+		Return(nil, logto.ErrDeviceCodeAccessDenied)
 
-	h := &Handler{devicePollUC: mockPollUC}
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
 
 	req := &PollDeviceTokenRequest{}
 	req.Body.DeviceCode = "dc_denied"
@@ -192,13 +190,13 @@ func TestHandler_DevicePoll_AccessDenied(t *testing.T) {
 }
 
 func TestHandler_DevicePoll_GenericError(t *testing.T) {
-	mockPollUC := newMockdevicePollUseCase(t)
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
 
-	mockPollUC.EXPECT().Execute(mock.Anything, auth.PollDeviceTokenInput{
-		DeviceCode: "dc_fail",
-	}).Return(nil, errors.New("unexpected error"))
+	mockLogtoDevice.EXPECT().PollDeviceToken(mock.Anything, "dc_fail").
+		Return(nil, errors.New("unexpected error"))
 
-	h := &Handler{devicePollUC: mockPollUC}
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
 
 	req := &PollDeviceTokenRequest{}
 	req.Body.DeviceCode = "dc_fail"

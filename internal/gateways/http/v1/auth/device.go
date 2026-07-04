@@ -51,22 +51,6 @@ type PollDeviceTokenResponse struct {
 }
 
 // ---------------------------------------------------------------------------
-// deviceAuthUseCase interface (satisfied by *auth.RequestDeviceAuthUseCase)
-// ---------------------------------------------------------------------------
-
-type deviceAuthUseCase interface {
-	Execute(ctx context.Context, input auth.RequestDeviceAuthInput) (*auth.RequestDeviceAuthOutput, error)
-}
-
-type devicePollUseCase interface {
-	Execute(ctx context.Context, input auth.PollDeviceTokenInput) (*auth.PollDeviceTokenOutput, error)
-}
-
-type deviceRefreshUseCase interface {
-	Execute(ctx context.Context, input auth.RefreshDeviceTokenInput) (*auth.RefreshDeviceTokenOutput, error)
-}
-
-// ---------------------------------------------------------------------------
 // Handlers
 // ---------------------------------------------------------------------------
 
