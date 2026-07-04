@@ -92,10 +92,13 @@ func (c *Client) PollDeviceToken(ctx context.Context, deviceCode string) (*Devic
 		"device_code": deviceCode,
 	}
 
+	// resty v3 uses SetResult for 2xx and SetResultError for non-2xx.
+	// Both point to the same struct so result.Error is populated on 4xx too.
 	var result DeviceTokenResponse
 	resp, err := c.httpClient.R(ctx).
 		SetFormData(formData).
 		SetResult(&result).
+		SetResultError(&result).
 		Post(c.cfg.OIDCEndpoint + "/token")
 	if err != nil {
 		return nil, fmt.Errorf("poll device token: %w", err)
