@@ -10,8 +10,6 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 )
 
-
-
 // HumaHandler defines the function signature for Huma handlers.
 type HumaHandler[I, O any] func(context.Context, *I) (*O, error)
 
