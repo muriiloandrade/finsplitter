@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.5 | Updated: 2026-07-04 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.6 | Updated: 2026-07-04 -->
 
 # Technical Domain
 
@@ -281,16 +281,18 @@ if resp.IsStatusFailure() {
 
 ```go
 // Device auth endpoints are fully public (no JWT required):
-//   POST /auth/device       — initiate flow, returns device_code + user_code
-//   POST /auth/device/poll  — poll for tokens after user approves in browser
+//   POST /auth/device           — initiate flow, returns device_code + user_code
+//   POST /auth/device/poll      — poll for tokens after user approves in browser
+//   POST /auth/device/refresh   — refresh tokens using a refresh token
 // Registration is also public:
-//   POST /auth/register     — passwordless, user then authenticates via device flow
+//   POST /auth/register         — passwordless, user then authenticates via device flow
 //
 // Middleware skips these via skipExact:
 var skipExact = []string{
     "/auth/register",
     "/auth/device",
     "/auth/device/poll",
+    "/auth/device/refresh",
 }
 ```
 
@@ -305,6 +307,7 @@ var skipExact = []string{
 type LogtoDeviceFlowClient interface {
     RequestDeviceCode(ctx context.Context) (*logto.DeviceCodeResponse, error)
     PollDeviceToken(ctx context.Context, deviceCode string) (*logto.DeviceTokenResponse, error)
+    RefreshDeviceToken(ctx context.Context, refreshToken string) (*logto.DeviceTokenRefreshResponse, error)
 }
 
 // In gateway package — compile-time satisfaction check:
@@ -360,7 +363,7 @@ var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
   2. **UserInfo fallback** (Logto `/oidc/me` endpoint) — for opaque access tokens from device authorization flow
 - Auth middleware: prefix skip for public paths, exact match for auth paths
 - Bearer token extraction; optional paths populate claims but never reject
-- Device flow endpoints (`/auth/device`, `/auth/device/poll`, `/auth/register`) are fully public (no auth)
+- Device flow endpoints (`/auth/device`, `/auth/device/poll`, `/auth/device/refresh`, `/auth/register`) are fully public (no auth)
 - `LOGTO_APP_CLIENT_ID` must match Logto API Resource identifier (aud claim)
 - Logto M2M client credentials grant with token caching (60s safety buffer)
 - JWKS TTL-based cache (15min) — cache errors degrade gracefully to direct fetch
@@ -392,7 +395,7 @@ var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 - **Config**: `internal/config/config.go`
 - **Domain Errors**: `internal/domain/errs/errs.go`
 - **Auth Middleware**: `internal/gateways/http/v1/auth/middleware.go`
-- **Auth Use Cases**: `internal/app/usecases/auth/` (register, device_auth, device_poll, me, errors)
+- **Auth Use Cases**: `internal/app/usecases/auth/` (register, device_auth, device_poll, device_refresh, me, errors)
 - **Profile Use Cases**: `internal/app/usecases/profile/` (setup)
 - **Logto Clients**: `internal/gateways/logto/m2m_client.go` (Management API), `internal/gateways/logto/device_flow.go` (device authorization grant)
 - **Cache Client**: `pkg/cache/client.go`
