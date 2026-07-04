@@ -52,7 +52,7 @@ func (c *Client) RequestDeviceCode(ctx context.Context) (*DeviceCodeResponse, er
 
 	formData := map[string]string{
 		"client_id": c.cfg.DeviceAppClientID,
-		"scope":     "openid profile email",
+		"scope":     "openid profile email offline_access",
 	}
 
 	var result DeviceCodeResponse
