@@ -6,10 +6,9 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
+	"github.com/muriiloandrade/finsplitter/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/muriiloandrade/finsplitter/api"
 )
 
 func TestRegisterRoutes_ContainsProfileSetupPath(t *testing.T) {
@@ -18,8 +17,8 @@ func TestRegisterRoutes_ContainsProfileSetupPath(t *testing.T) {
 	humaAPI := humachi.New(r, cfg)
 
 	a := API{
-		SetupHandler: func(ctx context.Context, req *SetupRequest) (*SetupResponse, error) {
-			return nil, nil
+		SetupHandler: func(_ context.Context, _ *SetupRequest) (*SetupResponse, error) {
+			return &SetupResponse{}, nil
 		},
 	}
 	a.RegisterRoutes(humaAPI)

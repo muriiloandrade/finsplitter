@@ -13,3 +13,8 @@ pre-commit:
       run: make code-check
       interactive: false
       stage_fixed: true
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --package=@commitlint/cli --package=@commitlint/config-conventional commitlint --config commitlint.config.mjs --edit {1}

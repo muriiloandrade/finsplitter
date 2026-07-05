@@ -8,10 +8,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
+	openapi "github.com/muriiloandrade/finsplitter/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	openapi "github.com/muriiloandrade/finsplitter/api"
 )
 
 // ---------------------------------------------------------------------------
@@ -24,11 +23,19 @@ func TestRegisterRoutes_ContainsExpectedPaths(t *testing.T) {
 	api := humachi.New(r, cfg)
 
 	a := API{
-		RegisterHandler:      func(_ context.Context, _ *RegisterRequest) (*RegisterResponse, error) { return nil, nil },
-		MeHandler:            func(_ context.Context, _ *struct{}) (*MeResponse, error) { return nil, nil },
-		DeviceAuthHandler:    func(_ context.Context, _ *RequestDeviceAuthRequest) (*RequestDeviceAuthResponse, error) { return nil, nil },
-		DevicePollHandler:    func(_ context.Context, _ *PollDeviceTokenRequest) (*PollDeviceTokenResponse, error) { return nil, nil },
-		DeviceRefreshHandler: func(_ context.Context, _ *DeviceRefreshRequest) (*DeviceRefreshResponse, error) { return nil, nil },
+		RegisterHandler: func(_ context.Context, _ *RegisterRequest) (*RegisterResponse, error) {
+			return &RegisterResponse{}, nil
+		},
+		MeHandler: func(_ context.Context, _ *struct{}) (*MeResponse, error) { return &MeResponse{}, nil },
+		DeviceAuthHandler: func(_ context.Context, _ *RequestDeviceAuthRequest) (*RequestDeviceAuthResponse, error) {
+			return &RequestDeviceAuthResponse{}, nil
+		},
+		DevicePollHandler: func(_ context.Context, _ *PollDeviceTokenRequest) (*PollDeviceTokenResponse, error) {
+			return &PollDeviceTokenResponse{}, nil
+		},
+		DeviceRefreshHandler: func(_ context.Context, _ *DeviceRefreshRequest) (*DeviceRefreshResponse, error) {
+			return &DeviceRefreshResponse{}, nil
+		},
 	}
 
 	a.RegisterRoutes(api)
@@ -60,11 +67,19 @@ func TestRegisterRoutes_CorrectMethods(t *testing.T) {
 	api := humachi.New(r, cfg)
 
 	a := API{
-		RegisterHandler:      func(_ context.Context, _ *RegisterRequest) (*RegisterResponse, error) { return nil, nil },
-		MeHandler:            func(_ context.Context, _ *struct{}) (*MeResponse, error) { return nil, nil },
-		DeviceAuthHandler:    func(_ context.Context, _ *RequestDeviceAuthRequest) (*RequestDeviceAuthResponse, error) { return nil, nil },
-		DevicePollHandler:    func(_ context.Context, _ *PollDeviceTokenRequest) (*PollDeviceTokenResponse, error) { return nil, nil },
-		DeviceRefreshHandler: func(_ context.Context, _ *DeviceRefreshRequest) (*DeviceRefreshResponse, error) { return nil, nil },
+		RegisterHandler: func(_ context.Context, _ *RegisterRequest) (*RegisterResponse, error) {
+			return &RegisterResponse{}, nil
+		},
+		MeHandler: func(_ context.Context, _ *struct{}) (*MeResponse, error) { return &MeResponse{}, nil },
+		DeviceAuthHandler: func(_ context.Context, _ *RequestDeviceAuthRequest) (*RequestDeviceAuthResponse, error) {
+			return &RequestDeviceAuthResponse{}, nil
+		},
+		DevicePollHandler: func(_ context.Context, _ *PollDeviceTokenRequest) (*PollDeviceTokenResponse, error) {
+			return &PollDeviceTokenResponse{}, nil
+		},
+		DeviceRefreshHandler: func(_ context.Context, _ *DeviceRefreshRequest) (*DeviceRefreshResponse, error) {
+			return &DeviceRefreshResponse{}, nil
+		},
 	}
 
 	a.RegisterRoutes(api)

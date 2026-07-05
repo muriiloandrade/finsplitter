@@ -48,7 +48,7 @@ func TestClient_RequestDeviceCode_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceCodeResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceCodeResponse{
 			DeviceCode:              "dc_123",
 			UserCode:                "ABCD-EFGH",
 			VerificationURI:         "http://localhost:3001/device",
@@ -113,7 +113,7 @@ func TestClient_PollDeviceToken_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			AccessToken:  "access_abc",
 			IDToken:      "id_def",
 			RefreshToken: "refresh_ghi",
@@ -141,7 +141,7 @@ func TestClient_PollDeviceToken_AuthorizationPending(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			Error: "authorization_pending",
 		}))
 	}))
@@ -155,10 +155,10 @@ func TestClient_PollDeviceToken_AuthorizationPending(t *testing.T) {
 }
 
 func TestClient_PollDeviceToken_SlowDown(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			Error: "slow_down",
 		}))
 	}))
@@ -172,10 +172,10 @@ func TestClient_PollDeviceToken_SlowDown(t *testing.T) {
 }
 
 func TestClient_PollDeviceToken_ExpiredToken(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			Error: "expired_token",
 		}))
 	}))
@@ -189,10 +189,10 @@ func TestClient_PollDeviceToken_ExpiredToken(t *testing.T) {
 }
 
 func TestClient_PollDeviceToken_AccessDenied(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			Error: "access_denied",
 		}))
 	}))
@@ -206,10 +206,10 @@ func TestClient_PollDeviceToken_AccessDenied(t *testing.T) {
 }
 
 func TestClient_PollDeviceToken_UnknownError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenResponse{
 			Error: "unknown_error",
 		}))
 	}))
@@ -223,7 +223,7 @@ func TestClient_PollDeviceToken_UnknownError(t *testing.T) {
 }
 
 func TestClient_PollDeviceToken_Non400Status(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
@@ -261,7 +261,7 @@ func TestClient_RefreshDeviceToken_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
 			AccessToken:  "new_access_abc",
 			IDToken:      "new_id_def",
 			RefreshToken: "new_refresh_ghi",
@@ -286,10 +286,10 @@ func TestClient_RefreshDeviceToken_Success(t *testing.T) {
 }
 
 func TestClient_RefreshDeviceToken_InvalidGrant(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
 			Error: "invalid_grant",
 		}))
 	}))
@@ -303,10 +303,10 @@ func TestClient_RefreshDeviceToken_InvalidGrant(t *testing.T) {
 }
 
 func TestClient_RefreshDeviceToken_UnknownError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		require.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
+		assert.NoError(t, json.NewEncoder(w).Encode(DeviceTokenRefreshResponse{
 			Error: "some_error",
 		}))
 	}))

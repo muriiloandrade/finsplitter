@@ -6,11 +6,10 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/muriiloandrade/finsplitter/api"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestRegisterRoutes_ContainsExpectedPaths verifies that RegisterRoutes
@@ -24,34 +23,34 @@ func TestRegisterRoutes_ContainsExpectedPaths(t *testing.T) {
 	// resulting OpenAPI spec to verify paths are registered.
 	a := cardbrand.API{
 		GetCardBrandHandler: func(
-			ctx context.Context,
-			req *cardbrand.GetCardBrandRequest,
+			_ context.Context,
+			_ *cardbrand.GetCardBrandRequest,
 		) (*cardbrand.GetCardBrandResponse, error) {
-			return nil, nil
+			return &cardbrand.GetCardBrandResponse{}, nil
 		},
 		ListCardBrandsHandler: func(
-			ctx context.Context,
-			req *cardbrand.ListCardBrandsRequest,
+			_ context.Context,
+			_ *cardbrand.ListCardBrandsRequest,
 		) (*cardbrand.ListCardBrandsResponse, error) {
-			return nil, nil
+			return &cardbrand.ListCardBrandsResponse{}, nil
 		},
 		CreateCardBrandHandler: func(
-			ctx context.Context,
-			req *cardbrand.CreateCardBrandRequest,
+			_ context.Context,
+			_ *cardbrand.CreateCardBrandRequest,
 		) (*cardbrand.CreateCardBrandResponse, error) {
-			return nil, nil
+			return &cardbrand.CreateCardBrandResponse{}, nil
 		},
 		UpdateCardBrandHandler: func(
-			ctx context.Context,
-			req *cardbrand.UpdateCardBrandRequest,
+			_ context.Context,
+			_ *cardbrand.UpdateCardBrandRequest,
 		) (*cardbrand.UpdateCardBrandResponse, error) {
-			return nil, nil
+			return &cardbrand.UpdateCardBrandResponse{}, nil
 		},
 		DeleteCardBrandHandler: func(
-			ctx context.Context,
-			req *cardbrand.DeleteCardBrandRequest,
+			_ context.Context,
+			_ *cardbrand.DeleteCardBrandRequest,
 		) (*cardbrand.DeleteCardBrandResponse, error) {
-			return nil, nil
+			return &cardbrand.DeleteCardBrandResponse{}, nil
 		},
 	}
 	a.RegisterRoutes(humaAPI)
