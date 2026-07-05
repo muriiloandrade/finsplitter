@@ -333,3 +333,49 @@ func TestClient_RefreshDeviceToken_NotConfigured(t *testing.T) {
 	require.Nil(t, resp)
 	require.ErrorIs(t, err, ErrAppClientNotConfigured)
 }
+
+// ---------------------------------------------------------------------------
+// HTTP client error paths
+// ---------------------------------------------------------------------------
+
+func TestClient_RequestDeviceCode_HTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	client := newTestDeviceFlowClient(t, server.URL)
+	server.Close() // Close so the next request fails with a connection error.
+
+	resp, err := client.RequestDeviceCode(context.Background())
+
+	require.Nil(t, resp)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "request device code")
+}
+
+func TestClient_PollDeviceToken_HTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	client := newTestDeviceFlowClient(t, server.URL)
+	server.Close()
+
+	resp, err := client.PollDeviceToken(context.Background(), "dc_123")
+
+	require.Nil(t, resp)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "poll device token")
+}
+
+func TestClient_RefreshDeviceToken_HTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	client := newTestDeviceFlowClient(t, server.URL)
+	server.Close()
+
+	resp, err := client.RefreshDeviceToken(context.Background(), "old_token")
+
+	require.Nil(t, resp)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "refresh device token")
+}

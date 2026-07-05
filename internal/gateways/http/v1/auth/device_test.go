@@ -210,3 +210,25 @@ func TestHandler_DevicePoll_GenericError(t *testing.T) {
 	require.ErrorAs(t, err, &statusErr)
 	assert.Equal(t, 500, statusErr.GetStatus())
 }
+
+func TestHandler_DevicePoll_InvalidInput(t *testing.T) {
+	mockLogtoDevice := auth.NewMockLogtoDeviceFlowClient(t)
+
+	// Empty DeviceCode is caught by the use case before calling the mock,
+	// so no expectations on mockLogtoDevice are needed.
+	devicePollUC := auth.NewPollDeviceTokenUseCase(mockLogtoDevice)
+	h := &Handler{devicePollUC: devicePollUC}
+
+	req := &PollDeviceTokenRequest{}
+	// Empty DeviceCode triggers errs.ErrInvalidInput in the use case.
+	req.Body.DeviceCode = ""
+
+	resp, err := h.DevicePoll(context.Background(), req)
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+
+	var statusErr huma.StatusError
+	require.ErrorAs(t, err, &statusErr)
+	assert.Equal(t, http.StatusUnprocessableEntity, statusErr.GetStatus())
+}

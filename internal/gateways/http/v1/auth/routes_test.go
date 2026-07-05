@@ -9,6 +9,8 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
 	openapi "github.com/muriiloandrade/finsplitter/api"
+	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/gateways/logto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -131,4 +133,28 @@ func TestRegisterRoutes_CorrectMethods(t *testing.T) {
 		assert.Equal(t, tt.path, op.Path, "operation Path should match")
 		assert.Equal(t, tt.expectedMethod, op.Method, "operation Method should match")
 	}
+}
+
+// ---------------------------------------------------------------------------
+// TestNewAPI
+// ---------------------------------------------------------------------------
+
+func TestNewAPI(t *testing.T) {
+	userRepo := ports.NewMockUserRepository(t)
+	logtoClient := logto.NewClient(logto.Config{
+		DeviceAppClientID: "test-device",
+		OIDCEndpoint:      "http://fake.example.com",
+		ManagementBaseURL: "http://fake.example.com",
+		ClientID:          "test-client",
+		ClientSecret:      "test-secret",
+	})
+
+	api := NewAPI(userRepo, logtoClient)
+
+	require.NotNil(t, api, "NewAPI should return a non-zero API value")
+	assert.NotNil(t, api.RegisterHandler, "RegisterHandler should be wired")
+	assert.NotNil(t, api.MeHandler, "MeHandler should be wired")
+	assert.NotNil(t, api.DeviceAuthHandler, "DeviceAuthHandler should be wired")
+	assert.NotNil(t, api.DevicePollHandler, "DevicePollHandler should be wired")
+	assert.NotNil(t, api.DeviceRefreshHandler, "DeviceRefreshHandler should be wired")
 }
