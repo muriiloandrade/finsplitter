@@ -24,7 +24,7 @@ func NewHandler(setupUC *profile.SetupUseCase, claimsPr ports.ClaimsProvider) *H
 	}
 }
 
-// SetupRequest is the body for POST /profile/setup.
+// SetupRequest is the body for PATCH /profile/setup.
 type SetupRequest struct {
 	Body struct {
 		Username string `json:"username" required:"true" maxLength:"100" doc:"Desired username"`
@@ -34,7 +34,7 @@ type SetupRequest struct {
 	}
 }
 
-// SetupResponse is the response for POST /profile/setup.
+// SetupResponse is the response for PATCH /profile/setup.
 type SetupResponse struct {
 	Body struct {
 		Message string `json:"message" doc:"Setup confirmation message"`
@@ -43,7 +43,7 @@ type SetupResponse struct {
 }
 
 // Setup handles profile setup for first-time users.
-// POST /profile/setup.
+// PATCH /profile/setup.
 func (h *Handler) Setup(ctx context.Context, req *SetupRequest) (*SetupResponse, error) {
 	claims := h.claimsPr.Claims(ctx)
 	if claims == nil {

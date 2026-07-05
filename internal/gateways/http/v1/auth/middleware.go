@@ -17,6 +17,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
+	"github.com/muriiloandrade/finsplitter/pkg/httpclient"
 	slogctx "github.com/veqryn/slog-context"
 )
 
@@ -33,6 +34,10 @@ const jwksCacheKey = "jwks:keyset"
 // enough to pick up Logto key rotations in reasonable time.
 const jwksCacheTTL = 15 * time.Minute
 
+// userInfoHTTPTimeout is the timeout for HTTP calls to Logto's /oidc/me
+// endpoint when validating opaque access tokens.
+const userInfoHTTPTimeout = 5 * time.Second
+
 //nolint:gochecknoglobals // Path prefix/suffix lists — fixed at init, not mutable state.
 var (
 	// skipPrefixes are path prefixes that do NOT require authentication.
@@ -46,7 +51,9 @@ var (
 	// skipExact are exact paths that do NOT require authentication.
 	skipExact = []string{
 		"/auth/register",
-		"/auth/sign-in",
+		"/auth/device",
+		"/auth/device/poll",
+		"/auth/device/refresh",
 	}
 
 	// optionalExact are exact paths that do NOT require authentication
@@ -78,17 +85,22 @@ const userClaimsKey contextKey = "user_claims"
 // Middleware validates JWTs issued by Logto using the jwx library.
 // JWKS is fetched on demand and cached in Valkey (via the cache.Client). The
 // cache is refreshed every jwksCacheTTL (15 minutes) to handle key rotation.
+// When the token is opaque (non-JWT, e.g. device flow), the middleware falls
+// back to Logto's /oidc/me endpoint (OIDC UserInfo equivalent) for validation.
 type Middleware struct {
 	oidcEndpoint string
 	appClientID  string
 	userRepo     ports.UserRepository
 	logger       *slog.Logger
 
-	jwksURL string
-	issuer  string
+	jwksURL     string
+	issuer      string
+	userInfoURL string
 
 	jwkClient jwkFetcher // used to fetch JWKS from Logto
 	cache     *cache.Client
+
+	httpClient *httpclient.Client
 }
 
 // NewMiddleware creates a new auth middleware. The JWKS is not fetched
@@ -111,8 +123,12 @@ func NewMiddleware(
 		logger:       logger,
 		jwksURL:      strings.TrimRight(oidcEndpoint, "/") + "/jwks",
 		issuer:       strings.TrimRight(expectedIssuer, "/"),
+		userInfoURL:  strings.TrimRight(oidcEndpoint, "/") + "/me",
 		jwkClient:    jwkfetch.NewClient(),
 		cache:        cacheClient,
+		httpClient: httpclient.New(
+			httpclient.WithTimeout(userInfoHTTPTimeout),
+		),
 	}
 }
 
@@ -133,8 +149,16 @@ func (m *Middleware) Protected() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 
 			case isOptionalPath(r.URL.Path):
-				if modified := m.tryPopulateClaims(r); modified != nil {
-					r = modified
+				result := m.tryPopulateClaims(r)
+				if result.err != nil {
+					m.logger.WarnContext(r.Context(), "Optional auth: invalid token",
+						slog.Any("error", result.err),
+					)
+					writeError(w, http.StatusUnauthorized, "invalid or expired token")
+					return
+				}
+				if result.request != nil {
+					r = result.request
 				}
 				next.ServeHTTP(w, r)
 
@@ -145,25 +169,37 @@ func (m *Middleware) Protected() func(http.Handler) http.Handler {
 	}
 }
 
+// tryPopulateClaimsResult is returned by tryPopulateClaims to distinguish
+// between "no token provided" and "token present but invalid".
+type tryPopulateClaimsResult struct {
+	request *http.Request // non-nil when claims were successfully attached
+	err     error         // non-nil when a token was present but invalid
+}
+
 // tryPopulateClaims attaches claims to the request context when a valid
-// bearer token is present. Never rejects the request.
-func (m *Middleware) tryPopulateClaims(r *http.Request) *http.Request {
+// bearer token is present.
+//
+// The result encodes three cases:
+//   - request != nil, err == nil → token was valid, claims are attached.
+//   - request == nil, err == nil → no bearer token was provided.
+//   - request == nil, err != nil → a token was provided but is invalid.
+func (m *Middleware) tryPopulateClaims(r *http.Request) tryPopulateClaimsResult {
 	logger := m.logger.With(slog.String("middleware", "auth.optional"))
 	ctx := slogctx.NewCtx(r.Context(), logger)
 
 	token := extractBearerToken(r)
 	if token == "" {
-		return nil
+		return tryPopulateClaimsResult{}
 	}
 	claims, err := m.parseAndValidate(ctx, token)
 	if err != nil {
 		logger.DebugContext(ctx, "Optional auth: invalid token",
 			slog.Any("error", err),
 		)
-		return nil
+		return tryPopulateClaimsResult{err: err}
 	}
 	ctx = context.WithValue(ctx, userClaimsKey, claims)
-	return r.WithContext(ctx)
+	return tryPopulateClaimsResult{request: r.WithContext(ctx)}
 }
 
 // requireAuth enforces JWT authentication. On any failure it writes an error
@@ -203,19 +239,40 @@ func (m *Middleware) requireAuth(w http.ResponseWriter, r *http.Request, next ht
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// parseAndValidate parses a JWT, verifies its signature against the cached
-// JWKS (refreshing if stale), and validates standard claims.
+// userInfoResponse maps Logto's /oidc/me response.
+type userInfoResponse struct {
+	Sub      string `json:"sub"`
+	Name     string `json:"name,omitempty"`
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
+	Picture  string `json:"picture,omitempty"`
+}
+
+// parseAndValidate validates the bearer token and returns the user's claims.
+// It first attempts JWT parsing + JWKS verification. If the token is opaque
+// (non-JWT, e.g. device flow), it falls back to Logto's /oidc/me endpoint.
 func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (*entity.UserClaims, error) {
-	tok, err := m.parseWithKeyset(ctx, tokenString)
-	if err != nil {
-		return nil, err
+	// Try JWT parsing first (faster — no extra HTTP call).
+	if tok, err := m.parseWithKeyset(ctx, tokenString); err == nil {
+		return m.claimsFromToken(tok)
 	}
 
+	// Only fall back to UserInfo if the token is not a JWT (no dots).
+	// If it IS a JWT but failed validation, return the error.
+	if strings.Contains(tokenString, ".") {
+		return nil, errors.New("invalid or expired token")
+	}
+
+	return m.parseViaUserInfo(ctx, tokenString)
+}
+
+// claimsFromToken extracts UserClaims from a parsed JWT token.
+func (m *Middleware) claimsFromToken(tok jwt.Token) (*entity.UserClaims, error) {
 	sub, ok := tok.Subject()
 	if !ok {
 		return nil, errors.New("token missing subject claim")
 	}
-
 	return &entity.UserClaims{
 		Sub:      sub,
 		Username: claimAsString(tok, "username"),
@@ -223,6 +280,50 @@ func (m *Middleware) parseAndValidate(ctx context.Context, tokenString string) (
 		Name:     claimAsString(tok, "name"),
 		Phone:    claimAsString(tok, "phone"),
 		Picture:  claimAsString(tok, "picture"),
+	}, nil
+}
+
+// userInfoClient returns the HTTP client for UserInfo calls, falling back to
+// a one-off client with the standard timeout when the middleware was
+// constructed without one (e.g. in unit tests that don't test this path).
+func (m *Middleware) userInfoClient() *httpclient.Client {
+	if m.httpClient != nil {
+		return m.httpClient
+	}
+	return httpclient.New(httpclient.WithTimeout(userInfoHTTPTimeout))
+}
+
+// parseViaUserInfo validates the token by calling Logto's /oidc/me endpoint.
+// This is the fallback for opaque access tokens (e.g. device flow).
+func (m *Middleware) parseViaUserInfo(ctx context.Context, tokenString string) (*entity.UserClaims, error) {
+	if m.userInfoURL == "" {
+		return nil, errors.New("userinfo endpoint not configured")
+	}
+
+	var ui userInfoResponse
+	resp, err := m.userInfoClient().R(ctx).
+		SetHeader("Authorization", "Bearer "+tokenString).
+		SetResult(&ui).
+		Get(m.userInfoURL)
+	if err != nil {
+		return nil, fmt.Errorf("userinfo call: %w", err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("userinfo: status %d", resp.StatusCode())
+	}
+
+	if ui.Sub == "" {
+		return nil, errors.New("userinfo: missing sub claim")
+	}
+
+	return &entity.UserClaims{
+		Sub:      ui.Sub,
+		Username: ui.Username,
+		Email:    ui.Email,
+		Name:     ui.Name,
+		Phone:    ui.Phone,
+		Picture:  ui.Picture,
 	}, nil
 }
 

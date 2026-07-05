@@ -116,13 +116,10 @@ func buildApp(t *testing.T, mockOIDC *mockOIDCProvider) *chi.Mux {
 		ClientSecret:          "test-mgmt-client-secret",
 		AppClientID:           "test-app-client-id",
 		AppClientSecret:       "test-app-client-secret",
+		DeviceAppClientID:     "test-device-client-id",
 	})
 
 	// --- Auth middleware ---
-	// Cache is intentionally nil (no Valkey) so each test fetches the JWKS
-	// directly from its own mock OIDC provider. Sharing the Valkey cache
-	// across tests would leak JWKS keys between mock instances, causing
-	// spurious signature verification failures.
 	authMiddleware := authHandler.NewMiddleware(
 		mockOIDC.OIDCEndpoint(), // OIDC endpoint (for JWKS URL)
 		mockOIDC.OIDCEndpoint(), // expected issuer
@@ -160,9 +157,9 @@ func (e *e2eEnv) post(t *testing.T, path, body string) *http.Response {
 	return resp
 }
 
-// postBody sends a POST request and returns the response body as a string.
+// postOK sends a POST request and returns the response body as a string.
 // It asserts a 200 OK status.
-func (e *e2eEnv) postBody(t *testing.T, path, body string) string {
+func (e *e2eEnv) postOK(t *testing.T, path, body string) string {
 	t.Helper()
 	resp := e.post(t, path, body)
 	data, err := io.ReadAll(resp.Body)
@@ -186,9 +183,9 @@ func (e *e2eEnv) get(t *testing.T, path, token string) *http.Response {
 	return resp
 }
 
-// getBody sends a GET request and returns the response body as a string.
+// getOK sends a GET request and returns the response body as a string.
 // It asserts a 200 OK status.
-func (e *e2eEnv) getBody(t *testing.T, path, token string) string {
+func (e *e2eEnv) getOK(t *testing.T, path, token string) string {
 	t.Helper()
 	resp := e.get(t, path, token)
 	data, err := io.ReadAll(resp.Body)
@@ -202,47 +199,72 @@ func (e *e2eEnv) getBody(t *testing.T, path, token string) string {
 // E2E Tests
 // ---------------------------------------------------------------------------
 
-// TestE2E_SignIn_RegisterSignInMe covers the full happy path:
-// register → sign in → use token for /auth/me.
-func TestE2E_SignIn_RegisterSignInMe(t *testing.T) {
+// TestE2E_DeviceFlow_RegisterAuthMe covers the full device flow happy path:
+// register → request device code → approve device code in mock → poll for
+// token → use token for /auth/me.
+func TestE2E_DeviceFlow_RegisterAuthMe(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
 	}
 
 	env := newE2EEnv(t)
 
-	// --- Register ---
-	regBody := env.postBody(t, "/auth/register", `{
-		"name":"John Doe","email":"john@example.com","password":"secret123"
+	// --- Register (passwordless) ---
+	regBody := env.postOK(t, "/auth/register", `{
+		"name":"John Doe","email":"john@example.com"
 	}`)
 
 	var reg struct {
-		UserID      string `json:"user_id"`
-		RedirectURL string `json:"redirect_url"`
+		UserID  string `json:"user_id"`
+		Message string `json:"message"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(regBody), &reg))
 	assert.NotEmpty(t, reg.UserID, "user_id")
-	assert.Equal(t, "/auth/sign-in", reg.RedirectURL)
+	assert.NotEmpty(t, reg.Message, "registration message")
 
-	// --- Sign in ---
-	siBody := env.postBody(t, "/auth/sign-in", `{
-		"email":"john@example.com","password":"secret123"
+	// --- Request device code ---
+	daBody := env.postOK(t, "/auth/device", `{
+		"email":"john@example.com"
 	}`)
 
-	var si struct {
+	var da struct {
+		DeviceCode              string `json:"device_code"`
+		UserCode                string `json:"user_code"`
+		VerificationURI         string `json:"verification_uri"`
+		VerificationURIComplete string `json:"verification_uri_complete"`
+		ExpiresIn               int    `json:"expires_in"`
+		Interval                int    `json:"interval"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+	assert.NotEmpty(t, da.DeviceCode, "device_code")
+	assert.NotEmpty(t, da.UserCode, "user_code")
+	assert.NotEmpty(t, da.VerificationURI, "verification_uri")
+	assert.Greater(t, da.ExpiresIn, 0, "expires_in")
+	assert.Greater(t, da.Interval, 0, "interval")
+
+	// --- Approve the device code in the mock OIDC provider ---
+	approved := env.mockOIDC.ApproveDeviceCode(da.DeviceCode, "john@example.com")
+	require.True(t, approved, "approve device code")
+
+	// --- Poll for token ---
+	pollBody := env.postOK(t, "/auth/device/poll", `{
+		"device_code":"`+da.DeviceCode+`"
+	}`)
+
+	var poll struct {
 		AccessToken  string `json:"access_token"`
 		IDToken      string `json:"id_token"`
 		RefreshToken string `json:"refresh_token"`
 		ExpiresIn    int    `json:"expires_in"`
 	}
-	require.NoError(t, json.Unmarshal([]byte(siBody), &si))
-	assert.NotEmpty(t, si.AccessToken, "access_token")
-	assert.NotEmpty(t, si.IDToken, "id_token")
-	assert.NotEmpty(t, si.RefreshToken, "refresh_token")
-	assert.Greater(t, si.ExpiresIn, 0, "expires_in")
+	require.NoError(t, json.Unmarshal([]byte(pollBody), &poll))
+	assert.NotEmpty(t, poll.AccessToken, "access_token")
+	assert.NotEmpty(t, poll.IDToken, "id_token")
+	assert.NotEmpty(t, poll.RefreshToken, "refresh_token")
+	assert.Greater(t, poll.ExpiresIn, 0, "expires_in")
 
 	// --- Use token to access /auth/me ---
-	meBody := env.getBody(t, "/auth/me", si.AccessToken)
+	meBody := env.getOK(t, "/auth/me", poll.AccessToken)
 
 	var me struct {
 		ID         string `json:"id"`
@@ -258,49 +280,88 @@ func TestE2E_SignIn_RegisterSignInMe(t *testing.T) {
 	assert.False(t, me.NeedsSetup, "should not need setup after register")
 }
 
-// TestE2E_SignIn_InvalidPassword verifies that wrong credentials return 401.
-func TestE2E_SignIn_InvalidPassword(t *testing.T) {
+// TestE2E_DeviceFlow_PollPending verifies that polling an unapproved device
+// code returns 401 (authorization_pending).
+func TestE2E_DeviceFlow_PollPending(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
 	}
 
 	env := newE2EEnv(t)
 
-	// Register a user first.
-	regBody := env.postBody(t, "/auth/register", `{
-		"name":"Jane Doe","email":"jane@example.com","password":"correctpass"
-	}`)
-	_ = regBody // consumed
+	// Request device code.
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
 
-	// Sign in with wrong password.
-	resp := env.post(t, "/auth/sign-in", `{
-		"email":"jane@example.com","password":"wrongpass"
-	}`)
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+
+	// Poll before approving — should get 401 (authorization_pending).
+	resp := env.post(t, "/auth/device/poll", `{"device_code":"`+da.DeviceCode+`"}`)
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "signin: %s", string(body))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "pending poll: %s", string(body))
 }
 
-// TestE2E_SignIn_UnknownUser verifies that unregistered emails return 401.
-func TestE2E_SignIn_UnknownUser(t *testing.T) {
+// TestE2E_DeviceFlow_PollExpired verifies that polling an expired device code
+// returns 400.
+func TestE2E_DeviceFlow_PollExpired(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
 	}
 
 	env := newE2EEnv(t)
 
-	// Sign in with an email that was never registered.
-	resp := env.post(t, "/auth/sign-in", `{
-		"email":"unknown@example.com","password":"somepass"
-	}`)
+	// Request device code.
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
+
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+
+	// Expire the code in the mock.
+	expired := env.mockOIDC.ExpireDeviceCode(da.DeviceCode)
+	require.True(t, expired)
+
+	// Poll after expiry — should get 400.
+	resp := env.post(t, "/auth/device/poll", `{"device_code":"`+da.DeviceCode+`"}`)
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode, "signin: %s", string(body))
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "expired poll: %s", string(body))
 }
 
-// TestE2E_SignIn_UnauthenticatedMe verifies that /auth/me works without a
+// TestE2E_DeviceFlow_PollDenied verifies that a denied device code returns 403.
+func TestE2E_DeviceFlow_PollDenied(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	// Request device code.
+	daBody := env.postOK(t, "/auth/device", `{"email":"user@example.com"}`)
+
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+
+	// Deny the code in the mock.
+	denied := env.mockOIDC.DenyDeviceCode(da.DeviceCode)
+	require.True(t, denied)
+
+	// Poll after denial — should get 403.
+	resp := env.post(t, "/auth/device/poll", `{"device_code":"`+da.DeviceCode+`"}`)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusForbidden, resp.StatusCode, "denied poll: %s", string(body))
+}
+
+// TestE2E_DeviceFlow_UnauthenticatedMe verifies that /auth/me works without a
 // token (it's an optional-auth path) and returns an empty response.
-func TestE2E_SignIn_UnauthenticatedMe(t *testing.T) {
+func TestE2E_DeviceFlow_UnauthenticatedMe(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
 	}
@@ -313,7 +374,6 @@ func TestE2E_SignIn_UnauthenticatedMe(t *testing.T) {
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusOK, resp.StatusCode, "me: %s", string(body))
 
-	// The response should be an empty object (no claims, no user in DB).
 	var me map[string]interface{}
 	require.NoError(t, json.Unmarshal(body, &me))
 	assert.Empty(t, me["id"], "should not have an ID without auth")
@@ -321,16 +381,15 @@ func TestE2E_SignIn_UnauthenticatedMe(t *testing.T) {
 	assert.False(t, needsSetup, "needs_setup defaults to false")
 }
 
-// TestE2E_SignIn_BadToken verifies that invalid tokens are silently ignored on
-// the optional /auth/me path (same behavior as no token at all).
-func TestE2E_SignIn_BadToken(t *testing.T) {
+// TestE2E_DeviceFlow_BadToken verifies that invalid tokens are silently
+// ignored on the optional /auth/me path (same behavior as no token at all).
+func TestE2E_DeviceFlow_BadToken(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
 	}
 
 	env := newE2EEnv(t)
 
-	// /auth/me with a completely bogus token → 200, needs_setup=false.
 	resp := env.get(t, "/auth/me", "this-is-not-a-valid-jwt")
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
@@ -341,4 +400,124 @@ func TestE2E_SignIn_BadToken(t *testing.T) {
 	}
 	json.Unmarshal(body, &result)
 	require.False(t, result.NeedsSetup, "bad token should yield empty response")
+}
+
+// TestE2E_DeviceFlow_InvalidDeviceCode verifies that an unknown device code
+// returns a 500 (generic error from Logto client).
+func TestE2E_DeviceFlow_InvalidDeviceCode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	resp := env.post(t, "/auth/device/poll", `{"device_code":"invalid-device-code"}`)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusInternalServerError, resp.StatusCode, "invalid code: %s", string(body))
+}
+
+// TestE2E_DeviceFlow_EmptyDeviceCode verifies that an empty device code
+// returns 422.
+func TestE2E_DeviceFlow_EmptyDeviceCode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	resp := env.post(t, "/auth/device/poll", `{"device_code":""}`)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode, "empty code: %s", string(body))
+}
+
+// TestE2E_DeviceFlow_RefreshToken covers the full token refresh cycle:
+// register → device auth → approve → poll → refresh → use new token for /auth/me.
+func TestE2E_DeviceFlow_RefreshToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	// --- Register ---
+	email := fmt.Sprintf("refresh-%d@example.com", time.Now().UnixNano())
+	regBody := env.postOK(t, "/auth/register", fmt.Sprintf(`{
+		"name":"Refresh Tester","email":"%s"
+	}`, email))
+
+	var reg struct {
+		UserID string `json:"user_id"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(regBody), &reg))
+	assert.NotEmpty(t, reg.UserID)
+
+	// --- Request device code ---
+	daBody := env.postOK(t, "/auth/device", fmt.Sprintf(`{"email":"%s"}`, email))
+
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+	assert.NotEmpty(t, da.DeviceCode)
+
+	// --- Approve ---
+	approved := env.mockOIDC.ApproveDeviceCode(da.DeviceCode, email)
+	require.True(t, approved)
+
+	// --- Poll for tokens ---
+	pollBody := env.postOK(t, "/auth/device/poll", fmt.Sprintf(`{"device_code":"%s"}`, da.DeviceCode))
+
+	var poll struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(pollBody), &poll))
+	require.NotEmpty(t, poll.AccessToken, "access_token")
+	require.NotEmpty(t, poll.RefreshToken, "refresh_token")
+
+	firstRefresh := poll.RefreshToken
+
+	// --- Refresh tokens ---
+	refreshBody := env.postOK(t, "/auth/device/refresh", fmt.Sprintf(`{"refresh_token":"%s"}`, firstRefresh))
+
+	var refresh struct {
+		AccessToken  string `json:"access_token"`
+		IDToken      string `json:"id_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int    `json:"expires_in"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(refreshBody), &refresh))
+	require.NotEmpty(t, refresh.AccessToken, "new access_token")
+	require.NotEmpty(t, refresh.IDToken, "new id_token")
+	require.NotEmpty(t, refresh.RefreshToken, "new refresh_token")
+	require.NotEqual(t, firstRefresh, refresh.RefreshToken, "refresh token should rotate")
+	require.Greater(t, refresh.ExpiresIn, 0, "expires_in")
+
+	// --- Use new token to access /auth/me ---
+	meBody := env.getOK(t, "/auth/me", refresh.AccessToken)
+
+	var me struct {
+		ID    string `json:"id"`
+		Email string `json:"email"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(meBody), &me))
+	assert.NotEmpty(t, me.ID, "finsplitter user id")
+	assert.Equal(t, email, me.Email)
+}
+
+// TestE2E_DeviceFlow_RefreshExpired verifies that refreshing an expired or
+// unknown refresh token returns 400.
+func TestE2E_DeviceFlow_RefreshExpired(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	resp := env.post(t, "/auth/device/refresh", `{"refresh_token":"this-token-does-not-exist"}`)
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "bad refresh: %s", string(body))
 }

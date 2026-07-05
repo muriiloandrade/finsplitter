@@ -23,7 +23,17 @@ func NewOpenAPIConfig() huma.Config {
 					Email: "murilo@muriloandrade.dev",
 				},
 			},
-			Components:     &huma.Components{Schemas: registry},
+			Components: &huma.Components{
+				Schemas: registry,
+				SecuritySchemes: map[string]*huma.SecurityScheme{
+					"bearerAuth": {
+						Type:         "http",
+						Scheme:       "bearer",
+						BearerFormat: "JWT",
+						Description:  "JWT from Logto obtained via device flow",
+					},
+				},
+			},
 			OnAddOperation: []huma.AddOpFunc{linkTransformer.OnAddOperation},
 			Servers: []*huma.Server{
 				{URL: "http://localhost:3033"},

@@ -53,3 +53,5 @@ worktrees/
 
 ### OpenCode ###
 .opencode/package*.json
+.tmp/
+node_modules/

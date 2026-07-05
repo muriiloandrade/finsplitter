@@ -14,7 +14,7 @@
 - **Language**: Go 1.26 (GOEXPERIMENT=jsonv2 required)
 - **Framework**: Huma v2 (REST API + OpenAPI)
 - **Database**: PostgreSQL (pgx)
-- **Auth**: Logto + jwx/jwkfetch (JWT, JWKS caching)
+- **Auth**: Logto + jwx/jwkfetch (JWT, JWKS caching, device authorization grant, UserInfo fallback)
 - **Cache**: Valkey 9.1 + go-redis/v9
 - **Architecture**: Clean Architecture (Ports & Adapters)
 - **Observability**: OpenTelemetry

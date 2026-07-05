@@ -11,17 +11,27 @@ import (
 
 // Handler handles auth-related HTTP requests.
 type Handler struct {
-	registerUC *auth.RegisterUseCase
-	meUC       *auth.MeUseCase
-	signInUC   *auth.SignInUseCase
+	registerUC      *auth.RegisterUseCase
+	meUC            *auth.MeUseCase
+	deviceAuthUC    *auth.RequestDeviceAuthUseCase
+	devicePollUC    *auth.PollDeviceTokenUseCase
+	deviceRefreshUC *auth.RefreshDeviceTokenUseCase
 }
 
 // NewHandler creates a new auth Handler.
-func NewHandler(registerUC *auth.RegisterUseCase, meUC *auth.MeUseCase, signInUC *auth.SignInUseCase) *Handler {
+func NewHandler(
+	registerUC *auth.RegisterUseCase,
+	meUC *auth.MeUseCase,
+	deviceAuthUC *auth.RequestDeviceAuthUseCase,
+	devicePollUC *auth.PollDeviceTokenUseCase,
+	deviceRefreshUC *auth.RefreshDeviceTokenUseCase,
+) *Handler {
 	return &Handler{
-		registerUC: registerUC,
-		meUC:       meUC,
-		signInUC:   signInUC,
+		registerUC:      registerUC,
+		meUC:            meUC,
+		deviceAuthUC:    deviceAuthUC,
+		devicePollUC:    devicePollUC,
+		deviceRefreshUC: deviceRefreshUC,
 	}
 }
 
@@ -34,7 +44,6 @@ type RegisterRequest struct {
 	Body struct {
 		Name     string `json:"name" required:"true" maxLength:"255" doc:"Display name"`
 		Email    string `json:"email" required:"true" maxLength:"255" doc:"Email address"`
-		Password string `json:"password" required:"true" minLength:"8" maxLength:"128" doc:"Password (min 8 chars)"`
 		Username string `json:"username,omitempty" maxLength:"100" doc:"Desired username (auto-generated from name if omitted)"`
 	}
 }
@@ -42,8 +51,8 @@ type RegisterRequest struct {
 // RegisterResponse is the response for POST /auth/register.
 type RegisterResponse struct {
 	Body struct {
-		RedirectURL string `json:"redirect_url" doc:"URL for the frontend to redirect the user to Logto sign-in"`
-		UserID      string `json:"user_id" doc:"The Finsplitter user ID"`
+		Message string `json:"message" doc:"Registration confirmation with next steps"`
+		UserID  string `json:"user_id" doc:"The Finsplitter user ID"`
 	}
 }
 
@@ -54,7 +63,6 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 		Name:     req.Body.Name,
 		Email:    req.Body.Email,
 		Username: req.Body.Username,
-		Password: req.Body.Password,
 	})
 	if err != nil {
 		if errors.Is(err, errs.ErrUsernameTaken) {
@@ -67,7 +75,7 @@ func (h *Handler) Register(ctx context.Context, req *RegisterRequest) (*Register
 	}
 
 	resp := &RegisterResponse{}
-	resp.Body.RedirectURL = "/auth/sign-in"
+	resp.Body.Message = "Account created. Use POST /auth/device to receive a verification code."
 	resp.Body.UserID = output.UserID
 	return resp, nil
 }
@@ -115,49 +123,5 @@ func (h *Handler) Me(ctx context.Context, _ *struct{}) (*MeResponse, error) {
 	resp.Body.Phone = claims.Phone
 	resp.Body.Picture = claims.Picture
 	resp.Body.NeedsSetup = output.NeedsSetup
-	return resp, nil
-}
-
-// ---------------------------------------------------------------------------
-// SignIn
-// ---------------------------------------------------------------------------
-
-// SignInRequest is the body for POST /auth/sign-in.
-type SignInRequest struct {
-	Body struct {
-		Email    string `json:"email" required:"true" maxLength:"255" doc:"Email address"`
-		Password string `json:"password" required:"true" minLength:"1" maxLength:"128" doc:"Account password"`
-	}
-}
-
-// SignInResponse is the response for POST /auth/sign-in.
-type SignInResponse struct {
-	Body struct {
-		AccessToken  string `json:"access_token" doc:"OIDC access token for API authorization"`
-		IDToken      string `json:"id_token" doc:"OIDC ID token with user claims"`
-		RefreshToken string `json:"refresh_token,omitempty" doc:"OIDC refresh token for token renewal"`
-		ExpiresIn    int    `json:"expires_in" doc:"Token lifetime in seconds"`
-	}
-}
-
-// SignIn authenticates a user and returns OIDC tokens via Logto's ROPC grant.
-// POST /auth/sign-in.
-func (h *Handler) SignIn(ctx context.Context, req *SignInRequest) (*SignInResponse, error) {
-	output, err := h.signInUC.Execute(ctx, auth.SignInInput{
-		Email:    req.Body.Email,
-		Password: req.Body.Password,
-	})
-	if err != nil {
-		if errors.Is(err, errs.ErrInvalidCredentials) {
-			return nil, huma.Error401Unauthorized("invalid email or password")
-		}
-		return nil, huma.Error500InternalServerError("sign-in failed")
-	}
-
-	resp := &SignInResponse{}
-	resp.Body.AccessToken = output.AccessToken
-	resp.Body.IDToken = output.IDToken
-	resp.Body.RefreshToken = output.RefreshToken
-	resp.Body.ExpiresIn = output.ExpiresIn
 	return resp, nil
 }

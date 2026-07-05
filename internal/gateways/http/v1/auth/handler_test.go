@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -18,36 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// mockLogtoCreator satisfies authUC.LogtoUserCreator.
-type mockLogtoCreator struct {
-	mock.Mock
-}
-
-func (m *mockLogtoCreator) CreateUser(
-	ctx context.Context, username, password, name, email string,
-) (*logto.CreateUserResponse, error) {
-	args := m.Called(ctx, username, password, name, email)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*logto.CreateUserResponse), args.Error(1)
-}
-
-// mockLogtoAuthenticator satisfies authUC.LogtoUserAuthenticator.
-type mockLogtoAuthenticator struct {
-	mock.Mock
-}
-
-func (m *mockLogtoAuthenticator) AuthenticateUser(
-	ctx context.Context, email, password string,
-) (*logto.TokenResponse, error) {
-	args := m.Called(ctx, email, password)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*logto.TokenResponse), args.Error(1)
-}
-
 // ---------------------------------------------------------------------------
 // Register
 // ---------------------------------------------------------------------------
@@ -55,9 +24,9 @@ func (m *mockLogtoAuthenticator) AuthenticateUser(
 func TestHandler_Register_Success(t *testing.T) {
 	userID := uuid.Must(uuid.NewV4())
 	mockUserRepo := ports.NewMockUserRepository(t)
-	mockCreator := new(mockLogtoCreator)
+	mockCreator := authUC.NewMockLogtoUserCreator(t)
 
-	mockCreator.On("CreateUser", mock.Anything, "john", "secret123", "John", "john@example.com").
+	mockCreator.EXPECT().CreateUser(mock.Anything, "john", "", "John", "john@example.com").
 		Return(&logto.CreateUserResponse{ID: "logto_user_1"}, nil)
 	mockUserRepo.EXPECT().
 		Create(mock.Anything, "logto_user_1").
@@ -65,39 +34,37 @@ func TestHandler_Register_Success(t *testing.T) {
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
 	req.Body.Email = "john@example.com"
 	req.Body.Username = "john"
-	req.Body.Password = "secret123"
 
 	resp, err := h.Register(context.Background(), req)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, userID.String(), resp.Body.UserID)
-	assert.Equal(t, "/auth/sign-in", resp.Body.RedirectURL)
+	assert.NotEmpty(t, resp.Body.Message, "registration confirmation message")
 
 	mockCreator.AssertExpectations(t)
 }
 
 func TestHandler_Register_UsernameTaken(t *testing.T) {
 	mockUserRepo := ports.NewMockUserRepository(t)
-	mockCreator := new(mockLogtoCreator)
+	mockCreator := authUC.NewMockLogtoUserCreator(t)
 
-	mockCreator.On("CreateUser", mock.Anything, "john", "secret123", "John", "john@example.com").
+	mockCreator.EXPECT().CreateUser(mock.Anything, "john", "", "John", "john@example.com").
 		Return(nil, logto.ErrUserExists)
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
 	req.Body.Email = "john@example.com"
 	req.Body.Username = "john"
-	req.Body.Password = "secret123"
 
 	resp, err := h.Register(context.Background(), req)
 
@@ -114,23 +81,22 @@ func TestHandler_Register_UsernameTaken(t *testing.T) {
 
 func TestHandler_Register_UserAlreadyExists(t *testing.T) {
 	mockUserRepo := ports.NewMockUserRepository(t)
-	mockCreator := new(mockLogtoCreator)
+	mockCreator := authUC.NewMockLogtoUserCreator(t)
 
-	mockCreator.On("CreateUser", mock.Anything, "john", "secret123", "John", "john@example.com").
+	mockCreator.EXPECT().CreateUser(mock.Anything, "john", "", "John", "john@example.com").
 		Return(&logto.CreateUserResponse{ID: "logto_user_1"}, nil)
 	mockUserRepo.EXPECT().
 		Create(mock.Anything, "logto_user_1").
-		Return(nil, errs.ErrDuplicate).
+		Return(&entity.User{}, errs.ErrDuplicate).
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
 	req.Body.Email = "john@example.com"
 	req.Body.Username = "john"
-	req.Body.Password = "secret123"
 
 	resp, err := h.Register(context.Background(), req)
 
@@ -147,19 +113,18 @@ func TestHandler_Register_UserAlreadyExists(t *testing.T) {
 
 func TestHandler_Register_GenericError(t *testing.T) {
 	mockUserRepo := ports.NewMockUserRepository(t)
-	mockCreator := new(mockLogtoCreator)
+	mockCreator := authUC.NewMockLogtoUserCreator(t)
 
-	mockCreator.On("CreateUser", mock.Anything, "john", "secret123", "John", "john@example.com").
+	mockCreator.EXPECT().CreateUser(mock.Anything, "john", "", "John", "john@example.com").
 		Return(nil, errors.New("unexpected logto error"))
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil)
+	h := NewHandler(registerUC, nil, nil, nil, nil)
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
 	req.Body.Email = "john@example.com"
 	req.Body.Username = "john"
-	req.Body.Password = "secret123"
 
 	resp, err := h.Register(context.Background(), req)
 
@@ -179,7 +144,7 @@ func TestHandler_Register_GenericError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Me_NoClaims(t *testing.T) {
-	h := NewHandler(nil, nil, nil)
+	h := NewHandler(nil, nil, nil, nil, nil)
 
 	resp, err := h.Me(context.Background(), &struct{}{})
 
@@ -199,7 +164,7 @@ func TestHandler_Me_Success(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub:      "logto_sub_1",
@@ -234,7 +199,7 @@ func TestHandler_Me_NeedsSetup(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_new",
@@ -259,7 +224,7 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil)
+	h := NewHandler(nil, meUC, nil, nil, nil)
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_1",
@@ -279,88 +244,97 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// SignIn
+// Device Refresh
 // ---------------------------------------------------------------------------
 
-func TestHandler_SignIn_Success(t *testing.T) {
-	mockAuthenticator := new(mockLogtoAuthenticator)
+func TestHandler_DeviceRefresh_Success(t *testing.T) {
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthenticator.On("AuthenticateUser", mock.Anything, "john@example.com", "secret123").
-		Return(&logto.TokenResponse{
-			AccessToken:  "access_abc",
-			IDToken:      "id_def",
-			RefreshToken: "refresh_ghi",
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "valid_refresh_token").
+		Return(&logto.DeviceTokenRefreshResponse{
+			AccessToken:  "new_access",
+			IDToken:      "new_id",
+			RefreshToken: "new_refresh",
 			ExpiresIn:    3600,
 			TokenType:    "Bearer",
 		}, nil)
 
-	signInUC := authUC.NewSignInUseCase(mockAuthenticator)
-	h := NewHandler(nil, nil, signInUC)
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
-	req := &SignInRequest{}
-	req.Body.Email = "john@example.com"
-	req.Body.Password = "secret123"
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "valid_refresh_token"
 
-	resp, err := h.SignIn(context.Background(), req)
+	resp, err := h.DeviceRefresh(context.Background(), req)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.Equal(t, "access_abc", resp.Body.AccessToken)
-	assert.Equal(t, "id_def", resp.Body.IDToken)
-	assert.Equal(t, "refresh_ghi", resp.Body.RefreshToken)
+	assert.Equal(t, "new_access", resp.Body.AccessToken)
+	assert.Equal(t, "new_id", resp.Body.IDToken)
+	assert.Equal(t, "new_refresh", resp.Body.RefreshToken)
 	assert.Equal(t, 3600, resp.Body.ExpiresIn)
-
-	mockAuthenticator.AssertExpectations(t)
 }
 
-func TestHandler_SignIn_InvalidCredentials(t *testing.T) {
-	mockAuthenticator := new(mockLogtoAuthenticator)
+func TestHandler_DeviceRefresh_ExpiredToken(t *testing.T) {
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthenticator.On("AuthenticateUser", mock.Anything, "wrong@example.com", "badpass").
-		Return(nil, fmt.Errorf("authenticate user: %w", errs.ErrInvalidCredentials))
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "expired_refresh").
+		Return(nil, logto.ErrDeviceCodeExpired)
 
-	signInUC := authUC.NewSignInUseCase(mockAuthenticator)
-	h := NewHandler(nil, nil, signInUC)
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
-	req := &SignInRequest{}
-	req.Body.Email = "wrong@example.com"
-	req.Body.Password = "badpass"
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "expired_refresh"
 
-	resp, err := h.SignIn(context.Background(), req)
-
+	resp, err := h.DeviceRefresh(context.Background(), req)
 	require.Error(t, err)
 	assert.Nil(t, resp)
 
 	var statusErr huma.StatusError
 	require.ErrorAs(t, err, &statusErr)
-	assert.Equal(t, 401, statusErr.GetStatus())
-	assert.Contains(t, statusErr.Error(), "invalid email or password")
-
-	mockAuthenticator.AssertExpectations(t)
+	assert.Equal(t, 400, statusErr.GetStatus())
+	assert.Contains(t, statusErr.Error(), "refresh token expired or invalid")
 }
 
-func TestHandler_SignIn_GenericError(t *testing.T) {
-	mockAuthenticator := new(mockLogtoAuthenticator)
+func TestHandler_DeviceRefresh_EmptyToken(t *testing.T) {
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
 
-	mockAuthenticator.On("AuthenticateUser", mock.Anything, "john@example.com", "secret123").
-		Return(nil, errors.New("logto network error"))
+	// Empty token is caught by the use case before calling the Logto client.
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
 
-	signInUC := authUC.NewSignInUseCase(mockAuthenticator)
-	h := NewHandler(nil, nil, signInUC)
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = ""
 
-	req := &SignInRequest{}
-	req.Body.Email = "john@example.com"
-	req.Body.Password = "secret123"
+	resp, err := h.DeviceRefresh(context.Background(), req)
+	require.Error(t, err)
+	assert.Nil(t, resp)
 
-	resp, err := h.SignIn(context.Background(), req)
+	var statusErr huma.StatusError
+	require.ErrorAs(t, err, &statusErr)
+	assert.Equal(t, 422, statusErr.GetStatus())
+	assert.Contains(t, statusErr.Error(), "refresh_token is required")
+}
 
+func TestHandler_DeviceRefresh_GenericError(t *testing.T) {
+	mockLogtoDevice := authUC.NewMockLogtoDeviceFlowClient(t)
+
+	mockLogtoDevice.EXPECT().RefreshDeviceToken(mock.Anything, "some_token").
+		Return(nil, errors.New("logto unavailable"))
+
+	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
+	h := NewHandler(nil, nil, nil, nil, refreshUC)
+
+	req := &DeviceRefreshRequest{}
+	req.Body.RefreshToken = "some_token"
+
+	resp, err := h.DeviceRefresh(context.Background(), req)
 	require.Error(t, err)
 	assert.Nil(t, resp)
 
 	var statusErr huma.StatusError
 	require.ErrorAs(t, err, &statusErr)
 	assert.Equal(t, 500, statusErr.GetStatus())
-	assert.Contains(t, statusErr.Error(), "sign-in failed")
-
-	mockAuthenticator.AssertExpectations(t)
+	assert.Contains(t, statusErr.Error(), "token refresh failed")
 }
