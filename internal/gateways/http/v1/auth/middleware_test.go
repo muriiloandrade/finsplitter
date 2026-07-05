@@ -589,6 +589,35 @@ func TestProtected_OptionalPath_NoToken(t *testing.T) {
 		"optional path without token should NOT populate claims")
 }
 
+// Test Protected — optional path with an invalid token returns 401.
+func TestProtected_OptionalPath_InvalidToken(t *testing.T) {
+	mockFetcher := newMockjwkFetcher(t)
+	_, jwks := newTestKeySet(t)
+
+	mw := &Middleware{
+		jwkClient: mockFetcher,
+		cache:     nil,
+		logger:    slog.Default(),
+		jwksURL:   "http://test.local/jwks",
+	}
+	handler := mw.Protected()(http.HandlerFunc(captureHandler))
+
+	// The context is wrapped by slogctx.NewCtx in tryPopulateClaims, so we use
+	// mock.Anything to match the wrapped value.
+	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer clearly-invalid")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+
+	var body map[string]string
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Equal(t, "invalid or expired token", body["error"])
+}
+
 // Test Protected — setup path with valid token passes middleware even without
 // a local DB record. This is the recovery scenario: user exists in Logto but
 // the previous DB insert failed (or setup was never completed).
@@ -667,8 +696,9 @@ func TestTryPopulateClaims_NoToken(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
-	modified := mw.tryPopulateClaims(req)
-	assert.Nil(t, modified, "no token → should return nil")
+	result := mw.tryPopulateClaims(req)
+	assert.Nil(t, result.request, "no token → should return nil request")
+	assert.NoError(t, result.err, "no token → should not error")
 }
 
 func TestTryPopulateClaims_InvalidToken(t *testing.T) {
@@ -687,8 +717,9 @@ func TestTryPopulateClaims_InvalidToken(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
 	req.Header.Set("Authorization", "Bearer clearly-invalid")
-	modified := mw.tryPopulateClaims(req)
-	assert.Nil(t, modified, "invalid token → should return nil")
+	result := mw.tryPopulateClaims(req)
+	assert.Nil(t, result.request, "invalid token → should return nil request")
+	assert.Error(t, result.err, "invalid token → should return error")
 }
 
 func TestTryPopulateClaims_ValidToken(t *testing.T) {
@@ -718,10 +749,11 @@ func TestTryPopulateClaims_ValidToken(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
-	modified := mw.tryPopulateClaims(req)
-	require.NotNil(t, modified, "valid token → should return modified request")
+	result := mw.tryPopulateClaims(req)
+	require.NoError(t, result.err, "valid token → should not error")
+	require.NotNil(t, result.request, "valid token → should return modified request")
 
-	claims := GetUserClaims(modified.Context())
+	claims := GetUserClaims(result.request.Context())
 	require.NotNil(t, claims)
 	assert.Equal(t, "user-456", claims.Sub)
 	assert.Equal(t, "alice", claims.Username)

@@ -149,8 +149,16 @@ func (m *Middleware) Protected() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 
 			case isOptionalPath(r.URL.Path):
-				if modified := m.tryPopulateClaims(r); modified != nil {
-					r = modified
+				result := m.tryPopulateClaims(r)
+				if result.err != nil {
+					m.logger.WarnContext(r.Context(), "Optional auth: invalid token",
+						slog.Any("error", result.err),
+					)
+					writeError(w, http.StatusUnauthorized, "invalid or expired token")
+					return
+				}
+				if result.request != nil {
+					r = result.request
 				}
 				next.ServeHTTP(w, r)
 
@@ -161,25 +169,37 @@ func (m *Middleware) Protected() func(http.Handler) http.Handler {
 	}
 }
 
+// tryPopulateClaimsResult is returned by tryPopulateClaims to distinguish
+// between "no token provided" and "token present but invalid".
+type tryPopulateClaimsResult struct {
+	request *http.Request // non-nil when claims were successfully attached
+	err     error         // non-nil when a token was present but invalid
+}
+
 // tryPopulateClaims attaches claims to the request context when a valid
-// bearer token is present. Never rejects the request.
-func (m *Middleware) tryPopulateClaims(r *http.Request) *http.Request {
+// bearer token is present.
+//
+// The result encodes three cases:
+//   - request != nil, err == nil → token was valid, claims are attached.
+//   - request == nil, err == nil → no bearer token was provided.
+//   - request == nil, err != nil → a token was provided but is invalid.
+func (m *Middleware) tryPopulateClaims(r *http.Request) tryPopulateClaimsResult {
 	logger := m.logger.With(slog.String("middleware", "auth.optional"))
 	ctx := slogctx.NewCtx(r.Context(), logger)
 
 	token := extractBearerToken(r)
 	if token == "" {
-		return nil
+		return tryPopulateClaimsResult{}
 	}
 	claims, err := m.parseAndValidate(ctx, token)
 	if err != nil {
 		logger.DebugContext(ctx, "Optional auth: invalid token",
 			slog.Any("error", err),
 		)
-		return nil
+		return tryPopulateClaimsResult{err: err}
 	}
 	ctx = context.WithValue(ctx, userClaimsKey, claims)
-	return r.WithContext(ctx)
+	return tryPopulateClaimsResult{request: r.WithContext(ctx)}
 }
 
 // requireAuth enforces JWT authentication. On any failure it writes an error
