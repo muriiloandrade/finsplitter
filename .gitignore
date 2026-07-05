@@ -52,4 +52,6 @@ go.work
 worktrees/
 
 ### OpenCode ###
-.opencode/package*.json.tmp/
+.opencode/package*.json
+.tmp/
+node_modules/
