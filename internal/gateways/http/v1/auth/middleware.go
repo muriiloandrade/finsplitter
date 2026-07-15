@@ -54,6 +54,7 @@ var (
 		"/auth/device",
 		"/auth/device/poll",
 		"/auth/device/refresh",
+		"/auth/device/revoke",
 	}
 
 	// optionalExact are exact paths that do NOT require authentication

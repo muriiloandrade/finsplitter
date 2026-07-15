@@ -578,7 +578,8 @@ func TestE2E_DeviceFlow_DeviceRevoke(t *testing.T) {
 
 	// --- Revoke the refresh token ---
 	revokeBody := env.postOK(t, "/auth/device/revoke", fmt.Sprintf(`{"refresh_token":"%s"}`, poll.RefreshToken))
-	assert.Empty(t, revokeBody, "revoke returns empty 200 OK")
+	// Huma returns {} for empty Body struct — we just check it's valid JSON.
+	assert.Contains(t, revokeBody, "{}", "revoke returns empty body")
 
 	// --- Using the revoked token must now fail ---
 	resp := env.post(t, "/auth/device/refresh", fmt.Sprintf(`{"refresh_token":"%s"}`, poll.RefreshToken))
