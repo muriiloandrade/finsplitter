@@ -348,3 +348,60 @@ func (_c *MockLogtoDeviceFlowClient_RequestDeviceCode_Call) RunAndReturn(run fun
 	_c.Call.Return(run)
 	return _c
 }
+
+// RevokeDeviceToken provides a mock function for the type MockLogtoDeviceFlowClient
+func (_mock *MockLogtoDeviceFlowClient) RevokeDeviceToken(ctx context.Context, refreshToken string) error {
+	ret := _mock.Called(ctx, refreshToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeDeviceToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, refreshToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockLogtoDeviceFlowClient_RevokeDeviceToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeDeviceToken'
+type MockLogtoDeviceFlowClient_RevokeDeviceToken_Call struct {
+	*mock.Call
+}
+
+// RevokeDeviceToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refreshToken string
+func (_e *MockLogtoDeviceFlowClient_Expecter) RevokeDeviceToken(ctx any, refreshToken any) *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call {
+	return &MockLogtoDeviceFlowClient_RevokeDeviceToken_Call{Call: _e.mock.On("RevokeDeviceToken", ctx, refreshToken)}
+}
+
+func (_c *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call) Run(run func(ctx context.Context, refreshToken string)) *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call) Return(err error) *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call) RunAndReturn(run func(ctx context.Context, refreshToken string) error) *MockLogtoDeviceFlowClient_RevokeDeviceToken_Call {
+	_c.Call.Return(run)
+	return _c
+}

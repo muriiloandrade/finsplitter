@@ -24,4 +24,5 @@ type LogtoDeviceFlowClient interface {
 	RequestDeviceCode(ctx context.Context) (*logto.DeviceCodeResponse, error)
 	PollDeviceToken(ctx context.Context, deviceCode string) (*logto.DeviceTokenResponse, error)
 	RefreshDeviceToken(ctx context.Context, refreshToken string) (*logto.DeviceTokenRefreshResponse, error)
+	RevokeDeviceToken(ctx context.Context, refreshToken string) error
 }

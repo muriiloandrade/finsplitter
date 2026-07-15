@@ -16,4 +16,5 @@ var (
 	ErrDeviceCodePending      = errors.New("device code authorization pending")
 	ErrDeviceCodeExpired      = errors.New("device code expired")
 	ErrDeviceCodeAccessDenied = errors.New("device code access denied")
+	ErrDeviceTokenRevoked     = errors.New("device token revocation failed")
 )
