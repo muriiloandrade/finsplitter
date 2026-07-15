@@ -3,53 +3,59 @@ tag-template: "v$RESOLVED_VERSION"
 
 categories:
     - title: "🚀 Features"
-      labels:
-          - "feature"
-          - "enhancement"
-          - "feat"
+      semver-increment: "minor"
+      when:
+        labels:
+            - "feature"
+            - "enhancement"
+            - "feat"
+            - "minor"
     - title: "🐛 Bug Fixes"
-      labels:
-          - "fix"
-          - "bugfix"
-          - "bug"
+      when:
+        labels:
+            - "fix"
+            - "bugfix"
+            - "bug"
     - title: "🧰 Maintenance"
-      labels:
-          - "chore"
-          - "ci"
-          - "refactor"
-          - "perf"
-          - "build"
+      when:
+        labels:
+            - "chore"
+            - "ci"
+            - "refactor"
+            - "perf"
+            - "build"
     - title: "📚 Documentation"
-      labels:
-          - "documentation"
-          - "docs"
+      when:
+        labels:
+            - "documentation"
+            - "docs"
     - title: "🔒 Security"
-      labels:
-          - "security"
+      when:
+        labels:
+            - "security"
     - title: "⚡ Performance Improvements"
-      labels:
-          - "performance"
-          - "perf"
+      when:
+        labels:
+            - "performance"
+            - "perf"
     - title: "🛠️ Dependencies"
-      labels:
-          - "dependencies"
-          - "deps"
+      when:
+        labels:
+            - "dependencies"
+            - "deps"
+    - type: "pre-exclude"
+      when:
+        label: "skip-changelog"
+    - type: "version-resolver"
+      semver-increment: "major"
+      when:
+        labels:
+            - "major"
+            - "breaking"
 
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
-
-version-resolver:
-    major:
-        labels:
-            - "major"
-            - "breaking"
-    minor:
-        labels:
-            - "minor"
-            - "feature"
-            - "feat"
-    default: patch
 
 autolabeler:
     - label: "feature"
@@ -91,9 +97,6 @@ autolabeler:
       title:
           - '/^security(\(.+\))?: .+/'
           - "/security/i"
-
-exclude-labels:
-    - "skip-changelog"
 
 template: |
     ## Changes
