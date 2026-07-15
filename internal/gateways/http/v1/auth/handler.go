@@ -16,6 +16,7 @@ type Handler struct {
 	deviceAuthUC    *auth.RequestDeviceAuthUseCase
 	devicePollUC    *auth.PollDeviceTokenUseCase
 	deviceRefreshUC *auth.RefreshDeviceTokenUseCase
+	deviceRevokeUC  *auth.RevokeDeviceTokenUseCase
 }
 
 // NewHandler creates a new auth Handler.
@@ -25,6 +26,7 @@ func NewHandler(
 	deviceAuthUC *auth.RequestDeviceAuthUseCase,
 	devicePollUC *auth.PollDeviceTokenUseCase,
 	deviceRefreshUC *auth.RefreshDeviceTokenUseCase,
+	deviceRevokeUC *auth.RevokeDeviceTokenUseCase,
 ) *Handler {
 	return &Handler{
 		registerUC:      registerUC,
@@ -32,6 +34,7 @@ func NewHandler(
 		deviceAuthUC:    deviceAuthUC,
 		devicePollUC:    devicePollUC,
 		deviceRefreshUC: deviceRefreshUC,
+		deviceRevokeUC:  deviceRevokeUC,
 	}
 }
 

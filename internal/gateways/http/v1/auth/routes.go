@@ -20,6 +20,7 @@ type API struct {
 	DeviceAuthHandler    HumaHandler[RequestDeviceAuthRequest, RequestDeviceAuthResponse]
 	DevicePollHandler    HumaHandler[PollDeviceTokenRequest, PollDeviceTokenResponse]
 	DeviceRefreshHandler HumaHandler[DeviceRefreshRequest, DeviceRefreshResponse]
+	DeviceRevokeHandler  HumaHandler[DeviceRevokeRequest, DeviceRevokeResponse]
 }
 
 // NewAPI creates an auth API from the given dependencies.
@@ -31,7 +32,8 @@ func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
 	deviceAuthUC := auth.NewRequestDeviceAuthUseCase(logtoClient)
 	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoClient)
 	deviceRefreshUC := auth.NewRefreshDeviceTokenUseCase(logtoClient)
-	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC, deviceRefreshUC)
+	deviceRevokeUC := auth.NewRevokeDeviceTokenUseCase(logtoClient)
+	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC, deviceRefreshUC, deviceRevokeUC)
 
 	return API{
 		RegisterHandler:      h.Register,
@@ -39,6 +41,7 @@ func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
 		DeviceAuthHandler:    h.DeviceAuth,
 		DevicePollHandler:    h.DevicePoll,
 		DeviceRefreshHandler: h.DeviceRefresh,
+		DeviceRevokeHandler:  h.DeviceRevoke,
 	}
 }
 
@@ -125,4 +128,19 @@ func (a API) RegisterRoutes(api huma.API) {
 			http.StatusInternalServerError,
 		},
 	}, a.DeviceRefreshHandler)
+
+	// Device token revocation (RFC 7009) — public endpoint (refresh token is the credential).
+	huma.Register(api, huma.Operation{
+		Method:  http.MethodPost,
+		Path:    "/auth/device/revoke",
+		Summary: "Revoke device flow refresh token",
+		Description: "Invalidates a refresh token obtained from POST /auth/device/poll. " +
+			"The token is immediately unusable for future refreshes. " +
+			"This endpoint is public (no JWT required) — the refresh token is the credential.",
+		Tags: []string{"Auth"},
+		Errors: []int{
+			http.StatusUnprocessableEntity,
+			http.StatusInternalServerError,
+		},
+	}, a.DeviceRevokeHandler)
 }

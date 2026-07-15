@@ -58,6 +58,7 @@ const mockOIDCKeyID = "mock-oidc-key-1"
 //   - POST /oidc/token — client_credentials grant (for M2M)
 //   - GET  /oidc/jwks  — returns the public JWK Set
 //   - POST /api/users  — creates a user (Management API)
+//   - POST /oidc/token/revocation — revokes a refresh token (RFC 7009)
 //
 // JWTs are signed with a real EC P-256 key so Finsplitter's middleware
 // validates them for real (signature verification, issuer/audience checks).
@@ -71,6 +72,7 @@ type mockOIDCProvider struct {
 	users              map[string]*oidcUser   // keyed by email
 	deviceCodes        map[string]*deviceCode // keyed by device_code
 	refreshTokens      map[string]*oidcUser   // keyed by refresh_token
+	revokedTokens      map[string]bool        // keyed by refresh_token (RFC 7009)
 	deviceAuthClientID string                 // expected client_id for device auth
 	privKey            *ecdsa.PrivateKey      // raw key for signing JWTs
 	signingJWK         jwk.Key                // private JWK with kid (for signing, keeps kid in header)
@@ -125,6 +127,7 @@ func newMockOIDCProvider(audience string) (*mockOIDCProvider, error) {
 		users:              make(map[string]*oidcUser),
 		deviceCodes:        make(map[string]*deviceCode),
 		refreshTokens:      make(map[string]*oidcUser),
+		revokedTokens:      make(map[string]bool),
 		deviceAuthClientID: "test-device-client-id",
 		signingJWK:         signingJWK,
 		publicJWK:          pubJWK,
@@ -138,6 +141,7 @@ func newMockOIDCProvider(audience string) (*mockOIDCProvider, error) {
 	mux.HandleFunc("/oidc/token", m.handleToken)
 	mux.HandleFunc("/oidc/jwks", m.handleJWKS)
 	mux.HandleFunc("/api/users", m.handleCreateUser)
+	mux.HandleFunc("/oidc/token/revocation", m.handleTokenRevocation)
 
 	m.server = &http.Server{Handler: mux}
 	go func() { _ = m.server.Serve(listener) }()
@@ -469,6 +473,14 @@ func (m *mockOIDCProvider) handleRefreshTokenGrant(w http.ResponseWriter, r *htt
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	// Reject revoked tokens (RFC 7009).
+	if m.revokedTokens[refreshToken] {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "invalid_grant",
+		})
+		return
+	}
+
 	user, ok := m.refreshTokens[refreshToken]
 	if !ok {
 		writeJSON(w, http.StatusBadRequest, map[string]string{
@@ -494,6 +506,38 @@ func (m *mockOIDCProvider) handleRefreshTokenGrant(w http.ResponseWriter, r *htt
 		"expires_in":    3600,
 		"token_type":    "Bearer",
 	})
+}
+
+// handleTokenRevocation implements RFC 7009 token revocation. It records the
+// token (by value) as revoked so subsequent refresh attempts fail with
+// invalid_grant. A successful revocation always returns 200 (per RFC 7009),
+// even if the token was already unknown/expired.
+func (m *mockOIDCProvider) handleTokenRevocation(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	token := r.FormValue("token")
+	if token == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request"})
+		return
+	}
+
+	m.mu.Lock()
+	m.revokedTokens[token] = true
+	// Also delete from the active refresh-token store so a rotated token
+	// (returned by a prior refresh using the same underlying token) is gone.
+	delete(m.refreshTokens, token)
+	m.mu.Unlock()
+
+	// RFC 7009: success is signalled by 200 with an empty body.
+	w.WriteHeader(http.StatusOK)
 }
 
 func (m *mockOIDCProvider) handleJWKS(w http.ResponseWriter, r *http.Request) {
