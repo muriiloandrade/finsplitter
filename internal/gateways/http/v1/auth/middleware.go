@@ -152,6 +152,10 @@ func (m *Middleware) Protected() func(http.Handler) http.Handler {
 			case isOptionalPath(r.URL.Path):
 				result := m.tryPopulateClaims(r)
 				if result.err != nil {
+					// Invalid/expired token → reject with 401 even on optional paths.
+					// An invalid token is not the same as "no token". If the caller
+					// provides a token, it must be valid. Only the complete absence
+					// of a token is allowed on optional paths.
 					m.logger.WarnContext(r.Context(), "Optional auth: invalid token",
 						slog.Any("error", result.err),
 					)

@@ -34,7 +34,7 @@ func TestHandler_Register_Success(t *testing.T) {
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil, nil)
+	h := NewHandler(HandlerConfig{RegisterUC: registerUC})
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -59,7 +59,7 @@ func TestHandler_Register_UsernameTaken(t *testing.T) {
 		Return(nil, logto.ErrUserExists)
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil, nil)
+	h := NewHandler(HandlerConfig{RegisterUC: registerUC})
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -91,7 +91,7 @@ func TestHandler_Register_UserAlreadyExists(t *testing.T) {
 		Once()
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil, nil)
+	h := NewHandler(HandlerConfig{RegisterUC: registerUC})
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -119,7 +119,7 @@ func TestHandler_Register_GenericError(t *testing.T) {
 		Return(nil, errors.New("unexpected logto error"))
 
 	registerUC := authUC.NewRegisterUseCase(mockUserRepo, mockCreator)
-	h := NewHandler(registerUC, nil, nil, nil, nil)
+	h := NewHandler(HandlerConfig{RegisterUC: registerUC})
 
 	req := &RegisterRequest{}
 	req.Body.Name = "John"
@@ -144,7 +144,7 @@ func TestHandler_Register_GenericError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Me_NoClaims(t *testing.T) {
-	h := NewHandler(nil, nil, nil, nil, nil)
+	h := NewHandler(HandlerConfig{})
 
 	resp, err := h.Me(context.Background(), &struct{}{})
 
@@ -164,7 +164,7 @@ func TestHandler_Me_Success(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil, nil)
+	h := NewHandler(HandlerConfig{MeUC: meUC})
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub:      "logto_sub_1",
@@ -199,7 +199,7 @@ func TestHandler_Me_NeedsSetup(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil, nil)
+	h := NewHandler(HandlerConfig{MeUC: meUC})
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_new",
@@ -224,7 +224,7 @@ func TestHandler_Me_UseCaseError(t *testing.T) {
 		Once()
 
 	meUC := authUC.NewMeUseCase(mockUserRepo)
-	h := NewHandler(nil, meUC, nil, nil, nil)
+	h := NewHandler(HandlerConfig{MeUC: meUC})
 
 	ctx := WithUserClaims(context.Background(), &entity.UserClaims{
 		Sub: "logto_sub_1",
@@ -260,7 +260,7 @@ func TestHandler_DeviceRefresh_Success(t *testing.T) {
 		}, nil)
 
 	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
-	h := NewHandler(nil, nil, nil, nil, refreshUC)
+	h := NewHandler(HandlerConfig{DeviceRefreshUC: refreshUC})
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "valid_refresh_token"
@@ -282,7 +282,7 @@ func TestHandler_DeviceRefresh_ExpiredToken(t *testing.T) {
 		Return(nil, logto.ErrDeviceCodeExpired)
 
 	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
-	h := NewHandler(nil, nil, nil, nil, refreshUC)
+	h := NewHandler(HandlerConfig{DeviceRefreshUC: refreshUC})
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "expired_refresh"
@@ -302,7 +302,7 @@ func TestHandler_DeviceRefresh_EmptyToken(t *testing.T) {
 
 	// Empty token is caught by the use case before calling the Logto client.
 	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
-	h := NewHandler(nil, nil, nil, nil, refreshUC)
+	h := NewHandler(HandlerConfig{DeviceRefreshUC: refreshUC})
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = ""
@@ -324,7 +324,7 @@ func TestHandler_DeviceRefresh_GenericError(t *testing.T) {
 		Return(nil, errors.New("logto unavailable"))
 
 	refreshUC := authUC.NewRefreshDeviceTokenUseCase(mockLogtoDevice)
-	h := NewHandler(nil, nil, nil, nil, refreshUC)
+	h := NewHandler(HandlerConfig{DeviceRefreshUC: refreshUC})
 
 	req := &DeviceRefreshRequest{}
 	req.Body.RefreshToken = "some_token"

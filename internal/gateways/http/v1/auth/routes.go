@@ -33,7 +33,14 @@ func NewAPI(userRepo ports.UserRepository, logtoClient *logto.Client) API {
 	devicePollUC := auth.NewPollDeviceTokenUseCase(logtoClient)
 	deviceRefreshUC := auth.NewRefreshDeviceTokenUseCase(logtoClient)
 	deviceRevokeUC := auth.NewRevokeDeviceTokenUseCase(logtoClient)
-	h := NewHandler(registerUC, meUC, deviceAuthUC, devicePollUC, deviceRefreshUC, deviceRevokeUC)
+	h := NewHandler(HandlerConfig{
+		RegisterUC:      registerUC,
+		MeUC:            meUC,
+		DeviceAuthUC:    deviceAuthUC,
+		DevicePollUC:    devicePollUC,
+		DeviceRefreshUC: deviceRefreshUC,
+		DeviceRevokeUC:  deviceRevokeUC,
+	})
 
 	return API{
 		RegisterHandler:      h.Register,

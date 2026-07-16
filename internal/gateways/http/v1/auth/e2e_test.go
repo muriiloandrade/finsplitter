@@ -381,8 +381,13 @@ func TestE2E_DeviceFlow_UnauthenticatedMe(t *testing.T) {
 	assert.False(t, needsSetup, "needs_setup defaults to false")
 }
 
-// TestE2E_DeviceFlow_BadToken verifies that invalid tokens are silently
-// ignored on the optional /auth/me path (same behavior as no token at all).
+// TestE2E_DeviceFlow_BadToken verifies that an invalid token provided on the
+// optional /auth/me path is REJECTED with 401 (not silently ignored).
+//
+// An invalid/expired token is NOT the same as "no token". If the caller
+// provides a token, it must be valid. Only the complete absence of a token
+// is allowed on optional paths. This is a security-critical behavior —
+// do NOT change it to return 200 for invalid tokens.
 func TestE2E_DeviceFlow_BadToken(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
@@ -393,13 +398,15 @@ func TestE2E_DeviceFlow_BadToken(t *testing.T) {
 	resp := env.get(t, "/auth/me", "this-is-not-a-valid-jwt")
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode, "bogus token: %s", string(body))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode,
+		"bogus token must be rejected: %s", string(body))
 
 	var result struct {
-		NeedsSetup bool `json:"needs_setup"`
+		Error string `json:"error"`
 	}
 	json.Unmarshal(body, &result)
-	require.False(t, result.NeedsSetup, "bad token should yield empty response")
+	require.Equal(t, "invalid or expired token", result.Error,
+		"invalid token should yield 401 with error message")
 }
 
 // TestE2E_DeviceFlow_InvalidDeviceCode verifies that an unknown device code

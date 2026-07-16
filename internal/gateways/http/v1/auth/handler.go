@@ -9,6 +9,16 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 )
 
+// HandlerConfig holds all handler dependencies.
+type HandlerConfig struct {
+	RegisterUC      *auth.RegisterUseCase
+	MeUC            *auth.MeUseCase
+	DeviceAuthUC    *auth.RequestDeviceAuthUseCase
+	DevicePollUC    *auth.PollDeviceTokenUseCase
+	DeviceRefreshUC *auth.RefreshDeviceTokenUseCase
+	DeviceRevokeUC  *auth.RevokeDeviceTokenUseCase
+}
+
 // Handler handles auth-related HTTP requests.
 type Handler struct {
 	registerUC      *auth.RegisterUseCase
@@ -20,21 +30,14 @@ type Handler struct {
 }
 
 // NewHandler creates a new auth Handler.
-func NewHandler(
-	registerUC *auth.RegisterUseCase,
-	meUC *auth.MeUseCase,
-	deviceAuthUC *auth.RequestDeviceAuthUseCase,
-	devicePollUC *auth.PollDeviceTokenUseCase,
-	deviceRefreshUC *auth.RefreshDeviceTokenUseCase,
-	deviceRevokeUC *auth.RevokeDeviceTokenUseCase,
-) *Handler {
+func NewHandler(cfg HandlerConfig) *Handler {
 	return &Handler{
-		registerUC:      registerUC,
-		meUC:            meUC,
-		deviceAuthUC:    deviceAuthUC,
-		devicePollUC:    devicePollUC,
-		deviceRefreshUC: deviceRefreshUC,
-		deviceRevokeUC:  deviceRevokeUC,
+		registerUC:      cfg.RegisterUC,
+		meUC:            cfg.MeUC,
+		deviceAuthUC:    cfg.DeviceAuthUC,
+		devicePollUC:    cfg.DevicePollUC,
+		deviceRefreshUC: cfg.DeviceRefreshUC,
+		deviceRevokeUC:  cfg.DeviceRevokeUC,
 	}
 }
 
