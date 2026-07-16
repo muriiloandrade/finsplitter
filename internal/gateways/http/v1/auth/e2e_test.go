@@ -381,8 +381,13 @@ func TestE2E_DeviceFlow_UnauthenticatedMe(t *testing.T) {
 	assert.False(t, needsSetup, "needs_setup defaults to false")
 }
 
-// TestE2E_DeviceFlow_BadToken verifies that invalid tokens are silently
-// ignored on the optional /auth/me path (same behavior as no token at all).
+// TestE2E_DeviceFlow_BadToken verifies that an invalid token provided on the
+// optional /auth/me path is REJECTED with 401 (not silently ignored).
+//
+// An invalid/expired token is NOT the same as "no token". If the caller
+// provides a token, it must be valid. Only the complete absence of a token
+// is allowed on optional paths. This is a security-critical behavior —
+// do NOT change it to return 200 for invalid tokens.
 func TestE2E_DeviceFlow_BadToken(t *testing.T) {
 	if testing.Short() {
 		t.Skip("e2e tests not run in short mode")
@@ -393,13 +398,15 @@ func TestE2E_DeviceFlow_BadToken(t *testing.T) {
 	resp := env.get(t, "/auth/me", "this-is-not-a-valid-jwt")
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
-	require.Equal(t, http.StatusOK, resp.StatusCode, "bogus token: %s", string(body))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode,
+		"bogus token must be rejected: %s", string(body))
 
 	var result struct {
-		NeedsSetup bool `json:"needs_setup"`
+		Error string `json:"error"`
 	}
 	json.Unmarshal(body, &result)
-	require.False(t, result.NeedsSetup, "bad token should yield empty response")
+	require.Equal(t, "invalid or expired token", result.Error,
+		"invalid token should yield 401 with error message")
 }
 
 // TestE2E_DeviceFlow_InvalidDeviceCode verifies that an unknown device code
@@ -520,4 +527,79 @@ func TestE2E_DeviceFlow_RefreshExpired(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 	_ = resp.Body.Close()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "bad refresh: %s", string(body))
+}
+
+// TestE2E_DeviceFlow_DeviceRevoke covers the full revocation flow:
+// register → device auth → approve → poll → refresh → revoke → refresh fails.
+func TestE2E_DeviceFlow_DeviceRevoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("e2e tests not run in short mode")
+	}
+
+	env := newE2EEnv(t)
+
+	// --- Register ---
+	email := fmt.Sprintf("revoke-%d@example.com", time.Now().UnixNano())
+	regBody := env.postOK(t, "/auth/register", fmt.Sprintf(`{
+		"name":"Revoke Tester","email":"%s"
+	}`, email))
+
+	var reg struct {
+		UserID string `json:"user_id"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(regBody), &reg))
+	assert.NotEmpty(t, reg.UserID)
+
+	// --- Request device code ---
+	daBody := env.postOK(t, "/auth/device", fmt.Sprintf(`{"email":"%s"}`, email))
+
+	var da struct {
+		DeviceCode string `json:"device_code"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(daBody), &da))
+	assert.NotEmpty(t, da.DeviceCode)
+
+	// --- Approve ---
+	approved := env.mockOIDC.ApproveDeviceCode(da.DeviceCode, email)
+	require.True(t, approved)
+
+	// --- Poll for tokens ---
+	pollBody := env.postOK(t, "/auth/device/poll", fmt.Sprintf(`{"device_code":"%s"}`, da.DeviceCode))
+
+	var poll struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(pollBody), &poll))
+	require.NotEmpty(t, poll.AccessToken, "access_token")
+	require.NotEmpty(t, poll.RefreshToken, "refresh_token")
+
+	// --- Confirm the refresh token works before revocation ---
+	refreshBody := env.postOK(t, "/auth/device/refresh", fmt.Sprintf(`{"refresh_token":"%s"}`, poll.RefreshToken))
+
+	var refresh struct {
+		AccessToken string `json:"access_token"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(refreshBody), &refresh))
+	require.NotEmpty(t, refresh.AccessToken, "new access_token before revoke")
+
+	// --- Revoke the refresh token ---
+	revokeBody := env.postOK(t, "/auth/device/revoke", fmt.Sprintf(`{"refresh_token":"%s"}`, poll.RefreshToken))
+	// Huma returns {} for empty Body struct — we just check it's valid JSON.
+	assert.Contains(t, revokeBody, "{}", "revoke returns empty body")
+
+	// --- Using the revoked token must now fail ---
+	resp := env.post(t, "/auth/device/refresh", fmt.Sprintf(`{"refresh_token":"%s"}`, poll.RefreshToken))
+	revokedBody, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "revoked refresh: %s", string(revokedBody))
+
+	// --- Original access token still works (JWT is stateless) ---
+	meBody := env.getOK(t, "/auth/me", poll.AccessToken)
+
+	var me struct {
+		Email string `json:"email"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(meBody), &me))
+	assert.Equal(t, email, me.Email)
 }

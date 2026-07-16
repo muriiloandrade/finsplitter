@@ -590,6 +590,8 @@ func TestProtected_OptionalPath_NoToken(t *testing.T) {
 }
 
 // Test Protected — optional path with an invalid token returns 401.
+// An invalid token is not the same as "no token". If the caller provides a token,
+// it must be valid. Only the complete absence of a token is allowed on optional paths.
 func TestProtected_OptionalPath_InvalidToken(t *testing.T) {
 	mockFetcher := newMockjwkFetcher(t)
 	_, jwks := newTestKeySet(t)

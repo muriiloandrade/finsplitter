@@ -152,3 +152,39 @@ func (h *Handler) DeviceRefresh(ctx context.Context, req *DeviceRefreshRequest) 
 	resp.Body.ExpiresIn = output.ExpiresIn
 	return resp, nil
 }
+
+// ---------------------------------------------------------------------------
+// Device Token Revocation (RFC 7009)
+// ---------------------------------------------------------------------------
+
+// DeviceRevokeRequest is the body for POST /auth/device/revoke.
+type DeviceRevokeRequest struct {
+	Body struct {
+		RefreshToken string `json:"refresh_token" required:"true" doc:"The refresh token to revoke"`
+	}
+}
+
+// DeviceRevokeResponse is the response for POST /auth/device/revoke.
+// Empty body on success (200 OK).
+type DeviceRevokeResponse struct {
+	Body struct{}
+}
+
+// DeviceRevoke revokes a device flow refresh token.
+// POST /auth/device/revoke.
+func (h *Handler) DeviceRevoke(ctx context.Context, req *DeviceRevokeRequest) (*DeviceRevokeResponse, error) {
+	err := h.deviceRevokeUC.Execute(ctx, auth.RevokeDeviceTokenInput{
+		RefreshToken: req.Body.RefreshToken,
+	})
+	if err != nil {
+		if errors.Is(err, errs.ErrInvalidInput) {
+			return nil, huma.Error422UnprocessableEntity("refresh_token is required")
+		}
+		if errors.Is(err, logto.ErrAppClientNotConfigured) {
+			return nil, huma.Error500InternalServerError("device auth not configured")
+		}
+		return nil, huma.Error500InternalServerError("token revocation failed")
+	}
+
+	return &DeviceRevokeResponse{}, nil
+}

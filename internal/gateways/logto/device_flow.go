@@ -11,6 +11,7 @@ import (
 type DeviceFlowClient interface {
 	RequestDeviceCode(ctx context.Context) (*DeviceCodeResponse, error)
 	PollDeviceToken(ctx context.Context, deviceCode string) (*DeviceTokenResponse, error)
+	RevokeDeviceToken(ctx context.Context, refreshToken string) error
 }
 
 var _ DeviceFlowClient = (*Client)(nil)
@@ -177,4 +178,38 @@ func (c *Client) RefreshDeviceToken(ctx context.Context, refreshToken string) (*
 	default:
 		return nil, fmt.Errorf("refresh device token: %s", result.Error)
 	}
+}
+
+// RevokeDeviceToken notifies Logto that a refresh token is no longer needed.
+// Per RFC 7009, client authentication uses client_id in body (public client).
+// Logto accepts form-encoded: client_id + token + token_type_hint=refresh_token.
+func (c *Client) RevokeDeviceToken(ctx context.Context, refreshToken string) error {
+	if c.cfg.DeviceAppClientID == "" {
+		return fmt.Errorf("revoke device token: %w", ErrAppClientNotConfigured)
+	}
+
+	formData := map[string]string{
+		"client_id":       c.cfg.DeviceAppClientID,
+		"token":           refreshToken,
+		"token_type_hint": "refresh_token",
+	}
+
+	var result struct {
+		Error            string `json:"error"`
+		ErrorDescription string `json:"error_description"`
+	}
+	resp, err := c.httpClient.R(ctx).
+		SetFormData(formData).
+		SetResult(&result).
+		SetResultError(&result).
+		Post(c.cfg.OIDCEndpoint + "/token/revocation")
+	if err != nil {
+		return fmt.Errorf("revoke device token: %w", err)
+	}
+
+	if resp.StatusCode() == http.StatusOK {
+		return nil
+	}
+
+	return fmt.Errorf("revoke device token: %w: %s", ErrDeviceTokenRevoked, result.Error)
 }
