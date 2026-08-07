@@ -18,7 +18,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
 	"github.com/muriiloandrade/finsplitter/pkg/httpclient"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 // jwkFetcher abstracts fetching a JWK Set so the middleware can be tested
@@ -190,7 +190,7 @@ type tryPopulateClaimsResult struct {
 //   - request == nil, err != nil → a token was provided but is invalid.
 func (m *Middleware) tryPopulateClaims(r *http.Request) tryPopulateClaimsResult {
 	logger := m.logger.With(slog.String("middleware", "auth.optional"))
-	ctx := slogctx.NewCtx(r.Context(), logger)
+	ctx := logctx.NewCtx(r.Context(), logger)
 
 	token := extractBearerToken(r)
 	if token == "" {
@@ -211,7 +211,7 @@ func (m *Middleware) tryPopulateClaims(r *http.Request) tryPopulateClaimsResult 
 // response and does not call next.
 func (m *Middleware) requireAuth(w http.ResponseWriter, r *http.Request, next http.Handler) {
 	logger := m.logger.With(slog.String("middleware", "auth.require"))
-	ctx := slogctx.NewCtx(r.Context(), logger)
+	ctx := logctx.NewCtx(r.Context(), logger)
 
 	token := extractBearerToken(r)
 	if token == "" {

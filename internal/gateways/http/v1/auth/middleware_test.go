@@ -386,7 +386,7 @@ func TestRequireAuth_InvalidToken(t *testing.T) {
 
 	// getJWKS must succeed so parseAndValidate can try jwt.Parse on the
 	// garbage token — jwt.Parse will fail regardless of the keyset.
-	// The context is wrapped by slogctx.NewCtx in requireAuth, so we use
+	// The context is wrapped by logctx.NewCtx in requireAuth, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 
@@ -415,7 +415,7 @@ func TestRequireAuth_UserNotFound(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	// The context is wrapped by slogctx.NewCtx in requireAuth, so we use
+	// The context is wrapped by logctx.NewCtx in requireAuth, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 	userRepo.EXPECT().
@@ -454,7 +454,7 @@ func TestRequireAuth_DBError(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	// The context is wrapped by slogctx.NewCtx in requireAuth, so we use
+	// The context is wrapped by logctx.NewCtx in requireAuth, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 	userRepo.EXPECT().
@@ -493,7 +493,7 @@ func TestRequireAuth_Success(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	// The context is wrapped by slogctx.NewCtx in requireAuth, so we use
+	// The context is wrapped by logctx.NewCtx in requireAuth, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 	userRepo.EXPECT().
@@ -553,7 +553,7 @@ func TestProtected_OptionalPath_WithValidToken(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	// The context is wrapped by slogctx.NewCtx in tryPopulateClaims, so we use
+	// The context is wrapped by logctx.NewCtx in tryPopulateClaims, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 
@@ -604,7 +604,7 @@ func TestProtected_OptionalPath_InvalidToken(t *testing.T) {
 	}
 	handler := mw.Protected()(http.HandlerFunc(captureHandler))
 
-	// The context is wrapped by slogctx.NewCtx in tryPopulateClaims, so we use
+	// The context is wrapped by logctx.NewCtx in tryPopulateClaims, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 
@@ -713,7 +713,7 @@ func TestTryPopulateClaims_InvalidToken(t *testing.T) {
 		logger:    slog.Default(),
 		jwksURL:   "http://test.local/jwks",
 	}
-	// The context is wrapped by slogctx.NewCtx in tryPopulateClaims, so we use
+	// The context is wrapped by logctx.NewCtx in tryPopulateClaims, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 
@@ -737,7 +737,7 @@ func TestTryPopulateClaims_ValidToken(t *testing.T) {
 		appClientID: "test-client",
 	}
 
-	// The context is wrapped by slogctx.NewCtx in tryPopulateClaims, so we use
+	// The context is wrapped by logctx.NewCtx in tryPopulateClaims, so we use
 	// mock.Anything to match the wrapped value.
 	mockFetcher.EXPECT().Fetch(mock.Anything, mw.jwksURL).Return(jwks, nil).Once()
 

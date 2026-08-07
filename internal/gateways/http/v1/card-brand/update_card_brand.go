@@ -11,7 +11,7 @@ import (
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 type UpdateCardBrandRequest struct {
@@ -37,7 +37,7 @@ func (h UpdateCardBrandHandler) UpdateCardBrand(
 	ctx context.Context,
 	input *UpdateCardBrandRequest,
 ) (*UpdateCardBrandResponse, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 	brand, err := h.UseCase.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
 		ID:   input.ID,
 		Name: input.Body.Name,

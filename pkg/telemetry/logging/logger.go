@@ -7,7 +7,7 @@ import (
 
 	"github.com/dusted-go/logging/prettylog"
 	"github.com/muriiloandrade/finsplitter/internal/config"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel/sdk/log"
 )
@@ -57,10 +57,8 @@ func NewContextWithLogger(
 		}).WithAttrs(defaultAttrs)
 	}
 
-	customHandler := slogctx.NewHandler(logHandler, nil)
-
 	// Wrap with CustomHandler for context value extraction
-	var finalHandler slog.Handler = &CustomHandler{Handler: customHandler}
+	var finalHandler slog.Handler = &CustomHandler{Handler: logHandler}
 
 	// If OTel logger provider is provided, create multi-handler to send logs to both local and OTel
 	if otelLoggerProvider != nil {
@@ -76,7 +74,7 @@ func NewContextWithLogger(
 
 	slog.SetDefault(logger)
 
-	mainCtx := slogctx.NewCtx(ctx, slog.Default())
+	mainCtx := logctx.NewCtx(ctx, slog.Default())
 
 	return mainCtx
 }

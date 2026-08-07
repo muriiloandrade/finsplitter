@@ -9,7 +9,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 const operation = "handler.ListCardBrands"
@@ -42,7 +42,7 @@ func (h ListCardBrandsHandler) ListCardBrands(
 	ctx context.Context,
 	input *ListCardBrandsRequest,
 ) (*ListCardBrandsResponse, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	cardBrands, err := h.useCase.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
 		ID:         input.ID,

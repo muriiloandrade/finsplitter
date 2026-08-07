@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
-	slogctx "github.com/veqryn/slog-context"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/log"
@@ -22,7 +22,7 @@ func NewLoggerProvider(
 	ctx context.Context,
 	opts telemetry.Options,
 ) (*log.LoggerProvider, telemetry.ShutdownFunc, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	// Create resource with service information
 	res, err := telemetry.NewResource(ctx, opts)
