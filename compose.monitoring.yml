@@ -3,7 +3,7 @@ services:
         profiles:
             - monitoring
         container_name: finsplitter-lgtm
-        image: grafana/otel-lgtm:0.29.0@sha256:6e14b923e0130b8b294ca5bcc7c94d54e899d150817e6c3ed82d9b665afe5499
+        image: grafana/otel-lgtm:0.30.1@sha256:bb182ac3174a20923fa58f00d1790fa71eb06cc0150078c0b0e8feb9e6611492
         networks:
             - finsplitter
         restart: unless-stopped
