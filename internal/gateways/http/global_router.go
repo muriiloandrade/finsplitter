@@ -21,6 +21,7 @@ func NewRouter(_ *slog.Logger) *chi.Mux {
 	)
 
 	r.Use(
+		RequestID,
 		middleware.SupressNotFound(r),
 		middleware.CleanPath,
 		otelchi.Middleware(

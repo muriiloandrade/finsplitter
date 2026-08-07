@@ -3,6 +3,8 @@ package logging
 import (
 	"context"
 	"log/slog"
+
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 type CustomHandler struct {
@@ -10,12 +12,8 @@ type CustomHandler struct {
 }
 
 func (h *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
-	keys := []string{"request_id"}
-
-	for _, key := range keys {
-		if value := ctx.Value(key); value != nil {
-			r.AddAttrs(slog.Any(key, value))
-		}
+	if requestID := logctx.GetRequestID(ctx); requestID != "" {
+		r.AddAttrs(slog.String("request_id", requestID))
 	}
 
 	return h.Handler.Handle(ctx, r)
