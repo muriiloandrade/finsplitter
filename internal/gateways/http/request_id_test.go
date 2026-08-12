@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -92,4 +93,22 @@ func TestNewRouter_AppliesRequestIDMiddleware(t *testing.T) {
 	// (we can't easily inspect internal state, but we know the
 	// middleware ran if we got a response without panicking)
 	require.NotEqual(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestNewRequestID_ReturnsUUIDV4(t *testing.T) {
+	id := newRequestID(uuid.NewV4)
+
+	parsed, err := uuid.FromString(id)
+	require.NoError(t, err, "generated request ID must be a valid UUID")
+	assert.Equal(t, byte(4), parsed.Version(), "generated request ID must be a UUID v4")
+}
+
+func TestNewRequestID_ReturnsEmptyWhenGeneratorFails(t *testing.T) {
+	boom := errors.New("random source failure")
+
+	id := newRequestID(func() (uuid.UUID, error) {
+		return uuid.UUID{}, boom
+	})
+
+	assert.Empty(t, id, "must fall back to empty string instead of panicking")
 }

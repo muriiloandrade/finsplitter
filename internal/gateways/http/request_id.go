@@ -23,7 +23,7 @@ func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := r.Header.Get(RequestIDHeader)
 		if requestID == "" {
-			requestID = newRequestID()
+			requestID = newRequestID(uuid.NewV4)
 		}
 
 		ctx := logctx.WithRequestID(r.Context(), requestID)
@@ -32,11 +32,11 @@ func RequestID(next http.Handler) http.Handler {
 	})
 }
 
-// newRequestID generates a UUID v4. On the astronomically unlikely failure of
-// the random source it falls back to the empty string rather than panicking,
-// so a request is never dropped because an ID could not be minted.
-func newRequestID() string {
-	id, err := uuid.NewV4()
+// newRequestID generates a UUID v4 via newID. On the astronomically unlikely
+// failure of the random source it falls back to the empty string rather than
+// panicking, so a request is never dropped because an ID could not be minted.
+func newRequestID(newID func() (uuid.UUID, error)) string {
+	id, err := newID()
 	if err != nil {
 		return ""
 	}
