@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.26.5-trixie@sha256:87ffdb09b6a2e29ff910748b745395e8a0299aa80b7c0551cdca9b55e3fd2b3e AS setup
+FROM golang:1.26.5-trixie@sha256:98988b42f3293b627bf07c884ff17181a59501769cd8c06c7ba901e0ce2c9853 AS setup
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN GOEXPERIMENT=jsonv2 CGO_ENABLED=0 go build \
     -o bin/finsplitter cmd/api/main.go
 
 # Execution stage
-FROM gcr.io/distroless/static-debian12:nonroot@sha256:f5b485ea962d9bd1186b2f6b3a061191539b905b82ec395de78cbfae51f20e35 AS production
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:1b7b9f0f0e0a1d2155f531db587cc48ec26aaf97ab64364225f5bf18a054e66a AS production
 
 # Copy the built binary
 COPY --from=builder /app/bin/finsplitter /
