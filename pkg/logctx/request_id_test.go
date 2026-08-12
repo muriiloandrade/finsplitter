@@ -9,12 +9,19 @@ import (
 )
 
 func TestGetRequestID_ReturnsEmptyWhenNothingStored(t *testing.T) {
-	assert.Empty(t, GetRequestID(context.Background()))
-}
+	testCases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{name: "empty context", ctx: context.Background()},
+		{name: "nil context", ctx: nil},
+	}
 
-func TestGetRequestID_ReturnsEmptyForNilContext(t *testing.T) {
-	//nolint:staticcheck // deliberately exercising the nil-context guard
-	assert.Empty(t, GetRequestID(nil))
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Empty(t, GetRequestID(tc.ctx))
+		})
+	}
 }
 
 func TestWithRequestID_StoresAndRetrieves(t *testing.T) {

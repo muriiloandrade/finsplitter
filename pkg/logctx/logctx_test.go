@@ -17,19 +17,42 @@ func newTestLogger(t *testing.T) *slog.Logger {
 }
 
 func TestFromCtx_ReturnsDefaultWhenNothingStored(t *testing.T) {
-	logger := FromCtx(context.Background())
+	testCases := []struct {
+		name string
+		ctx  context.Context
+	}{
+		{name: "empty context", ctx: context.Background()},
+		{name: "nil context", ctx: nil},
+	}
 
-	assert.Same(t, slog.Default(), logger)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := FromCtx(tc.ctx)
+
+			assert.Same(t, slog.Default(), logger)
+		})
+	}
 }
 
 func TestNewCtx_StoresLoggerAndReturnsCopy(t *testing.T) {
-	parent := context.Background()
-	logger := newTestLogger(t)
+	testCases := []struct {
+		name   string
+		parent context.Context
+	}{
+		{name: "with parent", parent: context.Background()},
+		{name: "nil parent falls back to background", parent: nil},
+	}
 
-	ctx := NewCtx(parent, logger)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := newTestLogger(t)
 
-	require.NotEqual(t, parent, ctx, "NewCtx must return a derived context")
-	assert.Same(t, logger, FromCtx(ctx))
+			ctx := NewCtx(tc.parent, logger)
+
+			require.NotEqual(t, tc.parent, ctx, "NewCtx must return a derived context")
+			assert.Same(t, logger, FromCtx(ctx))
+		})
+	}
 }
 
 func TestNewCtx_DoesNotMutateParent(t *testing.T) {

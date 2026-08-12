@@ -13,12 +13,22 @@ import (
 type ctxKey struct{}
 
 // NewCtx returns a copy of parent with the given logger stored in it.
+// A nil parent falls back to context.Background(), matching the semantics
+// of the veqryn/slog-context API this package replaces.
 func NewCtx(parent context.Context, logger *slog.Logger) context.Context {
+	if parent == nil {
+		parent = context.Background()
+	}
 	return context.WithValue(parent, ctxKey{}, logger)
 }
 
 // FromCtx returns the logger stored in ctx, or slog.Default() if none is stored.
+// A nil ctx is treated as empty and returns slog.Default(), matching the
+// semantics of the veqryn/slog-context API this package replaces.
 func FromCtx(ctx context.Context) *slog.Logger {
+	if ctx == nil {
+		return slog.Default()
+	}
 	if logger, ok := ctx.Value(ctxKey{}).(*slog.Logger); ok {
 		return logger
 	}

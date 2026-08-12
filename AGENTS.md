@@ -70,7 +70,7 @@ make generate     # Run sqlc + mocks generators
 ### Handler Pattern
 ```go
 func (h Handler) HandlerName(ctx context.Context, input *Request) (*Response, error) {
-    logger := slogctx.FromCtx(ctx)
+    logger := logctx.FromCtx(ctx)
     result, err := h.UseCase.Execute(ctx, input.Params)
     if errors.Is(err, errs.ErrDomainError) {
         return nil, huma.Error4xxYYY("message")
@@ -111,7 +111,7 @@ func (uc *UseCase) Execute(ctx context.Context, params string) (*Entity, error) 
 - Use `errors.Is()` for error checking
 - Domain errors in `internal/domain/errs/errs.go`
 - Map DB errors via `pgerrcode.IsIntegrityConstraintViolation()`
-- Use `slogctx.FromCtx(ctx)` for structured logging
+- Use `logctx.FromCtx(ctx)` for structured logging
 - Use sqlc for parameterized queries
 - Configuration via `ardanlabs/conf`
 - Test files `*_test.go` in same package

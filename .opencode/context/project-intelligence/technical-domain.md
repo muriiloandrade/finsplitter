@@ -28,7 +28,7 @@
 | JWT | lestrrat-go/jwx v4 + jwkfetch/v4 | 4.0.2 | Logto-compatible JWT validation, JWKS fetching |
 | Observability | OpenTelemetry | 1.44.0 | Traces, metrics, logs (OTLP exporter) |
 | Config | ardanlabs/conf | — | Environment-based configuration |
-| Logging | veqryn/slog-context | 0.9.0 | Context-aware structured logging |
+| Logging | stdlib log/slog + pkg/logctx | — | Context-aware structured logging |
 | Mock Generation | mockery v3 | 3.7.1 | Interface mock generation (Docker) |
 | Integration Testing | testcontainers-go | 0.43.0 | Real containers per test suite |
 | HTTP Client | resty v3 | 3.0.0-rc.2 | REST client for Logto Management API |
@@ -186,7 +186,7 @@ Build:        docker build --target production -t finsplitter:prod .
 func (h CreateCardBrandHandler) CreateCardBrand(
     ctx context.Context, input *CreateCardBrandRequest,
 ) (*CreateCardBrandResponse, error) {
-    logger := slogctx.FromCtx(ctx)
+    logger := logctx.FromCtx(ctx)
     brand, err := h.UseCase.CreateCardBrand(ctx, input.Body.Name)
     if errors.Is(err, errs.ErrCardBrandAlreadyExists) {
         return nil, huma.Error409Conflict(err.Error())
@@ -371,7 +371,7 @@ var _ auth.LogtoDeviceFlowClient = (*logto.Client)(nil)
 - Use `errors.Is()` for error checking (not equality)
 - Domain errors in `internal/domain/errs/errs.go`
 - Map DB errors via `pgerrcode.IsIntegrityConstraintViolation()`
-- Use `slogctx.FromCtx(ctx)` for structured logging
+- Use `logctx.FromCtx(ctx)` for structured logging
 - Use sqlc for parameterized queries (safe from SQL injection)
 - Configuration via `ardanlabs/conf` with env vars
 - Test files `*_test.go` in same package with testify/mock
