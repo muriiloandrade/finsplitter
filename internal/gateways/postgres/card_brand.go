@@ -14,7 +14,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/sqlc"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 const (
@@ -41,7 +41,7 @@ func (r *CardBrandRepository) CreateCardBrand(
 	ctx context.Context,
 	name string,
 ) (*entity.CardBrand, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	brand, err := r.sqlc.CreateCardBrand(ctx, sqlc.CreateCardBrandParams{
 		Name: name,
@@ -79,7 +79,7 @@ func (r *CardBrandRepository) GetCardBrandByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*entity.CardBrand, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	brand, err := r.sqlc.GetCardBrand(ctx, sqlc.GetCardBrandParams{
 		ID: id,
@@ -105,7 +105,7 @@ func (r *CardBrandRepository) ListCardBrands(
 	ctx context.Context,
 	opts ports.ListCardBrandFilterOptions,
 ) ([]entity.CardBrand, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	q := psql.
 		Select("id", "name", "created_date", "last_modified_date").
@@ -162,7 +162,7 @@ func (r *CardBrandRepository) UpdateCardBrand(
 	ctx context.Context,
 	opts ports.UpdateCardBrandOptions,
 ) (*entity.CardBrand, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	cb, err := r.sqlc.UpdateCardBrand(ctx, sqlc.UpdateCardBrandParams{
 		ID:   opts.ID,
@@ -207,7 +207,7 @@ func (r *CardBrandRepository) DeleteCardBrand(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*entity.CardBrand, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	cb, err := r.sqlc.DeleteCardBrand(ctx, sqlc.DeleteCardBrandParams{
 		ID: id,

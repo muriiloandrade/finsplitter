@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 type DeleteCardBrandRequest struct {
@@ -34,7 +34,7 @@ func (h DeleteCardBrandHandler) DeleteCardBrand(
 	ctx context.Context,
 	input *DeleteCardBrandRequest,
 ) (*DeleteCardBrandResponse, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 	cb, err := h.UseCase.DeleteCardBrand(ctx, input.ID)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to delete card brand", slog.Any("error", err))

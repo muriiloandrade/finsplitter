@@ -15,7 +15,7 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/sqlc"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 const (
@@ -38,7 +38,7 @@ func NewUserRepository(db *TxManager) ports.UserRepository {
 }
 
 func (r *UserRepository) Create(ctx context.Context, logtoUserID string) (*entity.User, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	row, err := r.sqlc.CreateUser(ctx, sqlc.CreateUserParams{
 		LogtoUserID: ptr(logtoUserID),
@@ -61,7 +61,7 @@ func (r *UserRepository) Create(ctx context.Context, logtoUserID string) (*entit
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	row, err := r.sqlc.GetUserByID(ctx, sqlc.GetUserByIDParams{ID: id})
 	if err != nil {
@@ -80,7 +80,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Use
 }
 
 func (r *UserRepository) GetByLogtoUserID(ctx context.Context, logtoUserID string) (*entity.User, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	row, err := r.sqlc.GetUserByLogtoUserID(ctx, sqlc.GetUserByLogtoUserIDParams{
 		LogtoUserID: ptr(logtoUserID),
@@ -101,7 +101,7 @@ func (r *UserRepository) GetByLogtoUserID(ctx context.Context, logtoUserID strin
 }
 
 func (r *UserRepository) ExistsByLogtoUserID(ctx context.Context, logtoUserID string) (bool, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	exists, err := r.sqlc.ExistsByLogtoUserID(ctx, sqlc.ExistsByLogtoUserIDParams{
 		LogtoUserID: ptr(logtoUserID),

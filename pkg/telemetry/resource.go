@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log/slog"
 
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 )
@@ -13,7 +13,7 @@ import (
 // NewResource creates a new OpenTelemetry resource with service information.
 // It automatically detects process, OS, container, and host information.
 func NewResource(ctx context.Context, opts Options) (*resource.Resource, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	// Create resource with automatic detection and service attributes
 	res, err := resource.New(ctx,

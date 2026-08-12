@@ -12,7 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file" // Import file source driver
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/muriiloandrade/finsplitter/internal/config"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 type MigrationOptions struct {
@@ -23,7 +23,7 @@ type MigrationOptions struct {
 
 // RunMigrations applies all available up migrations.
 func RunMigrations(ctx context.Context, opts MigrationOptions) error {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	logger.InfoContext(ctx, "Starting database migrations...")
 	logger.DebugContext(ctx,

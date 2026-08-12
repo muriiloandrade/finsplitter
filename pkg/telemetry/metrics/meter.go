@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
-	slogctx "github.com/veqryn/slog-context"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -19,7 +19,7 @@ import (
 //
 // The meter provider is automatically set as the global provider and can be accessed via otel.Meter().
 func NewMeterProvider(ctx context.Context, opts telemetry.Options) (telemetry.ShutdownFunc, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	// Create resource with service information
 	res, err := telemetry.NewResource(ctx, opts)

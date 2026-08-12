@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
-	slogctx "github.com/veqryn/slog-context"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -34,7 +34,7 @@ func NewTracerProvider(
 	opts telemetry.Options,
 	samplerRatio float64,
 ) (telemetry.ShutdownFunc, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 
 	// Validate sampler ratio
 	if err := validateSamplerRatio(samplerRatio); err != nil {

@@ -22,11 +22,11 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/migrations"
 	"github.com/muriiloandrade/finsplitter/pkg/cache"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/logging"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/metrics"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry/tracing"
-	slogctx "github.com/veqryn/slog-context"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
@@ -63,7 +63,7 @@ func main() {
 		}
 
 		ctx = logging.NewContextWithLogger(ctx, *cfg, otelLoggerProvider)
-		logger := slogctx.FromCtx(ctx)
+		logger := logctx.FromCtx(ctx)
 
 		poolCfg, err := postgres.NewPoolConfig(cfg.DB)
 		if err != nil {

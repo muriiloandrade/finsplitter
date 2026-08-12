@@ -9,7 +9,7 @@ import (
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
-	slogctx "github.com/veqryn/slog-context"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 type CreateCardBrandRequest struct {
@@ -34,7 +34,7 @@ func (h CreateCardBrandHandler) CreateCardBrand(
 	ctx context.Context,
 	input *CreateCardBrandRequest,
 ) (*CreateCardBrandResponse, error) {
-	logger := slogctx.FromCtx(ctx)
+	logger := logctx.FromCtx(ctx)
 	brand, err := h.UseCase.CreateCardBrand(ctx, input.Body.Name)
 	if err != nil {
 		logger.ErrorContext(ctx, "Failed to create card brand", slog.Any("error", err))
