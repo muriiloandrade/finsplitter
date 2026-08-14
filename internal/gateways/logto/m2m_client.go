@@ -83,7 +83,7 @@ func WithHTTPClientOptions(opts ...httpclient.Option) ClientOption {
 const (
 	defaultTimeout    = 10 * time.Second
 	defaultRetryBase  = 500 * time.Millisecond
-	defaultRetryCap   = 5 * time.Second
+	defaultRetryCap   = 10 * time.Second
 	tokenExpiryBuffer = 60 // seconds before actual expiry to refresh
 )
 
