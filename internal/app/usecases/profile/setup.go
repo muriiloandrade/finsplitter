@@ -9,12 +9,6 @@ import (
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 )
 
-// LogtoUserUpdater updates user profile fields in Logto via the Management API.
-// Satisfied by *logto.Client in production.
-type LogtoUserUpdater interface {
-	UpdateUser(ctx context.Context, userID, username, name, phone, picture string) error
-}
-
 // SetupInput carries the data needed to complete profile setup.
 type SetupInput struct {
 	LogtoUserID string
