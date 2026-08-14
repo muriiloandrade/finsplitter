@@ -26,6 +26,11 @@ packages:
     interfaces:
       LogtoDeviceFlowClient:
       LogtoUserCreator:
+  github.com/muriiloandrade/finsplitter/internal/app/usecases/profile:
+    config:
+      all: false
+    interfaces:
+      LogtoUserUpdater:
   github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/auth:
     config:
       all: false
