@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- Context: dox/root | Priority: critical | Version: 2.0 | Updated: 2026-08-12 -->
+<!-- Context: dox/root | Priority: critical | Version: 2.1 | Updated: 2026-08-13 -->
 
 # DOX framework
 
@@ -136,7 +136,7 @@ Test pattern: testify/mock with table-driven tests in `*_test.go` files; integra
 
 ## Architecture Decision Records
 
-See [`.opencode/context/project-intelligence/decisions-log.md`](.opencode/context/project-intelligence/decisions-log.md) for decisions and rationale; `business-domain.md` is the domain spec.
+See [`docs/project-intelligence/decisions-log.md`](docs/project-intelligence/decisions-log.md) for decisions and rationale; `business-domain.md` is the domain spec.
 
 ## Child DOX Index
 
@@ -185,4 +185,4 @@ Root-owned: `cmd/`, `internal/`, `pkg/` (routing via child docs above); `docs/`,
 
 ## Related Project Intelligence
 
-The `.opencode/context/project-intelligence/` directory contains the knowledge index. `technical-domain.md` is now a lightweight index pointing to the DOX tree above.
+The `docs/project-intelligence/` directory contains the knowledge index. `technical-domain.md` is now a lightweight index pointing to the DOX tree above.

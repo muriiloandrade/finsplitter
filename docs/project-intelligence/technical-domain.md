@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: high | Version: 2.0 | Updated: 2026-08-13 -->
+<!-- Context: project-intelligence/technical | Priority: high | Version: 2.1 | Updated: 2026-08-13 -->
 
 # Technical Domain
 
@@ -66,7 +66,7 @@ finsplitter/
 │   ├── httpclient/           # Resty v3 wrapper
 │   ├── logctx/               # Context-aware logging + request ID
 │   └── telemetry/            # OTel tracing, metrics, logging
-├── docs/                     # plans/ (domain spec lives in project-intelligence)
+├── docs/                     # plans/, project-intelligence/ (domain spec)
 └── .github/                  # CI/CD
 ```
 

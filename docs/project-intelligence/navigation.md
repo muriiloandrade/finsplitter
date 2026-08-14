@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/navigation | Priority: high | Version: 2.2 | Updated: 2026-08-13 -->
+<!-- Context: project-intelligence/navigation | Priority: high | Version: 2.3 | Updated: 2026-08-13 -->
 
 # Project Intelligence — Navigation
 
@@ -7,7 +7,7 @@
 ## Structure
 
 ```
-.opencode/context/project-intelligence/
+docs/project-intelligence/
 ├── navigation.md              # This file — quick overview + routing
 ├── business-domain.md         # Business context, entities, rules, workflows
 ├── business-tech-bridge.md    # Business needs → technical implementation
