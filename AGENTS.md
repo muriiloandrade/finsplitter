@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- Context: dox/root | Priority: critical | Version: 2.1 | Updated: 2026-08-13 -->
+<!-- Context: dox/root | Priority: critical | Version: 2.2 | Updated: 2026-08-14 -->
 
 # DOX framework
 
@@ -55,6 +55,13 @@ make code-check      # format + lint (golangci-lint)
 make generate        # sqlc + mocks generators
 make new-migration name=create_table_foo
 ```
+
+## Commit Conventions
+
+- Conventional commits (lowercase type: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, ...) — enforced by lefthook locally and commitlint in CI
+- **PR titles must pass the same commitlint rules** — the squash-merge commit is named after the PR title and is linted on push to `main`; CI also lints the title on pull requests
+- Subject starts with a lowercase word (no sentence-case/uppercase acronyms at the start), header ≤ 100 chars, no trailing period
+- Config: `commitlint.config.mjs` (repo root)
 
 ## First Time Setup
 

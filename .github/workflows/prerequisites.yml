@@ -50,6 +50,7 @@ jobs:
                   test -z "$(git status --porcelain -- '*mocks.gen.go')"
 
             - name: Check for TODOs in PR
+              if: github.event_name == 'pull_request'
               run: |
                   if git diff origin/${{ github.base_ref }}...HEAD | grep -i "TODO\|FIXME\|XXX"; then
                     echo "::warning::Found TODO/FIXME comments in PR"
@@ -58,7 +59,17 @@ jobs:
             - name: Run Commitlint
               uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
               with:
-                  configFile: .github/commitlint.config.mjs
+                  configFile: commitlint.config.mjs
+
+            # The squash-merge commit on main is named after the PR title and gets
+            # linted on push, so a bad title would break the pipeline after merge.
+            # Lint the title up front to catch it before merge. The title is passed
+            # via env (not inlined in the script) to avoid shell injection.
+            - name: Lint PR title
+              if: github.event_name == 'pull_request'
+              env:
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+              run: echo "$PR_TITLE" | npx --package=@commitlint/cli --package=@commitlint/config-conventional commitlint --config commitlint.config.mjs
 
             - name: Run Gitleaks
               uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
