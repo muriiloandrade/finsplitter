@@ -50,6 +50,7 @@ jobs:
                   test -z "$(git status --porcelain -- '*mocks.gen.go')"
 
             - name: Check for TODOs in PR
+              if: github.event_name == 'pull_request'
               run: |
                   if git diff origin/${{ github.base_ref }}...HEAD | grep -i "TODO\|FIXME\|XXX"; then
                     echo "::warning::Found TODO/FIXME comments in PR"
