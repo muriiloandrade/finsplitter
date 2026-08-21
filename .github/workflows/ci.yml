@@ -29,7 +29,7 @@ jobs:
         uses: ./.github/workflows/quality.yml
         with:
             go-versions: '["1.26"]'
-            golangci-lint-version: "v2.11.3"
+            golangci-lint-version: "v2.13.1"
             timeout: "10m"
 
     test:

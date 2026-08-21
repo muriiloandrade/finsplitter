@@ -19,7 +19,7 @@
 - Doc comments state the error contract per method (e.g. "Returns ErrDuplicate if logto_user_id already exists")
 - Imports limited to `context`, `entity`, `uuid`
 - Implementers (gateways) assert satisfaction: `var _ ports.UserRepository = (*postgres.UserRepository)(nil)`
-- No `go:generate` directives in source — mocks are driven by `.mockery.yml` (mockery v3.7.1 via Docker, testify template)
+- No `go:generate` directives in source — mocks are driven by `.mockery.yml` (mockery v3.7.3 via Docker, testify template)
 
 ## Work Guidance
 

@@ -124,7 +124,7 @@ var _ querier = (*mockQuerier)(nil)
 func reflectAssign(dest, src any) {
 	dv := reflect.ValueOf(dest)
 	sv := reflect.ValueOf(src)
-	if dv.Kind() == reflect.Ptr && !dv.IsNil() {
+	if dv.Kind() == reflect.Pointer && !dv.IsNil() {
 		if sv.Type().AssignableTo(dv.Elem().Type()) {
 			dv.Elem().Set(sv)
 		}

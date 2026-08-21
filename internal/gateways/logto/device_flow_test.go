@@ -335,6 +335,63 @@ func TestClient_RefreshDeviceToken_NotConfigured(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// RevokeDeviceToken
+// ---------------------------------------------------------------------------
+
+func TestClient_RevokeDeviceToken_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/token/revocation", r.URL.Path)
+		assert.Equal(t, "POST", r.Method)
+
+		_ = r.ParseForm()
+		assert.Equal(t, "test-device-client", r.Form.Get("client_id"))
+		assert.Equal(t, "rt_123", r.Form.Get("token"))
+		assert.Equal(t, "refresh_token", r.Form.Get("token_type_hint"))
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := newTestDeviceFlowClient(t, server.URL)
+	err := client.RevokeDeviceToken(context.Background(), "rt_123")
+
+	require.NoError(t, err)
+}
+
+func TestClient_RevokeDeviceToken_NotConfigured(t *testing.T) {
+	client := &Client{
+		httpClient: httpclient.New(httpclient.WithRetryCount(0)),
+		cfg: Config{
+			OIDCEndpoint: "http://fake.example.com",
+			// DeviceAppClientID intentionally empty.
+		},
+	}
+	t.Cleanup(func() { client.httpClient.Close() })
+
+	err := client.RevokeDeviceToken(context.Background(), "rt_123")
+
+	require.ErrorIs(t, err, ErrAppClientNotConfigured)
+}
+
+func TestClient_RevokeDeviceToken_NonOKStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		assert.NoError(t, json.NewEncoder(w).Encode(struct {
+			Error            string `json:"error"`
+			ErrorDescription string `json:"error_description"`
+		}{Error: "invalid_token"}))
+	}))
+	defer server.Close()
+
+	client := newTestDeviceFlowClient(t, server.URL)
+	err := client.RevokeDeviceToken(context.Background(), "rt_expired")
+
+	require.ErrorIs(t, err, ErrDeviceTokenRevoked)
+	assert.Contains(t, err.Error(), "invalid_token")
+}
+
+// ---------------------------------------------------------------------------
 // HTTP client error paths
 // ---------------------------------------------------------------------------
 
@@ -378,4 +435,17 @@ func TestClient_RefreshDeviceToken_HTTPError(t *testing.T) {
 	require.Nil(t, resp)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "refresh device token")
+}
+
+func TestClient_RevokeDeviceToken_HTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	client := newTestDeviceFlowClient(t, server.URL)
+	server.Close()
+
+	err := client.RevokeDeviceToken(context.Background(), "rt_123")
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "revoke device token")
 }

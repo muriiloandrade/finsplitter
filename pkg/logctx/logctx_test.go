@@ -2,7 +2,6 @@ package logctx
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"testing"
 
@@ -10,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newTestLogger returns a distinct logger that writes to io.Discard.
+// newTestLogger returns a distinct logger that discards all output.
 func newTestLogger(t *testing.T) *slog.Logger {
 	t.Helper()
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
+	return slog.New(slog.DiscardHandler)
 }
 
 func TestFromCtx_ReturnsDefaultWhenNothingStored(t *testing.T) {
