@@ -20,20 +20,20 @@ MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
 	-path /migrations/ \
 	-database "$(DATABASE_URL)"
 # renovate: datasource=docker depName=sqlc/sqlc
-SQLC_VERSION := 1.30.0@sha256:b8d1092c720438e093a231e75eba5d55b7696122f390292acabd5b6d3e986a12
+SQLC_VERSION := 1.31.1@sha256:70f53171d27b2424e9358869975455a6e955a5aa8e58a998a270a6e34e525537
 SQLC_CMD = docker run --rm -u $(UID):$(GID) \
 	--add-host host.docker.internal:host-gateway \
 	-v .:/src \
 	-w /src \
 	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
-MOCKERY_VERSION := v3.7.1@sha256:bb74169bd86ecd32fa77b8b4646f266d907ac6cb9a21d5cb9de0f7b7ee91c20f
+MOCKERY_VERSION := v3.7.3@sha256:d58ba74277bfd73af6bb44db2d8a97b86dbcfae9f385ec2c8bf61ae5b923cdb6
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-v .:/src \
 	-w /src \
 	vektra/mockery:$(MOCKERY_VERSION)
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION := v2.11.3-alpine@sha256:b1c3de5862ad0a95b4e45a993b0f00415835d687e4f12c845c7493b86c13414e
+GOLANGCI_LINT_VERSION := v2.13.1-alpine@sha256:f5e7bd15e2dce6f78f976acc07075f3208ce1a39b78f245f1ea984b2a39d105c
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
