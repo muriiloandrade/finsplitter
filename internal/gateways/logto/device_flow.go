@@ -52,8 +52,8 @@ func (c *Client) RequestDeviceCode(ctx context.Context) (*DeviceCodeResponse, er
 	}
 
 	formData := map[string]string{
-		"client_id": c.cfg.DeviceAppClientID,
-		"scope":     "openid profile email offline_access",
+		fieldClientID: c.cfg.DeviceAppClientID,
+		"scope":       "openid profile email offline_access",
 	}
 
 	var result DeviceCodeResponse
@@ -88,9 +88,9 @@ func (c *Client) PollDeviceToken(ctx context.Context, deviceCode string) (*Devic
 	}
 
 	formData := map[string]string{
-		"client_id":   c.cfg.DeviceAppClientID,
-		"grant_type":  "urn:ietf:params:oauth:grant-type:device_code",
-		"device_code": deviceCode,
+		fieldClientID:  c.cfg.DeviceAppClientID,
+		fieldGrantType: grantTypeDeviceCode,
+		"device_code":  deviceCode,
 	}
 
 	// resty v3 uses SetResult for 2xx and SetResultError for non-2xx.
@@ -152,9 +152,9 @@ func (c *Client) RefreshDeviceToken(ctx context.Context, refreshToken string) (*
 	}
 
 	formData := map[string]string{
-		"client_id":     c.cfg.DeviceAppClientID,
-		"grant_type":    "refresh_token",
-		"refresh_token": refreshToken,
+		fieldClientID:     c.cfg.DeviceAppClientID,
+		fieldGrantType:    grantTypeRefreshToken,
+		fieldRefreshToken: refreshToken,
 	}
 
 	var result DeviceTokenRefreshResponse
@@ -189,9 +189,11 @@ func (c *Client) RevokeDeviceToken(ctx context.Context, refreshToken string) err
 	}
 
 	formData := map[string]string{
-		"client_id":       c.cfg.DeviceAppClientID,
-		"token":           refreshToken,
-		"token_type_hint": "refresh_token",
+		fieldClientID: c.cfg.DeviceAppClientID,
+		"token":       refreshToken,
+		// token_type_hint tells the server which kind of token is revoked;
+		// for the device flow this is always a refresh token.
+		"token_type_hint": fieldRefreshToken,
 	}
 
 	var result struct {

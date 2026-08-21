@@ -142,10 +142,10 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 	}
 
 	formData := map[string]string{
-		"grant_type":    "client_credentials",
+		fieldGrantType:  grantTypeClientCredentials,
 		"resource":      resource,
 		"scope":         "all",
-		"client_id":     c.cfg.ClientID,
+		fieldClientID:   c.cfg.ClientID,
 		"client_secret": c.cfg.ClientSecret,
 	}
 

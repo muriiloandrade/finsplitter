@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -14,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// discardLogger returns a logger that writes to io.Discard.
+// discardLogger returns a logger that discards all output.
 func discardLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
+	return slog.New(slog.DiscardHandler)
 }
 
 // captureRequestIDHandler records the request ID seen by the downstream handler.
