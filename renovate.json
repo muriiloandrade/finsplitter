@@ -13,8 +13,16 @@
         ":prConcurrentLimit10",
         ":enableVulnerabilityAlerts",
         ":automergeStableNonMajor",
-        "customManagers:dockerfileVersions",
-        "customManagers:makefileVersions"
+        "customManagers:dockerfileVersions"
+    ],
+    "customManagers": [
+        {
+            "customType": "regex",
+            "managerFilePatterns": ["^Makefile$"],
+            "matchStrings": [
+                "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:*\\??=\\s*[\"']?(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[a-f0-9]+)[\"']?\\s"
+            ]
+        }
     ],
     "postUpdateOptions": [
         "gomodTidy",
