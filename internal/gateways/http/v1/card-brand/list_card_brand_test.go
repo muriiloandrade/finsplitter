@@ -9,6 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/http/v1/card-brand"
@@ -42,7 +43,7 @@ func TestListCardBrandsHandler(t *testing.T) {
 					{ID: uuid.Must(uuid.NewV4()), Name: "Mastercard", CreatedDate: now, LastModifiedDate: now},
 				}
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
-					PageSize: 10, PageNumber: 1, Name: &emptyStr,
+					Pagination: domain.Pagination{PageSize: 10, PageNumber: 1}, Name: &emptyStr,
 				}).Return(brands, nil)
 			},
 			want: []entity.CardBrand{
@@ -59,7 +60,7 @@ func TestListCardBrandsHandler(t *testing.T) {
 			},
 			ucSetup: func(uc *usecases.MockListCardBrandsUseCase) {
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
-					PageSize: 10, PageNumber: 1, Name: &emptyStr,
+					Pagination: domain.Pagination{PageSize: 10, PageNumber: 1}, Name: &emptyStr,
 				}).Return([]entity.CardBrand{}, nil)
 			},
 			want:    []entity.CardBrand{},
@@ -73,7 +74,7 @@ func TestListCardBrandsHandler(t *testing.T) {
 			},
 			ucSetup: func(uc *usecases.MockListCardBrandsUseCase) {
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
-					PageSize: 10, PageNumber: 1, Name: &emptyStr,
+					Pagination: domain.Pagination{PageSize: 10, PageNumber: 1}, Name: &emptyStr,
 				}).Return(nil, errs.ErrDatabaseGeneric)
 			},
 			wantErr: true,
@@ -96,7 +97,8 @@ func TestListCardBrandsHandler(t *testing.T) {
 					{ID: uuid.Must(uuid.NewV4()), Name: "Visa", CreatedDate: now, LastModifiedDate: now},
 				}
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
-					Name: &name, PageSize: 10, PageNumber: 1,
+					Name:       &name,
+					Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 				}).Return(brands, nil)
 			},
 			want:    []entity.CardBrand{{Name: "Visa"}},

@@ -80,21 +80,30 @@ func (q *Queries) GetCardBrand(ctx context.Context, arg GetCardBrandParams) (Car
 }
 
 const ListCardBrands = `-- name: ListCardBrands :many
-SELECT id, name, created_date, last_modified_date FROM card_brand
+SELECT id, name, created_date, last_modified_date
+FROM card_brand cb
 WHERE
-  (($1::text IS NULL OR $1::text = '') OR name ILIKE '%' || $1::text || '%')
+  ($1::text IS NULL OR cb.id = $1::uuid)
   AND
-  ($2::uuid IS NULL OR id = $2::uuid)
+  ($2::text IS NULL OR $2::text = '' OR cb.name ILIKE '%' || $2::text || '%')
 ORDER BY name
+LIMIT $4::bigint OFFSET $3::bigint
 `
 
 type ListCardBrandsParams struct {
-	Name *string   `db:"name" json:"name"`
-	ID   uuid.UUID `db:"id" json:"id"`
+	ID         *string `db:"id" json:"id"`
+	Name       *string `db:"name" json:"name"`
+	PageOffset int64   `db:"page_offset" json:"pageOffset"`
+	PageSize   int64   `db:"page_size" json:"pageSize"`
 }
 
 func (q *Queries) ListCardBrands(ctx context.Context, arg ListCardBrandsParams) ([]CardBrand, error) {
-	rows, err := q.db.Query(ctx, ListCardBrands, arg.Name, arg.ID)
+	rows, err := q.db.Query(ctx, ListCardBrands,
+		arg.ID,
+		arg.Name,
+		arg.PageOffset,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/stretchr/testify/assert"
@@ -32,10 +33,10 @@ func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
 	}{
 		{
 			name:   "returns a list of card brands",
-			filter: ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1},
+			filter: ports.ListCardBrandFilterOptions{Pagination: page()},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
 				repo.EXPECT().
-					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Pagination: page()}).
 					Return(brands, nil)
 			},
 			want: brands,
@@ -44,12 +45,11 @@ func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
 			name: "returns empty result",
 			filter: ports.ListCardBrandFilterOptions{
 				Name:       strPtr("NonExistent"),
-				PageSize:   10,
-				PageNumber: 1,
+				Pagination: page(),
 			},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
 				repo.EXPECT().
-					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Name: strPtr("NonExistent"), PageSize: 10, PageNumber: 1}).
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Name: strPtr("NonExistent"), Pagination: page()}).
 					Return([]entity.CardBrand{}, nil)
 			},
 			want: []entity.CardBrand{},
@@ -78,10 +78,10 @@ func TestListCardBrandsUC_ListCardBrandsError(t *testing.T) {
 	}{
 		{
 			name:   "returns error on database generic error",
-			filter: ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1},
+			filter: ports.ListCardBrandFilterOptions{Pagination: page()},
 			repoSetup: func(repo *ports.MockListCardBrandRepository) {
 				repo.EXPECT().
-					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{PageSize: 10, PageNumber: 1}).
+					ListCardBrands(mock.Anything, ports.ListCardBrandFilterOptions{Pagination: page()}).
 					Return(nil, errs.ErrDatabaseGeneric)
 			},
 			err: errs.ErrDatabaseGeneric,
@@ -103,3 +103,5 @@ func TestListCardBrandsUC_ListCardBrandsError(t *testing.T) {
 }
 
 func strPtr(s string) *string { return &s }
+
+func page() domain.Pagination { return domain.Pagination{PageSize: 10, PageNumber: 1} }

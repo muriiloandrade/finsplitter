@@ -102,8 +102,6 @@ require (
 	github.com/knadh/koanf/providers/fs v1.0.0 // indirect
 	github.com/knadh/koanf/providers/rawbytes v1.0.0 // indirect
 	github.com/knadh/koanf/v2 v2.3.5 // indirect
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
-	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.4.0 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
@@ -178,7 +176,6 @@ require (
 )
 
 require (
-	github.com/Masterminds/squirrel v1.5.4
 	github.com/ardanlabs/conf/v3 v3.13.0
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-logr/logr v1.4.4 // indirect

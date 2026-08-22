@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
@@ -17,8 +18,8 @@ const operation = "handler.ListCardBrands"
 type ListCardBrandsRequest struct {
 	ID         uuid.UUID `query:"id"          doc:"Card brand ID"              nullable:"true" format:"uuid"`
 	Name       string    `query:"name"        doc:"Card brand name"            nullable:"true"               example:"Visa" pattern:"^[a-zA-Z ]{1,50}$"`
-	PageSize   uint      `query:"page_size"   doc:"Number of items per page"                                                                            default:"10" minimum:"1" maximum:"100"`
-	PageNumber uint      `query:"page_number" doc:"Page number for pagination"                                                                          default:"1"  minimum:"1"`
+	PageSize   uint32    `query:"page_size"   doc:"Number of items per page"                                                                            default:"10" minimum:"1" maximum:"100"`
+	PageNumber uint32    `query:"page_number" doc:"Page number for pagination"                                                                          default:"1"  minimum:"1"`
 }
 
 type ListCardBrandsResponse struct {
@@ -45,10 +46,12 @@ func (h ListCardBrandsHandler) ListCardBrands(
 	logger := logctx.FromCtx(ctx)
 
 	cardBrands, err := h.useCase.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		ID:         input.ID,
-		Name:       &input.Name,
-		PageSize:   input.PageSize,
-		PageNumber: input.PageNumber,
+		ID:   input.ID,
+		Name: &input.Name,
+		Pagination: domain.Pagination{
+			PageSize:   input.PageSize,
+			PageNumber: input.PageNumber,
+		},
 	})
 	if err != nil {
 		logger.ErrorContext(ctx,

@@ -44,7 +44,7 @@
 | Proposal | Status | Detail |
 |----------|--------|--------|
 | `ardanlabs/conf` → `knadh/koanf/v2` | Proposed | See `docs/plans/conf-to-koanf-migration.md`; koanf already indirect dep |
-| `gofrs/uuid/v5` → stdlib `uuid` (Go 1.27) | Proposed | See `docs/plans/uuid-stdlib-migration.md`; removes 2 direct + 1 indirect deps |
+| `gofrs/uuid/v5` → stdlib `uuid` (Go 1.27) | Blocked — mockery lacks Go 1.27 support | See `docs/plans/uuid-stdlib-migration.md` §0; migration attempted 2026-08-22, reverted; all steps verified except `make generate-mocks`; unblock = mockery release parsing go1.27 modules (renovate bumps pin) |
 
 ## 📂 Codebase References
 

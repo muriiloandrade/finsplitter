@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -26,13 +25,11 @@ const (
 )
 
 type CardBrandRepository struct {
-	db   querier
 	sqlc *sqlc.Queries
 }
 
 func NewCardBrandRepository(db *TxManager) *CardBrandRepository {
 	return &CardBrandRepository{
-		db:   db,
 		sqlc: sqlc.New(db),
 	}
 }
@@ -107,31 +104,17 @@ func (r *CardBrandRepository) ListCardBrands(
 ) ([]entity.CardBrand, error) {
 	logger := logctx.FromCtx(ctx)
 
-	q := psql.
-		Select("id", "name", "created_date", "last_modified_date").
-		From("card_brand cb").
-		Limit(uint64(opts.PageSize)).
-		Offset(uint64((opts.PageNumber - 1) * opts.PageSize))
-
+	params := sqlc.ListCardBrandsParams{
+		Name:       opts.Name,
+		PageOffset: opts.Offset(),
+		PageSize:   int64(opts.PageSize),
+	}
 	if !opts.ID.IsNil() {
-		q = q.Where(squirrel.Eq{"cb.id": opts.ID})
+		id := opts.ID.String()
+		params.ID = &id
 	}
 
-	if opts.Name != nil && *opts.Name != "" {
-		q = q.Where(squirrel.ILike{"cb.name": "%" + *opts.Name + "%"})
-	}
-
-	sql, params, err := q.ToSql()
-	if err != nil {
-		logger.ErrorContext(ctx,
-			"Failed to build SQL query for listing card brands",
-			slog.String("operation", listCardBrandsOp),
-			slog.Any("error", err),
-		)
-		return nil, err
-	}
-
-	rows, err := r.db.Query(ctx, sql, params...)
+	brands, err := r.sqlc.ListCardBrands(ctx, params)
 	if err != nil {
 		logger.ErrorContext(ctx,
 			"Failed to list card brands",
@@ -140,19 +123,9 @@ func (r *CardBrandRepository) ListCardBrands(
 		)
 		return nil, err
 	}
-	defer rows.Close()
 
 	cardBrandList := make([]entity.CardBrand, 0, opts.PageSize)
-	for rows.Next() {
-		var brand sqlc.CardBrand
-		if err = rows.Scan(&brand.ID, &brand.Name, &brand.CreatedDate, &brand.LastModifiedDate); err != nil {
-			logger.ErrorContext(ctx,
-				"Failed to scan card brand",
-				slog.String("operation", listCardBrandsOp),
-				slog.Any("error", err),
-			)
-			return nil, err
-		}
+	for _, brand := range brands {
 		cardBrandList = append(cardBrandList, parseToCardBrand(brand))
 	}
 	return cardBrandList, nil
