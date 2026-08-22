@@ -16,10 +16,13 @@ type GetCardBrandByIDRepository interface {
 }
 
 type ListCardBrandFilterOptions struct {
-	ID         uuid.UUID
-	Name       *string
-	PageSize   uint
-	PageNumber uint
+	ID   uuid.UUID
+	Name *string
+	// PageSize/PageNumber are uint32 so they convert to the sqlc bigint
+	// params (int64) without any overflow risk; the HTTP layer bounds them
+	// to 1–100 / ≥ 1 via schema validation.
+	PageSize   uint32
+	PageNumber uint32
 }
 
 type ListCardBrandRepository interface {

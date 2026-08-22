@@ -32,7 +32,7 @@ func newMockCardBrandRepo(fns mockCBFuncs) *CardBrandRepository {
 		queryRowFn: fns.queryRowFn,
 		queryFunc:  fns.queryFn,
 	}
-	return &CardBrandRepository{db: mq, sqlc: sqlc.New(mq)}
+	return &CardBrandRepository{sqlc: sqlc.New(mq)}
 }
 
 func defaultCBRow() *mockRow {
