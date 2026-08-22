@@ -9,7 +9,7 @@
 | Item | Status | Where |
 |------|--------|-------|
 | `conf` → `koanf` migration | Proposed — plan written | `docs/plans/conf-to-koanf-migration.md` |
-| `gofrs/uuid/v5` → stdlib `uuid` | Proposed — target Go 1.27 | `docs/plans/uuid-stdlib-migration.md` |
+| `gofrs/uuid/v5` → stdlib `uuid` | ⛔ Blocked — mockery v3.7.3 can't parse go1.27 modules; attempted + reverted 2026-08-22; unblock criteria in plan §0 | `docs/plans/uuid-stdlib-migration.md` |
 | DOX AGENTS.md migration | Done 2026-08-12 — validate as used | Root `AGENTS.md` + 15 child docs |
 
 ## Technical Debt / Bugs Found (2026-08-12 audit)
