@@ -57,6 +57,14 @@ change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
 
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 
+# Collapse high-noise categories (renovate/dependabot churn) on the release page.
+# Wraps each section body in <details><summary> so it starts collapsed.
+replacers:
+    - search: '/## 🧰 Maintenance\n\n([\s\S]*?)(?=\n## |$)/'
+      replace: "<details>\n<summary>🧰 Maintenance</summary>\n\n$1\n\n</details>"
+    - search: '/## 🛠️ Dependencies\n\n([\s\S]*?)(?=\n## |$)/'
+      replace: "<details>\n<summary>🛠️ Dependencies</summary>\n\n$1\n\n</details>"
+
 autolabeler:
     - label: "feature"
       title:
