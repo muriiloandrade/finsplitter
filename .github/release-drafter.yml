@@ -59,11 +59,15 @@ change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add
 
 # Collapse high-noise categories (renovate/dependabot churn) on the release page.
 # Wraps each section body in <details><summary> so it starts collapsed.
+# The trailing \n after </details> is required: the lookahead leaves the
+# section separator unconsumed, and without it the next heading (or
+# "## Contributors" when the collapsed section is last) ends up glued to
+# the HTML block and renders as raw text.
 replacers:
     - search: '/## 🧰 Maintenance\n\n([\s\S]*?)(?=\n## |$)/'
-      replace: "<details>\n<summary>🧰 Maintenance</summary>\n\n$1\n\n</details>"
+      replace: "<details>\n<summary>🧰 Maintenance</summary>\n\n$1\n\n</details>\n"
     - search: '/## 🛠️ Dependencies\n\n([\s\S]*?)(?=\n## |$)/'
-      replace: "<details>\n<summary>🛠️ Dependencies</summary>\n\n$1\n\n</details>"
+      replace: "<details>\n<summary>🛠️ Dependencies</summary>\n\n$1\n\n</details>\n"
 
 autolabeler:
     - label: "feature"
