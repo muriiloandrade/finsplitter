@@ -106,7 +106,7 @@ func (r *CardBrandRepository) ListCardBrands(
 
 	params := sqlc.ListCardBrandsParams{
 		Name:       opts.Name,
-		PageOffset: int64((opts.PageNumber - 1) * opts.PageSize),
+		PageOffset: opts.Offset(),
 		PageSize:   int64(opts.PageSize),
 	}
 	if !opts.ID.IsNil() {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 )
 
@@ -16,13 +17,12 @@ type GetCardBrandByIDRepository interface {
 }
 
 type ListCardBrandFilterOptions struct {
+	// Pagination is the shared page-bound options bundle; reuse it for
+	// new list endpoints instead of adding PageSize/PageNumber fields.
+	domain.Pagination
+
 	ID   uuid.UUID
 	Name *string
-	// PageSize/PageNumber are uint32 so they convert to the sqlc bigint
-	// params (int64) without any overflow risk; the HTTP layer bounds them
-	// to 1–100 / ≥ 1 via schema validation.
-	PageSize   uint32
-	PageNumber uint32
 }
 
 type ListCardBrandRepository interface {

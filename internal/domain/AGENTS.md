@@ -1,14 +1,15 @@
-<!-- Context: internal/domain | Priority: critical | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: internal/domain | Priority: critical | Version: 1.1 | Updated: 2026-08-22 -->
 
-# internal/domain — Entities, domain errors, transactioner
+# internal/domain — Entities, domain errors, transactioner, shared value objects
 
-**Purpose**: The innermost layer: pure business models (`entity/`), sentinel domain errors (`errs/`), and the transaction abstraction (`Transactioner`). Must stay free of any dependency on application or infrastructure layers.
+**Purpose**: The innermost layer: pure business models (`entity/`), sentinel domain errors (`errs/`), the transaction abstraction (`Transactioner`), and shared domain value objects (`Pagination`). Must stay free of any dependency on application or infrastructure layers.
 
 ## Ownership
 
 - `internal/domain/entity/` — `User`, `CardBrand`, `UserClaims` (+ tests)
 - `internal/domain/errs/` — sentinel errors (`errs.go` + test)
 - `internal/domain/transactioner.go` — `Transactioner` interface, `TransactionFunc`, `HasTX`/`WithTx` context markers
+- `internal/domain/pagination.go` — `Pagination` value object (page-bound list options + `Offset()`); embed it in new list filter options instead of duplicating PageSize/PageNumber fields
 - `internal/domain/mocks.gen.go` — generated `MockTransactioner`
 - Must NOT import `internal/app/**`, `internal/gateways/**`, or `pkg/**` — only stdlib + `gofrs/uuid/v5`
 
@@ -53,4 +54,5 @@ No child AGENTS.md files needed — `entity/` and `errs/` are owned by this doc.
 - `internal/domain/entity/user_claims.go`
 - `internal/domain/errs/errs.go`
 - `internal/domain/transactioner.go`
+- `internal/domain/pagination.go` (+ `pagination_test.go`)
 - `internal/domain/mocks.gen.go`

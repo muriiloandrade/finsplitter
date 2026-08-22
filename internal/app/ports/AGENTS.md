@@ -1,4 +1,4 @@
-<!-- Context: internal/app/ports | Priority: critical | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: internal/app/ports | Priority: critical | Version: 1.1 | Updated: 2026-08-22 -->
 
 # internal/app/ports — Repository & service contracts
 
@@ -17,7 +17,8 @@
 - Consumer-defined narrow interfaces, one method family each: `CreateCardBrandRepository`, `GetCardBrandByIDRepository`, `ListCardBrandRepository`, `UpdateCardBrandRepository`, `DeleteCardBrandRepository` (not one fat `CardBrandRepository`)
 - Method signatures: `ctx` first, return `(*entity.X, error)`; input bundles go in option structs (`ListCardBrandFilterOptions`, `UpdateCardBrandOptions`)
 - Doc comments state the error contract per method (e.g. "Returns ErrDuplicate if logto_user_id already exists")
-- Imports limited to `context`, `entity`, `uuid`
+- Imports limited to `context`, `domain`, `entity`, `uuid`
+- Shared page-bound options go in `domain.Pagination` (embed it in list filter options); do not re-declare PageSize/PageNumber fields per option struct
 - Implementers (gateways) assert satisfaction: `var _ ports.UserRepository = (*postgres.UserRepository)(nil)`
 - No `go:generate` directives in source — mocks are driven by `.mockery.yml` (mockery v3.7.3 via Docker, testify template)
 

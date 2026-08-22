@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
@@ -45,10 +46,12 @@ func (h ListCardBrandsHandler) ListCardBrands(
 	logger := logctx.FromCtx(ctx)
 
 	cardBrands, err := h.useCase.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		ID:         input.ID,
-		Name:       &input.Name,
-		PageSize:   input.PageSize,
-		PageNumber: input.PageNumber,
+		ID:   input.ID,
+		Name: &input.Name,
+		Pagination: domain.Pagination{
+			PageSize:   input.PageSize,
+			PageNumber: input.PageNumber,
+		},
 	})
 	if err != nil {
 		logger.ErrorContext(ctx,

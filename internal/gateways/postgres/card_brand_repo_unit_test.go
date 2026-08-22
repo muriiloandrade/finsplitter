@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/sqlc"
 	"github.com/stretchr/testify/assert"
@@ -382,8 +383,7 @@ func TestCardBrandRepo_List_Success(t *testing.T) {
 	ctx := context.Background()
 
 	brands, err := repo.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		PageSize:   10,
-		PageNumber: 1,
+		Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 	})
 
 	require.NoError(t, err)
@@ -401,8 +401,7 @@ func TestCardBrandRepo_List_Empty(t *testing.T) {
 	ctx := context.Background()
 
 	brands, err := repo.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		PageSize:   10,
-		PageNumber: 1,
+		Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 	})
 
 	require.NoError(t, err)
@@ -418,8 +417,7 @@ func TestCardBrandRepo_List_QueryError(t *testing.T) {
 	ctx := context.Background()
 
 	brands, err := repo.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		PageSize:   10,
-		PageNumber: 1,
+		Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 	})
 
 	require.Error(t, err)
@@ -440,8 +438,7 @@ func TestCardBrandRepo_List_ScanError(t *testing.T) {
 	ctx := context.Background()
 
 	brands, err := repo.ListCardBrands(ctx, ports.ListCardBrandFilterOptions{
-		PageSize:   10,
-		PageNumber: 1,
+		Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 	})
 
 	require.Error(t, err)

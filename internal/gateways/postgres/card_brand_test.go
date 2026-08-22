@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
+	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres/testutils"
@@ -139,16 +140,14 @@ func TestCardBrandRepository_List(t *testing.T) {
 		{
 			name: "lists all card brands",
 			filter: ports.ListCardBrandFilterOptions{
-				PageSize:   10,
-				PageNumber: 1,
+				Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 			},
 			wantCount: 5,
 		},
 		{
 			name: "respects pagination",
 			filter: ports.ListCardBrandFilterOptions{
-				PageSize:   2,
-				PageNumber: 1,
+				Pagination: domain.Pagination{PageSize: 2, PageNumber: 1},
 			},
 			wantCount: 2,
 		},
@@ -156,8 +155,7 @@ func TestCardBrandRepository_List(t *testing.T) {
 			name: "filters by name (case insensitive)",
 			filter: ports.ListCardBrandFilterOptions{
 				Name:       strPtr("Visa"),
-				PageSize:   10,
-				PageNumber: 1,
+				Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 			},
 			wantCount: 1,
 			wantFirst: strPtr("Visa"),
@@ -166,8 +164,7 @@ func TestCardBrandRepository_List(t *testing.T) {
 			name: "filters by id",
 			filter: ports.ListCardBrandFilterOptions{
 				ID:         diners.ID,
-				PageSize:   10,
-				PageNumber: 1,
+				Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 			},
 			wantCount: 1,
 		},
@@ -175,8 +172,7 @@ func TestCardBrandRepository_List(t *testing.T) {
 			name: "returns empty when filter matches nothing",
 			filter: ports.ListCardBrandFilterOptions{
 				Name:       strPtr("NonExistentBrand"),
-				PageSize:   10,
-				PageNumber: 1,
+				Pagination: domain.Pagination{PageSize: 10, PageNumber: 1},
 			},
 			wantCount: 0,
 		},
