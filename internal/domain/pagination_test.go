@@ -28,10 +28,9 @@ func TestPagination_Offset(t *testing.T) {
 			want:       150,
 		},
 		{
-			name:       "zero page number underflows to a huge offset returning empty results",
+			name:       "zero page number defaults to the first page",
 			pagination: Pagination{PageSize: 10, PageNumber: 0},
-			// (0-1)*10 wraps mod 2^32 → MaxUint32-9; documents the preserved quirk
-			want: int64(uint32(0xFFFFFFFF - 9)),
+			want:       0,
 		},
 	}
 

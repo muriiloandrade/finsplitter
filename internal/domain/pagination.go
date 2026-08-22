@@ -11,9 +11,9 @@ type Pagination struct {
 }
 
 // Offset returns the number of rows to skip before the first row of the
-// page. A zero PageNumber underflows to a huge offset (empty result) —
-// preserved deliberately for parity with the original implementation;
-// HTTP validation makes it unreachable through the API.
+// page. A zero PageNumber defaults to the first page, so the offset is
+// always a sane non-negative value.
 func (p Pagination) Offset() int64 {
-	return int64((p.PageNumber - 1) * p.PageSize)
+	page := max(p.PageNumber, 1)
+	return int64((page - 1) * p.PageSize)
 }
