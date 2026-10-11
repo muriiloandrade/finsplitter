@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// newTestLogger returns a distinct logger that discards all output.
-func newTestLogger(t *testing.T) *slog.Logger {
+// testLogger returns a logger that writes to test output.
+func testLogger(t *testing.T) *slog.Logger {
 	t.Helper()
-	return slog.New(slog.DiscardHandler)
+	return slog.New(slog.NewTextHandler(t.Output(), nil))
 }
 
 func TestFromCtx_ReturnsDefaultWhenNothingStored(t *testing.T) {
@@ -44,7 +44,7 @@ func TestNewCtx_StoresLoggerAndReturnsCopy(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			logger := newTestLogger(t)
+			logger := testLogger(t)
 
 			ctx := NewCtx(tc.parent, logger)
 
@@ -56,13 +56,13 @@ func TestNewCtx_StoresLoggerAndReturnsCopy(t *testing.T) {
 
 func TestNewCtx_DoesNotMutateParent(t *testing.T) {
 	parent := context.Background()
-	_ = NewCtx(parent, newTestLogger(t))
+	_ = NewCtx(parent, testLogger(t))
 
 	assert.Same(t, slog.Default(), FromCtx(parent))
 }
 
 func TestFromCtx_PropagatesThroughDerivedContexts(t *testing.T) {
-	logger := newTestLogger(t)
+	logger := testLogger(t)
 	ctx := NewCtx(context.Background(), logger)
 
 	// The logger must survive further context derivation and coexist
