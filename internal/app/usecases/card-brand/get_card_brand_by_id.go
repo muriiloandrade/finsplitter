@@ -3,8 +3,8 @@ package usecases
 import (
 	"context"
 	"errors"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"

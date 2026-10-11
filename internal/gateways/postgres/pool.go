@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/exaring/otelpgx"
-	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	pgxdecimal "github.com/jackc/pgx-shopspring-decimal"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -25,7 +24,6 @@ func NewPoolConfig(cfg config.Database) (*pgxpool.Config, error) {
 	}
 
 	dbConfig.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
-		pgxuuid.Register(conn.TypeMap())
 		pgxdecimal.Register(conn.TypeMap())
 		return nil
 	}

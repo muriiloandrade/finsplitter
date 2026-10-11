@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -109,7 +109,7 @@ func (r *CardBrandRepository) ListCardBrands(
 		PageOffset: opts.Offset(),
 		PageSize:   int64(opts.PageSize),
 	}
-	if !opts.ID.IsNil() {
+	if opts.ID != uuid.Nil() {
 		id := opts.ID.String()
 		params.ID = &id
 	}

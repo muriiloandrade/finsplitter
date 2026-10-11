@@ -1,17 +1,20 @@
 package http
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// versionOctet is the index of the UUID octet whose high nibble holds the
+// version field (RFC 9562 §4.2).
+const versionOctet = 6
 
 // discardLogger returns a logger that discards all output.
 func discardLogger() *slog.Logger {
@@ -47,9 +50,9 @@ func TestRequestID_StoresRequestIDInContext(t *testing.T) {
 			headerValue: "",
 			assertID: func(t *testing.T, id string) {
 				require.NotEmpty(t, id, "a request ID must be generated")
-				parsed, err := uuid.FromString(id)
+				parsed, err := uuid.Parse(id)
 				require.NoError(t, err, "generated request ID must be a valid UUID")
-				assert.Equal(t, byte(4), parsed.Version(), "generated request ID must be a UUID v4")
+				assert.Equal(t, byte(4), parsed[versionOctet]>>4, "generated request ID must be a UUID v4")
 			},
 		},
 	}
@@ -95,19 +98,17 @@ func TestNewRouter_AppliesRequestIDMiddleware(t *testing.T) {
 }
 
 func TestNewRequestID_ReturnsUUIDV4(t *testing.T) {
-	id := newRequestID(uuid.NewV4)
+	id := newRequestID(uuid.New)
 
-	parsed, err := uuid.FromString(id)
+	parsed, err := uuid.Parse(id)
 	require.NoError(t, err, "generated request ID must be a valid UUID")
-	assert.Equal(t, byte(4), parsed.Version(), "generated request ID must be a UUID v4")
+	assert.Equal(t, byte(4), parsed[versionOctet]>>4, "generated request ID must be a UUID v4")
 }
 
-func TestNewRequestID_ReturnsEmptyWhenGeneratorFails(t *testing.T) {
-	boom := errors.New("random source failure")
+func TestNewRequestID_FormatsGeneratorOutput(t *testing.T) {
+	want := uuid.MustParse("f81d4fae-7dec-11d0-a765-00a0c91e6bf6")
 
-	id := newRequestID(func() (uuid.UUID, error) {
-		return uuid.UUID{}, boom
-	})
+	id := newRequestID(func() uuid.UUID { return want })
 
-	assert.Empty(t, id, "must fall back to empty string instead of panicking")
+	assert.Equal(t, want.String(), id, "must render the generator output in canonical form")
 }

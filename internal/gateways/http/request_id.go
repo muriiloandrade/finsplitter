@@ -2,8 +2,8 @@ package http
 
 import (
 	"net/http"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
@@ -23,7 +23,7 @@ func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := r.Header.Get(RequestIDHeader)
 		if requestID == "" {
-			requestID = newRequestID(uuid.NewV4)
+			requestID = newRequestID(uuid.New)
 		}
 
 		ctx := logctx.WithRequestID(r.Context(), requestID)
@@ -32,13 +32,14 @@ func RequestID(next http.Handler) http.Handler {
 	})
 }
 
-// newRequestID generates a UUID v4 via newID. On the astronomically unlikely
-// failure of the random source it falls back to the empty string rather than
-// panicking, so a request is never dropped because an ID could not be minted.
-func newRequestID(newID func() (uuid.UUID, error)) string {
-	id, err := newID()
-	if err != nil {
-		return ""
-	}
-	return id.String()
+// newRequestID formats the UUID produced by newID as a string. The generator is
+// injected so tests can pin the output; production passes uuid.New (UUID v4).
+//
+// The standard library uuid package cannot report a generation error the way
+// gofrs/uuid did: uuid.New reads from crypto/rand, which crashes the program
+// irrecoverably if the system source fails (it is not a recoverable panic).
+// There is therefore no fallback ID to return — an entropy failure is fatal by
+// upstream design, and the previous empty-string fallback is unreachable.
+func newRequestID(newID func() uuid.UUID) string {
+	return newID().String()
 }

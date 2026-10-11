@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
-
-	"github.com/gofrs/uuid/v5"
+	"uuid"
 )
 
 func TestCardBrandJSONSerialization(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.New()
 
 	brand := CardBrand{
 		ID:               id,
@@ -48,7 +47,7 @@ func TestCardBrandJSONSerialization(t *testing.T) {
 
 func TestCardBrandJSONTags(t *testing.T) {
 	brand := CardBrand{
-		ID:               uuid.Must(uuid.NewV4()),
+		ID:               uuid.New(),
 		Name:             "Mastercard",
 		CreatedDate:      time.Now(),
 		LastModifiedDate: time.Now(),
@@ -89,7 +88,7 @@ func containsAny(s, substr string) bool {
 func TestCardBrandEmptyStruct(t *testing.T) {
 	brand := CardBrand{}
 
-	if brand.ID != uuid.Nil {
+	if brand.ID != uuid.Nil() {
 		t.Error("expected empty ID to be Nil")
 	}
 	if brand.Name != "" {

@@ -6,8 +6,8 @@ package usecases
 
 import (
 	"context"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	mock "github.com/stretchr/testify/mock"

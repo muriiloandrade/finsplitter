@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
@@ -18,8 +18,8 @@ import (
 
 func TestListCardBrandsUC_ListCardBrandsSuccess(t *testing.T) {
 	now := time.Now()
-	id1 := uuid.Must(uuid.NewV4())
-	id2 := uuid.Must(uuid.NewV4())
+	id1 := uuid.New()
+	id2 := uuid.New()
 	brands := []entity.CardBrand{
 		{ID: id1, Name: "Visa", CreatedDate: now, LastModifiedDate: now},
 		{ID: id2, Name: "Mastercard", CreatedDate: now, LastModifiedDate: now},

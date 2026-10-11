@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/app/usecases/profile"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
@@ -27,7 +27,7 @@ func TestSetupUseCase_Execute_Success(t *testing.T) {
 		Return(false, nil)
 	userRepo.EXPECT().
 		Create(mock.Anything, "logto_user_1").
-		Return(&entity.User{ID: uuid.Must(uuid.NewV4()), LogtoUserID: "logto_user_1"}, nil).
+		Return(&entity.User{ID: uuid.New(), LogtoUserID: "logto_user_1"}, nil).
 		Once()
 
 	uc := profile.NewSetupUseCase(userRepo, logtoClient)

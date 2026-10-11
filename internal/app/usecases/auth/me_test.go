@@ -3,8 +3,8 @@ package auth_test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	auth "github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
@@ -35,7 +35,7 @@ func TestMeUseCase_Execute_NeedsSetup(t *testing.T) {
 
 func TestMeUseCase_Execute_AlreadySetup(t *testing.T) {
 	logtoUserID := "logto_user_abc"
-	userID := uuid.Must(uuid.NewV4())
+	userID := uuid.New()
 
 	repo := ports.NewMockUserRepository(t)
 	repo.EXPECT().

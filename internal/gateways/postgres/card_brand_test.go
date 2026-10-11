@@ -3,8 +3,8 @@ package postgres_test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
@@ -62,7 +62,7 @@ func TestCardBrandRepository_Create(t *testing.T) {
 
 			require.NoError(t, createErr)
 			if tt.wantIDNotNil {
-				assert.NotEqual(t, uuid.Nil, result.ID)
+				assert.NotEqual(t, uuid.Nil(), result.ID)
 			}
 			assert.Equal(t, tt.wantName, result.Name)
 			assert.NotZero(t, result.CreatedDate)
@@ -90,10 +90,8 @@ func TestCardBrandRepository_GetByID(t *testing.T) {
 			wantName: "Amex",
 		},
 		{
-			name: "returns error when not found",
-			setupID: func() uuid.UUID {
-				return uuid.Must(uuid.NewV4())
-			},
+			name:    "returns error when not found",
+			setupID: uuid.New,
 			wantErr: errs.ErrCardBrandNotFound,
 		},
 	}
@@ -217,7 +215,7 @@ func TestCardBrandRepository_Update(t *testing.T) {
 		{
 			name: "returns error when not found",
 			setup: func() (uuid.UUID, error) {
-				return uuid.Must(uuid.NewV4()), nil
+				return uuid.New(), nil
 			},
 			updateID:   func(id uuid.UUID) uuid.UUID { return id },
 			updateName: "Test",
@@ -228,7 +226,7 @@ func TestCardBrandRepository_Update(t *testing.T) {
 			setup: func() (uuid.UUID, error) {
 				_, err := repo.CreateCardBrand(ctx, "Visa")
 				if err != nil {
-					return uuid.Nil, err
+					return uuid.Nil(), err
 				}
 				created, err := repo.CreateCardBrand(ctx, "Mastercard")
 				return created.ID, err
@@ -281,10 +279,8 @@ func TestCardBrandRepository_Delete(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "returns error when not found",
-			setupID: func() uuid.UUID {
-				return uuid.Must(uuid.NewV4())
-			},
+			name:    "returns error when not found",
+			setupID: uuid.New,
 			wantErr: errs.ErrCardBrandNotFound,
 		},
 	}
