@@ -19,10 +19,19 @@ func NewMockCreateCardBrandUseCase(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockCreateCardBrandUseCase {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockCreateCardBrandUseCase{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -114,10 +123,19 @@ func NewMockGetCardBrandByIDUseCase(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockGetCardBrandByIDUseCase {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockGetCardBrandByIDUseCase{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -209,10 +227,19 @@ func NewMockListCardBrandsUseCase(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockListCardBrandsUseCase {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockListCardBrandsUseCase{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -304,10 +331,19 @@ func NewMockUpdateCardBrandUseCase(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockUpdateCardBrandUseCase {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockUpdateCardBrandUseCase{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -399,10 +435,19 @@ func NewMockDeleteCardBrandUseCase(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockDeleteCardBrandUseCase {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockDeleteCardBrandUseCase{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
