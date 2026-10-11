@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/living | Priority: medium | Version: 1.4 | Updated: 2026-08-13 -->
+<!-- Context: project-intelligence/living | Priority: medium | Version: 1.5 | Updated: 2026-10-11 -->
 
 # Living Notes
 
@@ -9,7 +9,6 @@
 | Item | Status | Where |
 |------|--------|-------|
 | `conf` → `koanf` migration | Proposed — plan written | `docs/plans/conf-to-koanf-migration.md` |
-| `gofrs/uuid/v5` → stdlib `uuid` | ⛔ Blocked — mockery v3.7.3 can't parse go1.27 modules; attempted + reverted 2026-08-22; unblock criteria in plan §0 | `docs/plans/uuid-stdlib-migration.md` |
 | DOX AGENTS.md migration | Done 2026-08-12 — validate as used | Root `AGENTS.md` + 15 child docs |
 
 ## Technical Debt / Bugs Found (2026-08-12 audit)
@@ -24,6 +23,7 @@
 
 ## Resolved
 
+- 2026-10-11: `gofrs/uuid/v5` → stdlib `uuid` — mockery v3.8.0 unblocked it (v3.7.3 couldn't parse go1.27 modules); the migration and the `GOEXPERIMENT=jsonv2` removal landed together (`docs/plans/uuid-stdlib-migration.md`)
 - 2026-08-13: `last_modified_date` trigger — verified applied to all 6 entity tables (`user`, `card_brand`, `person`, `card`, `bill`, `transaction`); pivot tables (`card_person`, `transaction_person`) intentionally use `created_date` + `end_date` history (SPLIT-004 pattern) instead
 - 2026-08-13: `device_poll.go` — tests existed but were co-located in `device_auth_test.go`; extracted to `device_poll_test.go` with fuller coverage (whitespace input, unexpected error pass-through)
 - 2026-08-13: Profile package — `LogtoUserUpdater` extracted to `interfaces.go` (+ compile-time check); mockery entry added, manual `mockLogtoUpdater` replaced with `profile.NewMockLogtoUserUpdater(t)`

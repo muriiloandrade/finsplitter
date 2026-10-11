@@ -1,4 +1,4 @@
-<!-- Context: cmd/api | Priority: critical | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: cmd/api | Priority: critical | Version: 1.1 | Updated: 2026-10-11 -->
 
 # cmd/api — Application entry point & dependency wiring
 
@@ -18,7 +18,7 @@
 - Startup order is fixed: config → telemetry → DB pool → migrations → clients → router → server
 - Redis failure = warn + `nil` client (auth middleware then fetches JWKS per request) — non-fatal
 - Shutdown: 5s graceful timeout (`gracefulShutdownTimeout`), then close pool/redis/otel
-- Compile/build with `GOEXPERIMENT=jsonv2` (jwx v4 dependency)
+- Compile/build with Go 1.27 (no `GOEXPERIMENT` flag needed — `encoding/json/v2` is stable)
 
 ## Work Guidance
 
@@ -42,7 +42,7 @@ Order matters: create repos → use cases → handler APIs → register routes �
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go build ./cmd/api/...   # compile check
+go build ./cmd/api/...   # compile check
 make test                                     # unit tests (short mode)
 make code-check                               # format + lint
 ```

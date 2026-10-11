@@ -1,4 +1,4 @@
-<!-- Context: internal/config | Priority: high | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: internal/config | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
 
 # internal/config — Environment configuration
 
@@ -37,7 +37,7 @@ Required vars get the `required` keyword. Cover every new var in `config_test.go
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test -short ./internal/config/...
+go test -short ./internal/config/...
 make test          # unit tests
 make code-check    # format + lint
 ```

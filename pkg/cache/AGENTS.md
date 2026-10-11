@@ -1,4 +1,4 @@
-<!-- Context: pkg/cache | Priority: high | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: pkg/cache | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
 
 # pkg/cache — Valkey/Redis client wrapper
 
@@ -50,7 +50,7 @@ Add new operations as typed methods delegating to `c.raw`, wrapping errors with 
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test ./pkg/cache/...
+go test ./pkg/cache/...
 make test
 make code-check
 ```

@@ -29,7 +29,7 @@ docs/project-intelligence/
 
 ## Quick Overview
 
-- **Language**: Go 1.26.4 (`GOEXPERIMENT=jsonv2` required)
+- **Language**: Go 1.27 (stdlib `uuid`; no `GOEXPERIMENT` flag needed)
 - **Framework**: Huma v2.39.1 (REST + OpenAPI)
 - **Database**: PostgreSQL 18 (pgx v5, sqlc)
 - **Auth**: Logto + jwx/jwkfetch (JWT, JWKS caching, device authorization grant, UserInfo fallback)
@@ -63,7 +63,7 @@ Global rules (naming, standards, security, testing) live in the root `AGENTS.md`
 
 - Root `AGENTS.md` (DOX rail) — global rules + Child DOX Index
 - `business-domain.md` — canonical domain spec (entities, business rules, workflows)
-- `docs/plans/` — proposed migrations (conf→koanf, uuid→stdlib)
+- `docs/plans/` — proposed migrations (conf→koanf)
 
 ## Maintenance
 

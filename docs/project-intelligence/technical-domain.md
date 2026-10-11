@@ -14,7 +14,7 @@
 
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
-| Language | Go | 1.26.4 | Static typing, fast builds, single binary |
+| Language | Go | 1.27 | Static typing, fast builds, single binary |
 | API Framework | Huma v2 | 2.39.1 | OpenAPI spec generated from Go types |
 | HTTP Router | Chi (via Huma) | — | Idiomatic Go routing |
 | Database | PostgreSQL | 18 | Relational model, JSONB, constraints |
@@ -24,7 +24,7 @@
 | Observability | OpenTelemetry + slog | — | Vendor-neutral traces/metrics/logs |
 | HTTP Client | resty v3 (via `pkg/httpclient`) | — | Retry, timeout, OTel hooks |
 | Config | ardanlabs/conf | v3 | Declarative env parsing (→ koanf proposed) |
-| IDs | gofrs/uuid/v5 | — | UUIDs for entity IDs (→ stdlib proposed) |
+| IDs | stdlib `uuid` | — | UUIDs for entity IDs (first-party since Go 1.27) |
 | Money | shopspring/decimal | — | Precise monetary math |
 | Testing | testify + mockery + testcontainers-go | — | Mocks + real-Postgres integration tests |
 | Infrastructure | Docker + GitHub Actions | — | Multi-stage distroless builds, CI/CD |
@@ -84,7 +84,7 @@ finsplitter/
 | JWT+JWKS + UserInfo fallback | Opaque device tokens aren't JWTs | Two-strategy auth middleware |
 | Valkey over Redis | OSS license-safe drop-in | Same API, self-hosted |
 | OpenTelemetry | Vendor-neutral | Swap exporters freely |
-| GOEXPERIMENT=jsonv2 (jwx v4 dep) | Required by dependency | Set for all go build/test/run |
+| Go 1.27 stabilizes `encoding/json/v2` | jwx v4 dependency resolves with no build flag | No `GOEXPERIMENT` needed for go build/test/run |
 
 Full history with alternatives: `decisions-log.md`.
 
@@ -102,7 +102,7 @@ Full history with alternatives: `decisions-log.md`.
 
 | Constraint | Origin | Impact |
 |------------|--------|--------|
-| `GOEXPERIMENT=jsonv2` required | jwx v4 dep | Must prefix all go build/test/run |
+| Go 1.27+ toolchain required | stdlib `uuid` (new in Go 1.27) | `go.mod` declares `go 1.27`; CI matrix and Dockerfile must use Go ≥ 1.27 |
 | Passwordless only (device grant) | Security decision | No password auth/reset flow |
 | DB SSL required in prod | Security (`PG_SSL_MODE=require`) | TLS for all DB connections |
 | `LOGTO_APP_CLIENT_ID` must match API Resource aud | Logto config | Auth fails if mismatched |
@@ -114,7 +114,7 @@ Full history with alternatives: `decisions-log.md`.
 
 ```
 Setup: cp .env.example .env → configure → make start-infra → make start-dev
-Requirements: Go 1.26.4+, Docker, GOEXPERIMENT=jsonv2
+Requirements: Go 1.27+, Docker
 Local Dev: make start-dev (infra + hot reload)
 Testing:  make test | go test ./... -cover
 Generate: make generate (sqlc + mocks)
@@ -150,4 +150,4 @@ Security: make docker-scout (image scans), .dockerignore, no secrets in images
 - `business-tech-bridge.md` — how business needs map to technical solutions
 - `decisions-log.md` — full decision history with context
 - `living-notes.md` — active issues, debt, open questions
-- `docs/plans/` — proposed migrations (conf→koanf, uuid→stdlib)
+- `docs/plans/` — proposed migrations (conf→koanf)
