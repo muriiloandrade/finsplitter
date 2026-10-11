@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/living | Priority: medium | Version: 1.5 | Updated: 2026-10-11 -->
+<!-- Context: project-intelligence/living | Priority: medium | Version: 1.6 | Updated: 2026-10-11 -->
 
 # Living Notes
 
@@ -15,6 +15,10 @@
 
 - **No `go:generate` directives**: mock generation is Makefile-driven (`.mockery.yml`), zero `//go:generate` in source — fine, but note it
 - **Stale docs risk**: previous `technical-domain.md` had drifted (Huma 2.38→2.39.1, jwkfetch module move, Go 1.26.3→1.26.4) — DOX tree is now source of truth; keep it current via DOX pass
+
+## Known Constraints
+
+- **golangci-lint cannot read Go 1.27.2 export data** (found 2026-10-11): Go 1.27.2 bumped the unified-IR export data format to V5 (`internal/pkgbits.V5`, go.dev/issue/81188). golangci-lint binaries up to v2.14.0 are built with go1.27.0 and support max V4, so linting a Go 1.27.2 toolchain fails with `could not load export data: internal error in importing "internal/goarch" (cannot decode "internal/goarch", export data version 5 is greater than maximum supported version 4)`. Mitigations: the CI Code Quality job runs on Go 1.27.1, and `make lint` runs inside the pinned golangci-lint image, which bundles Go 1.27.1. Revert the CI pin to `1.27` once a golangci-lint release built with Go >= 1.27.2 exists. Note `go.mod` must stay at `go 1.27` (never `go 1.27.x`), otherwise the lint image's `GOTOOLCHAIN=auto` would fetch a newer toolchain inside the container and trip the same failure.
 
 ## Open Questions
 
