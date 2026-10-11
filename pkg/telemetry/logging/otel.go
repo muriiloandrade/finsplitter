@@ -8,8 +8,8 @@ import (
 
 	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 	"github.com/muriiloandrade/finsplitter/pkg/telemetry"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/log"
 )
 
@@ -41,7 +41,7 @@ func NewLoggerProvider(
 		log.WithProcessor(log.NewBatchProcessor(exporter)),
 		log.WithResource(res),
 	)
-	global.SetLoggerProvider(lp)
+	otel.SetLoggerProvider(lp)
 
 	logger.InfoContext(ctx, "logger provider initialized",
 		slog.String("service", opts.ServiceName()),
