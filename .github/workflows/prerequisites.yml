@@ -6,7 +6,7 @@ on:
             go-versions:
                 description: "Go versions to check (JSON array)"
                 required: false
-                default: '["1.26"]'
+                default: '["1.27"]'
                 type: string
 
 jobs:
@@ -32,11 +32,11 @@ jobs:
                   cache: true
 
             - name: Verify dependencies
-              run: GOEXPERIMENT=jsonv2 go mod verify
+              run: go mod verify
 
             - name: Verify go mod tidy
               run: |
-                  GOEXPERIMENT=jsonv2 go mod tidy
+                  go mod tidy
                   test -z "$(git status --porcelain go.mod go.sum)"
 
             - name: Verify SQLC generation

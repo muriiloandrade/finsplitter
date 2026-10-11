@@ -3,8 +3,6 @@ FROM golang:1.27.2-trixie@sha256:e58d6f83b3416618d8bcac2b3dde1b7f7e3c4a77d25e886
 
 WORKDIR /app
 
-ENV GOEXPERIMENT=jsonv2
-
 COPY go.* .
 
 RUN go mod download
@@ -18,7 +16,7 @@ ARG GIT_COMMIT
 ARG GIT_BUILD_TAG
 ARG BUILD_TIME
 
-RUN GOEXPERIMENT=jsonv2 CGO_ENABLED=0 go build \ 
+RUN CGO_ENABLED=0 go build \ 
     -ldflags "-X main.BuildCommit=${GIT_COMMIT} -X main.BuildTime=${BUILD_TIME} -X main.BuildTag=${GIT_BUILD_TAG}" \
     -o bin/finsplitter cmd/api/main.go
 

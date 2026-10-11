@@ -41,7 +41,6 @@ GOLANGCI_LINT_VERSION := v2.13.1-alpine@sha256:f5e7bd15e2dce6f78f976acc07075f320
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
-	-e GOEXPERIMENT=jsonv2 \
 	-v $(shell go env GOMODCACHE):/home/.cache/mod \
 	-e GOMODCACHE=/home/.cache/mod \
 	-v ~/.cache/golangci-lint:/home/.cache/golangci-lint \
@@ -123,15 +122,15 @@ code-check: format lint
 
 test:
 	@echo "==> Running unit tests (short mode, skips integration)"
-	@GOEXPERIMENT=jsonv2 go test -short ./...
+	@go test -short ./...
 
 test-int:
 	@echo "==> Running all non-e2e tests (unit + integration)"
-	@GOEXPERIMENT=jsonv2 go test ./...
+	@go test ./...
 
 test-e2e:
 	@echo "==> Running e2e tests"
-	@GOEXPERIMENT=jsonv2 go test -tags=e2e -v -run "^TestE2E" \
+	@go test -tags=e2e -v -run "^TestE2E" \
 	  ./internal/gateways/http/v1/auth/...
 
 test-watch:
@@ -139,7 +138,7 @@ test-watch:
 
 test-cov:
 	@echo "==> Running test coverage report"
-	@GOEXPERIMENT=jsonv2 go test -coverprofile=coverage.out $$(GOEXPERIMENT=jsonv2 go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
+	@go test -coverprofile=coverage.out $$(go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
 	@echo ""
 	@echo "==> Coverage by package:"
 	@go tool cover -func=coverage.out | grep -v "^total:" | grep -v "mocks.gen.go" | grep -v "/testutils/"
