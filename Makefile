@@ -10,7 +10,7 @@ UID=$(shell id -u)
 GID=$(shell id -g)
 
 # renovate: datasource=docker depName=migrate/migrate
-MIGRATE_VERSION := v4.19.1@sha256:cc4ad8e19d66791e3689405d9a028ce6e9614f32032db14acda1469f7201d6e4
+MIGRATE_VERSION := v4.20.1@sha256:76cc2074cb6642631f34a898ced71e6aeaa6b1a4d78c4daa743275a22e0c5be7
 MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
 	--add-host host.docker.internal:host-gateway \
 	-v $(MIGRATIONS_PATH):/migrations \
@@ -37,7 +37,7 @@ MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-w /src \
 	vektra/mockery:$(MOCKERY_VERSION)
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION := v2.13.1-alpine@sha256:f5e7bd15e2dce6f78f976acc07075f3208ce1a39b78f245f1ea984b2a39d105c
+GOLANGCI_LINT_VERSION := v2.14.0-alpine@sha256:25925c95ebdc7aee39ecc0e6f4f33ac27b9a91718bc65fdf18a1a5c4c9325ee4
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
