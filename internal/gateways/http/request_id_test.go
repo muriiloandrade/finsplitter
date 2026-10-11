@@ -16,9 +16,10 @@ import (
 // version field (RFC 9562 §4.2).
 const versionOctet = 6
 
-// discardLogger returns a logger that discards all output.
-func discardLogger() *slog.Logger {
-	return slog.New(slog.DiscardHandler)
+// testLogger returns a logger that writes to test output.
+func testLogger(t *testing.T) *slog.Logger {
+	t.Helper()
+	return slog.New(slog.NewTextHandler(t.Output(), nil))
 }
 
 // captureRequestIDHandler records the request ID seen by the downstream handler.
@@ -83,7 +84,7 @@ func TestNewRouter_AppliesRequestIDMiddleware(t *testing.T) {
 	t.Helper()
 
 	// Build the router using the global constructor
-	r := NewRouter(discardLogger())
+	r := NewRouter(testLogger(t))
 
 	// Create a request that will go through the middleware chain
 	req := httptest.NewRequest(http.MethodGet, "/any-path", nil)
