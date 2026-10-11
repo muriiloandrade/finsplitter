@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
@@ -19,7 +19,7 @@ import (
 
 func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
 	now := time.Now()
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.New()
 	cardBrand := &entity.CardBrand{
 		ID:               id,
 		Name:             "Visa",
@@ -71,7 +71,7 @@ func TestUpdateCardBrandUC_UpdateCardBrandSuccess(t *testing.T) {
 }
 
 func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
-	id := uuid.Must(uuid.NewV4())
+	id := uuid.New()
 
 	tests := []struct {
 		name      string
@@ -89,7 +89,7 @@ func TestUpdateCardBrandUC_UpdateCardBrandError(t *testing.T) {
 		},
 		{
 			name:      "returns error on empty id",
-			input:     ports.UpdateCardBrandOptions{ID: uuid.Nil, Name: "Visa"},
+			input:     ports.UpdateCardBrandOptions{ID: uuid.Nil(), Name: "Visa"},
 			repoSetup: func(_ *ports.MockUpdateCardBrandRepository) {},
 			txSetup:   func(_ *domain.MockTransactioner) {},
 			err:       errors.New("name and id are required"),

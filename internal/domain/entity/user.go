@@ -2,8 +2,7 @@ package entity
 
 import (
 	"time"
-
-	"github.com/gofrs/uuid/v5"
+	"uuid"
 )
 
 // User represents a registered Finsplitter user.

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -28,7 +28,7 @@ func makeTimestamp(t time.Time) pgtype.Timestamptz {
 func defaultUserRowValues() []any {
 	ts := makeTimestamp(time.Now())
 	return []any{
-		uuid.Must(uuid.NewV4()),
+		uuid.New(),
 		ptr("test-logto-id"),
 		ts,
 		ts,
@@ -96,7 +96,7 @@ func TestUserRepo_GetByID_Success(t *testing.T) {
 	repo := newMockUserRepo(nil)
 	ctx := context.Background()
 
-	user, err := repo.GetByID(ctx, uuid.Must(uuid.NewV4()))
+	user, err := repo.GetByID(ctx, uuid.New())
 
 	require.NoError(t, err)
 	require.NotNil(t, user)
@@ -108,7 +108,7 @@ func TestUserRepo_GetByID_NotFound(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	user, err := repo.GetByID(ctx, uuid.Must(uuid.NewV4()))
+	user, err := repo.GetByID(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, user)
@@ -121,7 +121,7 @@ func TestUserRepo_GetByID_GenericError(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	user, err := repo.GetByID(ctx, uuid.Must(uuid.NewV4()))
+	user, err := repo.GetByID(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, user)

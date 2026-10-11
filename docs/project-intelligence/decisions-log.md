@@ -27,7 +27,7 @@
 | M2M client credentials for management API | Service-level access to Logto (create users) | Token cache with 60s safety buffer |
 | Device token revocation (#219) | Security: users can revoke sessions | `/auth/device/revoke` endpoint + `device_revoke.go` use case |
 | Password auth disabled | Security: device grant only | No password storage, no reset flow |
-| `GOEXPERIMENT=jsonv2` required | jwx v4 depends on stdlib encoding/json/v2 | Must set env for all go build/test/run |
+| Go 1.27 toolchain (`GOEXPERIMENT` retired) | Go 1.27 stabilizes stdlib `encoding/json/v2`, the jwx v4 dependency | Plain `go build`/`go test`/`go run` — no env flag (previously `GOEXPERIMENT=jsonv2`) |
 
 ## Cross-Cutting
 
@@ -35,7 +35,7 @@
 |----------|-----------|--------|
 | Request ID propagation, slog-context removal (#231) | Trace requests end-to-end; context-based logging | `pkg/logctx` + `internal/gateways/http/request_id.go` |
 | ardanlabs/conf for env config | Declarative env parsing with struct tags | `conf` tags in `internal/config/config.go` |
-| gofrs/uuid/v5 for entity IDs | UUIDs avoid enumeration, merge-friendly | pgx type adapter (`pgx-gofrs-uuid`) + sqlc override |
+| stdlib `uuid` for entity IDs (was gofrs/uuid/v5) | UUIDs avoid enumeration + are merge-friendly; Go 1.27's first-party package drops 2 direct + 1 indirect deps | sqlc override (`import: uuid`) + native pgx v5 encode/scan — no `pgx-gofrs-uuid` adapter |
 | shopspring/decimal for money math | High-precision decimal arithmetic | Entity amounts stored as decimal, not float |
 | testcontainers-go for integration tests | Test against real Postgres/Valkey | `-short` skips; CI runs full suite |
 
@@ -44,11 +44,15 @@
 | Proposal | Status | Detail |
 |----------|--------|--------|
 | `ardanlabs/conf` → `knadh/koanf/v2` | Proposed | See `docs/plans/conf-to-koanf-migration.md`; koanf already indirect dep |
-| `gofrs/uuid/v5` → stdlib `uuid` (Go 1.27) | Blocked — mockery lacks Go 1.27 support | See `docs/plans/uuid-stdlib-migration.md` §0; migration attempted 2026-08-22, reverted; all steps verified except `make generate-mocks`; unblock = mockery release parsing go1.27 modules (renovate bumps pin) |
+## Completed
+
+| Change | Date | Detail |
+|--------|------|--------|
+| `gofrs/uuid/v5` → stdlib `uuid` | 2026-10-11 | Unblocked by mockery v3.8.0 (v3.7.3 could not parse go1.27 modules); `docs/plans/uuid-stdlib-migration.md` executed in full, including the `GOEXPERIMENT=jsonv2` removal |
 
 ## 📂 Codebase References
 
 - **Stack & architecture**: `technical-domain.md`, `business-tech-bridge.md`
 - **DI wiring**: `cmd/api/main.go`
 - **Config**: `internal/config/config.go`
-- **Plans**: `docs/plans/` (conf→koanf, uuid→stdlib)
+- **Plans**: `docs/plans/` (conf→koanf)

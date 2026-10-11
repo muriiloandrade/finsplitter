@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- Context: dox/root | Priority: critical | Version: 2.2 | Updated: 2026-08-14 -->
+<!-- Context: dox/root | Priority: critical | Version: 2.3 | Updated: 2026-10-11 -->
 
 # DOX framework
 
@@ -42,9 +42,9 @@ Update parent docs when parent-level structure, ownership, workflow, or child in
 
 Finsplitter is a Go backend API for expense management and splitting, using Clean Architecture (Ports & Adapters) with Huma v2 and PostgreSQL.
 
-**Stack**: Go 1.26.4 · Huma v2.39.1 · PostgreSQL 18 (pgx v5) · sqlc · Valkey/go-redis v9 · Logto (OIDC) · jwx/v4 + jwkfetch · OpenTelemetry · resty v3 · ardanlabs/conf
+**Stack**: Go 1.27 · Huma v2.39.1 · PostgreSQL 18 (pgx v5) · sqlc · Valkey/go-redis v9 · Logto (OIDC) · jwx/v4 + jwkfetch · OpenTelemetry · resty v3 · ardanlabs/conf
 
-**Build note**: `GOEXPERIMENT=jsonv2` required for all `go build`/`go test`/`go run` invocations (jwx v4 dependency).
+**Build note**: Go 1.27 stabilizes `encoding/json/v2` (the jwx v4 dependency), so no `GOEXPERIMENT` flag is needed — plain `go build`/`go test`/`go run` work.
 
 ## Essential Commands
 
@@ -90,8 +90,7 @@ make new-migration name=create_table_foo
 - Use sqlc for parameterized queries (SQL-injection safe)
 - Configuration via `ardanlabs/conf` with env vars
 - Test files `*_test.go` with table-driven tests, testify/mock
-- UUIDs for entity IDs (gofrs/uuid/v5), auto `last_modified_date` via trigger
-- `GOEXPERIMENT=jsonv2` required for all go build/test/run
+- UUIDs for entity IDs (stdlib `uuid`), auto `last_modified_date` via trigger
 - Extract interfaces for testability
 - Graceful degradation: non-critical infra failures (cache down) → warn + fallback
 - Compile-time interface satisfaction checks: `var _ Interface = (*Concrete)(nil)`

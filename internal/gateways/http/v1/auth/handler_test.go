@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"uuid"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	authUC "github.com/muriiloandrade/finsplitter/internal/app/usecases/auth"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
@@ -22,7 +22,7 @@ import (
 // ---------------------------------------------------------------------------
 
 func TestHandler_Register_Success(t *testing.T) {
-	userID := uuid.Must(uuid.NewV4())
+	userID := uuid.New()
 	mockUserRepo := ports.NewMockUserRepository(t)
 	mockCreator := authUC.NewMockLogtoUserCreator(t)
 
@@ -155,7 +155,7 @@ func TestHandler_Me_NoClaims(t *testing.T) {
 }
 
 func TestHandler_Me_Success(t *testing.T) {
-	userID := uuid.Must(uuid.NewV4())
+	userID := uuid.New()
 	mockUserRepo := ports.NewMockUserRepository(t)
 
 	mockUserRepo.EXPECT().

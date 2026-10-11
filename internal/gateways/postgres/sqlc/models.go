@@ -5,9 +5,9 @@
 package sqlc
 
 import (
-	uuid "github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
+	"uuid"
 )
 
 type Bill struct {

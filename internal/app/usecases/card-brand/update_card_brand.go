@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"errors"
+	"uuid"
 
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
@@ -28,7 +29,7 @@ func (uc *UpdateCardBrandUC) UpdateCardBrand(
 ) (*entity.CardBrand, error) {
 	var cardBrand *entity.CardBrand
 
-	if opts.Name == "" || opts.ID.IsNil() {
+	if opts.Name == "" || opts.ID == uuid.Nil() {
 		return nil, errors.New("name and id are required")
 	}
 

@@ -198,9 +198,11 @@ linters:
             - pkg: github.com/golang/protobuf
               desc: Use google.golang.org/protobuf instead, see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules
             - pkg: github.com/satori/go.uuid
-              desc: Use github.com/google/uuid instead, satori's package is not maintained
+              desc: Use the standard library uuid package (Go 1.27+) instead, satori's package is not maintained
             - pkg: github.com/gofrs/uuid$
-              desc: Use github.com/gofrs/uuid/v5 or later, it was not a go module before v5
+              desc: Use the standard library uuid package (Go 1.27+) instead
+            - pkg: github.com/gofrs/uuid/v5$
+              desc: Use the standard library uuid package (Go 1.27+) instead
         "non-test files":
           files:
             - "!$test"

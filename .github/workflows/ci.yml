@@ -21,15 +21,23 @@ jobs:
         permissions:
             contents: read
         with:
-            go-versions: '["1.26"]'
+            go-versions: '["1.27"]'
 
     quality:
         name: Code Quality
         needs: [checks]
         uses: ./.github/workflows/quality.yml
         with:
-            go-versions: '["1.26"]'
-            golangci-lint-version: "v2.13.1"
+            # Pinned to 1.27.1 rather than 1.27: Go 1.27.2 bumped the unified-IR
+            # export data format to V5, which golangci-lint binaries (built with
+            # go1.27.0) cannot decode:
+            #   could not load export data: internal error in importing
+            #   "internal/goarch" (cannot decode "internal/goarch", export data
+            #   version 5 is greater than maximum supported version 4)
+            # Revert to "1.27" once a golangci-lint release built with Go >= 1.27.2
+            # exists.
+            go-versions: '["1.27.1"]'
+            golangci-lint-version: "v2.14.0"
             timeout: "10m"
 
     test:
@@ -37,7 +45,7 @@ jobs:
         needs: [checks]
         uses: ./.github/workflows/test.yml
         with:
-            go-versions: '["1.26"]'
+            go-versions: '["1.27"]'
             upload-coverage: true
 
     security:
@@ -45,7 +53,7 @@ jobs:
         needs: [checks]
         uses: ./.github/workflows/security.yml
         with:
-            go-versions: '["1.26"]'
+            go-versions: '["1.27"]'
         permissions:
             security-events: write
             packages: read

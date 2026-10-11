@@ -1,4 +1,4 @@
-<!-- Context: gateways/http | Priority: critical | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: gateways/http | Priority: critical | Version: 1.1 | Updated: 2026-10-11 -->
 
 # HTTP Gateway (global router) — chi router assembly + request ID middleware
 
@@ -15,10 +15,10 @@
 ## Local Contracts
 
 - **Request ID**:
-  - Header `X-Request-ID` (`RequestIDHeader`); absent → generate UUID v4 via gofrs/uuid.
+  - Header `X-Request-ID` (`RequestIDHeader`); absent → generate UUID v4 via stdlib `uuid` (`uuid.New`).
   - Store with `logctx.WithRequestID(ctx, id)` under `logctx.RequestIDKey`; read via `logctx.GetRequestID`.
   - Custom middleware — do NOT switch to chi's `middleware.RequestID` (it generates hostname/counter IDs and exposes no generation hook; UUID v4 in every log line is a requirement).
-  - `newRequestID` must never panic: UUID failure → empty string, request still served.
+  - `newRequestID` takes an injected generator (`func() uuid.UUID`) so tests pin the output; production passes `uuid.New`. The stdlib `uuid` package cannot report a generation error — `uuid.New` reads `crypto/rand`, which crashes the program irrecoverably if the system source fails (not a recoverable panic) — so the former empty-string fallback is gone; an entropy failure is fatal upstream by design.
 - **Router assembly** (`NewRouter(*slog.Logger) *chi.Mux`):
   - Middleware order is significant: `RequestID` → `SupressNotFound` → `CleanPath` → otelchi → otelchimetric (request duration, active requests, response body size) → `Recoverer`.
   - otelchi filter blocklist (no spans): `/health/liveness`, `/health/readiness`, `/docs`, `/openapi.yaml`, `/openapi.json`.

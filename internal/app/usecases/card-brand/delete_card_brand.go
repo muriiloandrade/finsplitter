@@ -3,8 +3,8 @@ package usecases
 import (
 	"context"
 	"errors"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
@@ -28,7 +28,7 @@ func (uc *DeleteCardBrandUC) DeleteCardBrand(
 ) (*entity.CardBrand, error) {
 	var cardBrand *entity.CardBrand
 
-	if id.IsNil() {
+	if id == uuid.Nil() {
 		return nil, errors.New("id is required")
 	}
 

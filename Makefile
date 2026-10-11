@@ -10,7 +10,7 @@ UID=$(shell id -u)
 GID=$(shell id -g)
 
 # renovate: datasource=docker depName=migrate/migrate
-MIGRATE_VERSION := v4.19.1@sha256:cc4ad8e19d66791e3689405d9a028ce6e9614f32032db14acda1469f7201d6e4
+MIGRATE_VERSION := v4.20.1@sha256:76cc2074cb6642631f34a898ced71e6aeaa6b1a4d78c4daa743275a22e0c5be7
 MIGRATE_CMD = docker run --rm -u $(UID):$(GID) \
 	--add-host host.docker.internal:host-gateway \
 	-v $(MIGRATIONS_PATH):/migrations \
@@ -27,7 +27,7 @@ SQLC_CMD = docker run --rm -u $(UID):$(GID) \
 	-w /src \
 	sqlc/sqlc:$(SQLC_VERSION)
 # renovate: datasource=docker depName=vektra/mockery
-MOCKERY_VERSION := v3.7.3@sha256:d58ba74277bfd73af6bb44db2d8a97b86dbcfae9f385ec2c8bf61ae5b923cdb6
+MOCKERY_VERSION := v3.8.0@sha256:9cc494d37c32889cca1e0d68deb2712b26ef73eef05d55e6bbd4ad3c6b8b7184
 MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-e GOTOOLCHAIN=auto \
 	-e GOPATH=/tmp/mockery-gopath \
@@ -37,11 +37,10 @@ MOCKERY_CMD = docker run --rm -u $(UID):$(GID) \
 	-w /src \
 	vektra/mockery:$(MOCKERY_VERSION)
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCI_LINT_VERSION := v2.13.1-alpine@sha256:f5e7bd15e2dce6f78f976acc07075f3208ce1a39b78f245f1ea984b2a39d105c
+GOLANGCI_LINT_VERSION := v2.14.0-alpine@sha256:25925c95ebdc7aee39ecc0e6f4f33ac27b9a91718bc65fdf18a1a5c4c9325ee4
 GOLANGCI_LINT_CMD = docker run --rm -t -v $(shell pwd):/app -w /app \
 	-v $(shell go env GOCACHE):/home/.cache/go-build \
 	-e GOCACHE=/home/.cache/go-build \
-	-e GOEXPERIMENT=jsonv2 \
 	-v $(shell go env GOMODCACHE):/home/.cache/mod \
 	-e GOMODCACHE=/home/.cache/mod \
 	-v ~/.cache/golangci-lint:/home/.cache/golangci-lint \
@@ -123,15 +122,15 @@ code-check: format lint
 
 test:
 	@echo "==> Running unit tests (short mode, skips integration)"
-	@GOEXPERIMENT=jsonv2 go test -short ./...
+	@go test -short ./...
 
 test-int:
 	@echo "==> Running all non-e2e tests (unit + integration)"
-	@GOEXPERIMENT=jsonv2 go test ./...
+	@go test ./...
 
 test-e2e:
 	@echo "==> Running e2e tests"
-	@GOEXPERIMENT=jsonv2 go test -tags=e2e -v -run "^TestE2E" \
+	@go test -tags=e2e -v -run "^TestE2E" \
 	  ./internal/gateways/http/v1/auth/...
 
 test-watch:
@@ -139,7 +138,7 @@ test-watch:
 
 test-cov:
 	@echo "==> Running test coverage report"
-	@GOEXPERIMENT=jsonv2 go test -coverprofile=coverage.out $$(GOEXPERIMENT=jsonv2 go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
+	@go test -coverprofile=coverage.out $$(go list ./... | grep -v '/cmd/api' | grep -v '/api$$' | grep -v '/pkg/telemetry' | grep -v '/internal/config' | grep -v '/migrations' | grep -v '/sqlc')
 	@echo ""
 	@echo "==> Coverage by package:"
 	@go tool cover -func=coverage.out | grep -v "^total:" | grep -v "mocks.gen.go" | grep -v "/testutils/"

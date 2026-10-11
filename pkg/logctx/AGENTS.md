@@ -1,4 +1,4 @@
-<!-- Context: pkg/logctx | Priority: high | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: pkg/logctx | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
 
 # pkg/logctx — context-aware logging + request ID
 
@@ -47,7 +47,7 @@ Adding a new context value: copy the typed-key pattern above (private key type +
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test ./pkg/logctx/...
+go test ./pkg/logctx/...
 make test
 make code-check
 ```

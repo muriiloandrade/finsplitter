@@ -1,10 +1,12 @@
 # Migration: `gofrs/uuid/v5` → stdlib `uuid` (Go 1.27)
 
-> **Status**: ⛔ **BLOCKED** — awaiting mockery Go 1.27 support (see §0)
+> **Status**: ✅ **COMPLETED** — executed 2026-10-11 once mockery v3.8.0 landed (see §0 → Resolved, and Execution notes)
 > **Target Go version**: 1.27 (stdlib `uuid` package is new in Go 1.27)
 > **Dependencies removed**: `github.com/gofrs/uuid/v5`, `github.com/jackc/pgx-gofrs-uuid`, `github.com/google/uuid` (indirect)
 
-## 0. Blocker — mockery cannot parse Go 1.27 modules (discovered 2026-08-22)
+## 0. Blocker — mockery could not parse Go 1.27 modules (2026-08-22 → resolved 2026-10-11)
+
+> **Resolved**: mockery `v3.8.0` parses go1.27 modules **and** ships a Docker image built with go1.27.1, clearing both unblock criteria. Pre-flight passed (`go.mod` → `go 1.27`, then `make generate-mocks`), and §5 was executed in full on `feat/uuid-stdlib-migration`.
 
 The migration was executed through the code-swap stage on `feat/uuid-stdlib-migration` and reverted. Everything worked **except mock generation**:
 
@@ -16,10 +18,10 @@ The migration was executed through the code-swap stage on `feat/uuid-stdlib-migr
 | sqlc-generated queries at runtime (create/get/update/delete/list/exists, both tables) | ✅ integration suite green |
 | jwx-dependent packages flag-less (logto, auth UCs, http auth) | ✅ validation-gate step 1 green |
 | `GOEXPERIMENT=jsonv2` inert on 1.27 (§3.7) | ✅ empirically verified |
-| `make generate-mocks` (`vektra/mockery:v3.7.3` docker image) | ❌ image built with go1.26 → `package requires newer Go version go1.27 (application built with go1.26)` |
+| `make generate-mocks` (`vektra/mockery:v3.7.3` docker image) | ❌ image built with go1.26 → `package requires newer Go version go1.27 (application built with go1.26)` — ✅ fixed in v3.8.0 (see §0 Resolved) |
 | Workaround: `go run github.com/vektra/mockery/v3@v3.7.3` under local go1.27 | ❌ `internal error: package "context" without types was imported from ".../internal/domain"` — v3.7.3's embedded x/tools loader predates go1.27 export data |
 
-As of 2026-08-22, **v3.7.3 is the newest mockery release** (2026-08-12) — there is no newer version to pin.
+As of 2026-08-22, **v3.7.3 was the newest mockery release** (2026-08-12) — there was no newer version to pin. Superseded by **v3.8.0** (2026-10-11), the release that unblocked this migration.
 
 ### Validation scope (disposable worktree, 2026-08-22)
 
@@ -221,6 +223,21 @@ Docs / DOX pass (same commit or follow-up):
 9. Strip `GOEXPERIMENT=jsonv2` from Makefile, Dockerfile, compose.yml, workflows, `.env.example` (§3.7 table).
 10. `make test` + `make code-check` (now flag-less by construction).
 11. DOX pass: update AGENTS.md chain + project-intelligence docs (uuid mentions + GOEXPERIMENT mentions).
+
+## Execution notes (2026-10-11)
+
+Deviations from the plan as written — all verified green:
+
+| Item | What changed |
+|------|--------------|
+| `internal/gateways/http/request_id.go` (omitted from §3.4) | `newRequestID`'s generator went `func() (uuid.UUID, error)` → `func() uuid.UUID`; production passes `uuid.New`. The "UUID failure → empty string" fallback was **removed, not translated**: stdlib `uuid.New` reads `crypto/rand`, whose `Read` "crashes the program irrecoverably" on entropy failure, so no `recover` could honour that contract. `TestNewRequestID_ReturnsEmptyWhenGeneratorFails` became `TestNewRequestID_FormatsGeneratorOutput`, and the `internal/gateways/http/AGENTS.md` contract was updated to match. `parsed.Version()` in the test became an octet-nibble assertion (stdlib `uuid` has no `Version()`). |
+| CI Go matrix (omitted from §3.7) | `go.mod` now declares `go 1.27`, so `go-versions` went `["1.26"]` → `["1.27"]` in `ci.yml` (×4) plus the `test`/`prerequisites`/`quality`/`security` workflow defaults. Without this, setup-go 1.26 cannot build the module. |
+| `.zed/settings.json` (omitted from §3.7) | Its gopls `GOEXPERIMENT=jsonv2` env override existed only for the old flag; the file is now `{}`. |
+| Lint follow-up | The `uuid.Must(uuid.NewV4())` → `uuid.New()` swap left two `func() uuid.UUID { return uuid.New() }` lambdas that gocritic's `unlambda` rejected; both became `setupID: uuid.New`. |
+| `google/uuid` | Still an indirect dependency of another module, so `go mod tidy` legitimately keeps it (the plan's "if unused elsewhere" caveat applies). |
+| Version stamps | Every touched AGENTS.md and the project-intelligence docs got a version bump + `Updated: 2026-10-11` per the DOX pass. |
+
+Verified: unit suite, postgres integration suite (real Postgres 18.4, **no** codec registration), e2e, and all four flag-less §3.7 gates green; `make code-check` reports 0 issues with `GOEXPERIMENT` gone from every file.
 
 ## Appendix A — custom pgx codec (verified NOT needed)
 

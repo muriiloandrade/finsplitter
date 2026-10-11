@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/gofrs/uuid/v5"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain/entity"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
@@ -18,7 +18,7 @@ import (
 
 func TestCreateCardBrandHandler(t *testing.T) {
 	ctx := context.Background()
-	brandID := uuid.Must(uuid.NewV4())
+	brandID := uuid.New()
 	now := time.Now()
 
 	tests := []struct {

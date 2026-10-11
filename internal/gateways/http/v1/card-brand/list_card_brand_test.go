@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
@@ -39,8 +39,8 @@ func TestListCardBrandsHandler(t *testing.T) {
 			},
 			ucSetup: func(uc *usecases.MockListCardBrandsUseCase) {
 				brands := []entity.CardBrand{
-					{ID: uuid.Must(uuid.NewV4()), Name: "Visa", CreatedDate: now, LastModifiedDate: now},
-					{ID: uuid.Must(uuid.NewV4()), Name: "Mastercard", CreatedDate: now, LastModifiedDate: now},
+					{ID: uuid.New(), Name: "Visa", CreatedDate: now, LastModifiedDate: now},
+					{ID: uuid.New(), Name: "Mastercard", CreatedDate: now, LastModifiedDate: now},
 				}
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
 					Pagination: domain.Pagination{PageSize: 10, PageNumber: 1}, Name: &emptyStr,
@@ -94,7 +94,7 @@ func TestListCardBrandsHandler(t *testing.T) {
 			ucSetup: func(uc *usecases.MockListCardBrandsUseCase) {
 				name := "Visa"
 				brands := []entity.CardBrand{
-					{ID: uuid.Must(uuid.NewV4()), Name: "Visa", CreatedDate: now, LastModifiedDate: now},
+					{ID: uuid.New(), Name: "Visa", CreatedDate: now, LastModifiedDate: now},
 				}
 				uc.On("ListCardBrands", mock.Anything, ports.ListCardBrandFilterOptions{
 					Name:       &name,

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -39,7 +39,7 @@ func newMockCardBrandRepo(fns mockCBFuncs) *CardBrandRepository {
 func defaultCBRow() *mockRow {
 	ts := pgtype.Timestamptz{Time: time.Now(), Valid: true}
 	return &mockRow{
-		values: []any{uuid.Must(uuid.NewV4()), "Visa", ts, ts},
+		values: []any{uuid.New(), "Visa", ts, ts},
 	}
 }
 
@@ -134,7 +134,7 @@ func TestCardBrandRepo_GetByID_Success(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.GetCardBrandByID(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.GetCardBrandByID(ctx, uuid.New())
 
 	require.NoError(t, err)
 	require.NotNil(t, brand)
@@ -149,7 +149,7 @@ func TestCardBrandRepo_GetByID_NotFound(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.GetCardBrandByID(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.GetCardBrandByID(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -164,7 +164,7 @@ func TestCardBrandRepo_GetByID_NonPgError(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.GetCardBrandByID(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.GetCardBrandByID(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -180,14 +180,14 @@ func TestCardBrandRepo_Update_Success(t *testing.T) {
 	repo := newMockCardBrandRepo(mockCBFuncs{
 		queryRowFn: func(_ context.Context, _ string, _ ...any) pgx.Row {
 			return &mockRow{
-				values: []any{uuid.Must(uuid.NewV4()), "UpdatedName", ts, ts},
+				values: []any{uuid.New(), "UpdatedName", ts, ts},
 			}
 		},
 	})
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "UpdatedName",
 	})
 
@@ -205,7 +205,7 @@ func TestCardBrandRepo_Update_NotFound(t *testing.T) {
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "Ghost",
 	})
 
@@ -223,7 +223,7 @@ func TestCardBrandRepo_Update_UniqueViolation(t *testing.T) {
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "Duplicate",
 	})
 
@@ -241,7 +241,7 @@ func TestCardBrandRepo_Update_ForeignKeyViolation(t *testing.T) {
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "Invalid",
 	})
 
@@ -259,7 +259,7 @@ func TestCardBrandRepo_Update_DefaultPgError(t *testing.T) {
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "Bad",
 	})
 
@@ -277,7 +277,7 @@ func TestCardBrandRepo_Update_NonPgError(t *testing.T) {
 	ctx := context.Background()
 
 	brand, err := repo.UpdateCardBrand(ctx, ports.UpdateCardBrandOptions{
-		ID:   uuid.Must(uuid.NewV4()),
+		ID:   uuid.New(),
 		Name: "Fail",
 	})
 
@@ -298,7 +298,7 @@ func TestCardBrandRepo_Delete_Success(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.DeleteCardBrand(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.DeleteCardBrand(ctx, uuid.New())
 
 	require.NoError(t, err)
 	require.NotNil(t, brand)
@@ -312,7 +312,7 @@ func TestCardBrandRepo_Delete_NotFound(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.DeleteCardBrand(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.DeleteCardBrand(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -327,7 +327,7 @@ func TestCardBrandRepo_Delete_ForeignKeyViolation(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.DeleteCardBrand(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.DeleteCardBrand(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -342,7 +342,7 @@ func TestCardBrandRepo_Delete_DefaultPgError(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.DeleteCardBrand(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.DeleteCardBrand(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -357,7 +357,7 @@ func TestCardBrandRepo_Delete_NonPgError(t *testing.T) {
 	})
 	ctx := context.Background()
 
-	brand, err := repo.DeleteCardBrand(ctx, uuid.Must(uuid.NewV4()))
+	brand, err := repo.DeleteCardBrand(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, brand)
@@ -374,8 +374,8 @@ func TestCardBrandRepo_List_Success(t *testing.T) {
 		queryFn: func(_ context.Context, _ string, _ ...any) (pgx.Rows, error) {
 			return &mockRows{
 				rows: [][]any{
-					{uuid.Must(uuid.NewV4()), "Visa", ts, ts},
-					{uuid.Must(uuid.NewV4()), "Mastercard", ts, ts},
+					{uuid.New(), "Visa", ts, ts},
+					{uuid.New(), "Mastercard", ts, ts},
 				},
 			}, nil
 		},
@@ -430,7 +430,7 @@ func TestCardBrandRepo_List_ScanError(t *testing.T) {
 	repo := newMockCardBrandRepo(mockCBFuncs{
 		queryFn: func(_ context.Context, _ string, _ ...any) (pgx.Rows, error) {
 			return &mockRows{
-				rows:    [][]any{{uuid.Must(uuid.NewV4()), "Visa", ts, ts}},
+				rows:    [][]any{{uuid.New(), "Visa", ts, ts}},
 				scanErr: errors.New("column mismatch"),
 			}, nil
 		},

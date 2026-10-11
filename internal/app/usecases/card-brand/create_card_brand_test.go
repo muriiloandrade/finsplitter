@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	usecases "github.com/muriiloandrade/finsplitter/internal/app/usecases/card-brand"
 	"github.com/muriiloandrade/finsplitter/internal/domain"
@@ -20,7 +20,7 @@ import (
 func TestCreateCardBrandUC_CreateCardBrandSuccess(t *testing.T) {
 	// Setup test data
 	now := time.Now()
-	sampleUUID := uuid.Must(uuid.NewV4())
+	sampleUUID := uuid.New()
 	validCardBrand := &entity.CardBrand{
 		ID:               sampleUUID,
 		Name:             "Visa",

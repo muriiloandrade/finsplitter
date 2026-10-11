@@ -1,14 +1,16 @@
 module github.com/muriiloandrade/finsplitter
 
-go 1.26.6
+go 1.27
 
 require (
+	github.com/ardanlabs/conf/v3 v3.13.0
 	github.com/danielgtaylor/huma/v2 v2.39.1
 	github.com/dusted-go/logging v1.3.0
 	github.com/exaring/otelpgx v0.12.0
-	github.com/gofrs/uuid/v5 v5.5.1
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
+	github.com/jackc/pgx-shopspring-decimal v0.0.0-20220624020537-1d36b5a1853e
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jwx-go/jwkfetch/v4 v4.0.4
 	github.com/lestrrat-go/jwx/v4 v4.5.0
@@ -74,6 +76,7 @@ require (
 	github.com/go-delve/delve v1.27.2 // indirect
 	github.com/go-delve/liner v1.2.3-0.20231231155935-4726ab1d7f62 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
+	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
@@ -82,6 +85,7 @@ require (
 	github.com/google/go-dap v0.12.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.3 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -142,6 +146,8 @@ require (
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
+	github.com/spf13/cobra v1.10.2 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/testcontainers/testcontainers-go v0.44.0 // indirect
 	github.com/tidwall/jsonc v0.3.3 // indirect
@@ -171,17 +177,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260819154853-08b0e4226688 // indirect
 	google.golang.org/grpc v1.83.1 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-)
-
-require (
-	github.com/ardanlabs/conf/v3 v3.13.0
-	github.com/go-chi/chi/v5 v5.3.2
-	github.com/go-logr/logr v1.4.4 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
-	github.com/jackc/pgx-shopspring-decimal v0.0.0-20220624020537-1d36b5a1853e
-	github.com/spf13/cobra v1.10.2 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 )
 
 tool (

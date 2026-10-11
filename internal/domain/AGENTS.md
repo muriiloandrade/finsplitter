@@ -1,4 +1,4 @@
-<!-- Context: internal/domain | Priority: critical | Version: 1.1 | Updated: 2026-08-22 -->
+<!-- Context: internal/domain | Priority: critical | Version: 1.2 | Updated: 2026-10-11 -->
 
 # internal/domain — Entities, domain errors, transactioner, shared value objects
 
@@ -11,11 +11,11 @@
 - `internal/domain/transactioner.go` — `Transactioner` interface, `TransactionFunc`, `HasTX`/`WithTx` context markers
 - `internal/domain/pagination.go` — `Pagination` value object (page-bound list options + `Offset()`); embed it in new list filter options instead of duplicating PageSize/PageNumber fields
 - `internal/domain/mocks.gen.go` — generated `MockTransactioner`
-- Must NOT import `internal/app/**`, `internal/gateways/**`, or `pkg/**` — only stdlib + `gofrs/uuid/v5`
+- Must NOT import `internal/app/**`, `internal/gateways/**`, or `pkg/**` — only stdlib (incl. `uuid`)
 
 ## Local Contracts
 
-- Entities are thin data holders: `gofrs/uuid/v5` IDs, `json` tags, timestamps; no business methods
+- Entities are thin data holders: stdlib `uuid` IDs, `json` tags, timestamps; no business methods
 - `User.LogtoUserID` carries `json:"-"` — never serialized or returned by the API (security)
 - Domain errors are sentinel values (`errors.New`) grouped by concern; consumers check with `errors.Is()`, sources wrap with `%w`
 - `Transactioner.WithTx(ctx, fn)` + `TransactionFunc` — the only way use cases run transactions
@@ -38,7 +38,7 @@ Consumers compare with `errors.Is(err, errs.ErrCardBrandNotFound)` — never `er
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test -short ./internal/domain/...
+go test -short ./internal/domain/...
 make test          # unit tests
 make code-check    # format + lint
 ```

@@ -3,8 +3,8 @@ package postgres_test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/muriiloandrade/finsplitter/internal/app/ports"
 	"github.com/muriiloandrade/finsplitter/internal/domain/errs"
 	"github.com/muriiloandrade/finsplitter/internal/gateways/postgres"
@@ -45,7 +45,7 @@ func TestUserRepository_Create_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, user)
-	assert.NotEqual(t, uuid.Nil, user.ID)
+	assert.NotEqual(t, uuid.Nil(), user.ID)
 	assert.Equal(t, testLogtoUserID, user.LogtoUserID)
 	assert.NotZero(t, user.CreatedDate)
 	assert.NotZero(t, user.LastModifiedDate)
@@ -86,7 +86,7 @@ func TestUserRepository_GetByID_Success(t *testing.T) {
 func TestUserRepository_GetByID_NotFound(t *testing.T) {
 	ctx, repo := setupUserRepo(t)
 
-	user, err := repo.GetByID(ctx, uuid.Must(uuid.NewV4()))
+	user, err := repo.GetByID(ctx, uuid.New())
 
 	require.Error(t, err)
 	assert.Nil(t, user)

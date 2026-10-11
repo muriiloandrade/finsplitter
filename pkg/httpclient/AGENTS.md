@@ -1,4 +1,4 @@
-<!-- Context: pkg/httpclient | Priority: high | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: pkg/httpclient | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
 
 # pkg/httpclient — resty v3 wrapper
 
@@ -48,7 +48,7 @@ To add an option: declare `WithX(...)` returning `Option` that calls the matchin
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test ./pkg/httpclient/...
+go test ./pkg/httpclient/...
 make test
 make code-check
 ```

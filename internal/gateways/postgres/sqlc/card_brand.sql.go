@@ -8,7 +8,7 @@ package sqlc
 import (
 	"context"
 
-	uuid "github.com/gofrs/uuid/v5"
+	"uuid"
 )
 
 const CreateCardBrand = `-- name: CreateCardBrand :one

@@ -13,8 +13,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"uuid"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/lestrrat-go/jwx/v4/jwa"
 	"github.com/lestrrat-go/jwx/v4/jwk"
 	"github.com/lestrrat-go/jwx/v4/jwt"
@@ -182,8 +182,8 @@ func (m *mockOIDCProvider) NewDeviceCode() (string, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	dc := uuid.Must(uuid.NewV4()).String()
-	uc := uuid.Must(uuid.NewV4()).String()[:8]
+	dc := uuid.New().String()
+	uc := uuid.New().String()[:8]
 	m.deviceCodes[dc] = &deviceCode{
 		code:      dc,
 		state:     deviceCodePending,
@@ -240,7 +240,7 @@ func (m *mockOIDCProvider) AddUser(email, password, name, username string) strin
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	id := uuid.Must(uuid.NewV4()).String()
+	id := uuid.New().String()
 	m.users[email] = &oidcUser{
 		ID:       id,
 		Email:    email,
@@ -254,7 +254,7 @@ func (m *mockOIDCProvider) AddUser(email, password, name, username string) strin
 // newRefreshToken generates a unique refresh token and stores it for the user.
 // Returns the raw token string. The caller must hold m.mu.
 func (m *mockOIDCProvider) newRefreshToken(user *oidcUser) string {
-	rt := uuid.Must(uuid.NewV4()).String()
+	rt := uuid.New().String()
 	m.refreshTokens[rt] = user
 	return rt
 }

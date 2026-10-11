@@ -1,4 +1,4 @@
-<!-- Context: internal/app/ports | Priority: critical | Version: 1.1 | Updated: 2026-08-22 -->
+<!-- Context: internal/app/ports | Priority: critical | Version: 1.2 | Updated: 2026-10-11 -->
 
 # internal/app/ports — Repository & service contracts
 
@@ -20,7 +20,7 @@
 - Imports limited to `context`, `domain`, `entity`, `uuid`
 - Shared page-bound options go in `domain.Pagination` (embed it in list filter options); do not re-declare PageSize/PageNumber fields per option struct
 - Implementers (gateways) assert satisfaction: `var _ ports.UserRepository = (*postgres.UserRepository)(nil)`
-- No `go:generate` directives in source — mocks are driven by `.mockery.yml` (mockery v3.7.3 via Docker, testify template)
+- No `go:generate` directives in source — mocks are driven by `.mockery.yml` (mockery v3.8.0 via Docker, testify template)
 
 ## Work Guidance
 
@@ -42,7 +42,7 @@ type CreateCardRepository interface {
 
 ```bash
 make generate-mocks                              # regenerate mocks.gen.go after interface changes
-GOEXPERIMENT=jsonv2 go test -short ./internal/app/...
+go test -short ./internal/app/...
 make code-check                                  # format + lint (includes mocks.gen.go)
 ```
 

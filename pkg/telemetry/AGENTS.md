@@ -1,4 +1,4 @@
-<!-- Context: pkg/telemetry | Priority: high | Version: 1.0 | Updated: 2026-08-12 -->
+<!-- Context: pkg/telemetry | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
 
 # pkg/telemetry — OpenTelemetry setup
 
@@ -56,7 +56,7 @@ To add a provider sub-package: follow the tracing/metrics/logging shape — `New
 ## Verification
 
 ```bash
-GOEXPERIMENT=jsonv2 go test ./pkg/telemetry/...
+go test ./pkg/telemetry/...
 make test
 make code-check
 ```
