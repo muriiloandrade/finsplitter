@@ -1,8 +1,8 @@
-<!-- Context: pkg/telemetry | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
+<!-- Context: pkg/telemetry | Priority: high | Version: 1.2 | Updated: 2026-10-11 -->
 
 # pkg/telemetry — OpenTelemetry setup
 
-**Purpose**: Central OTel v1.45.0 bootstrap: shared functional options, resource detection, shutdown contract, and one provider per concern in the sub-packages `tracing/`, `metrics/`, `logging/`. Project instrumentation stack: otelchi (server), otelhttp (client), otelpgx (DB), otelslog (log bridge), b3 + W3C propagators.
+**Purpose**: Central OTel v1.47.0 bootstrap: shared functional options, resource detection, shutdown contract, and one provider per concern in the sub-packages `tracing/`, `metrics/`, `logging/`. Project instrumentation stack: otelchi (server), otelhttp (client), otelpgx (DB), otelslog (log bridge), b3 + W3C propagators.
 
 ## Ownership
 
@@ -18,7 +18,7 @@
 
 - All providers are built from `telemetry.Options` obtained via `NewOptions(opts...)` — `WithServiceName` and `WithExporterURL` are required (error otherwise). Defaults: version "local", env "development", exporter timeout 10s, metric export interval 60s.
 - OTLP HTTP exporters only (gzip compression, 500ms initial retry, timeout from options; `WithInsecure(true)` for local dev only).
-- Each `New*Provider` sets the GLOBAL provider (`otel.SetTracerProvider` / `otel.SetMeterProvider` / `global.SetLoggerProvider`) — they are process singletons; bootstrap once in `cmd/api`.
+- Each `New*Provider` sets the GLOBAL provider via the root `go.opentelemetry.io/otel` package (`otel.SetTracerProvider` / `otel.SetMeterProvider` / `otel.SetLoggerProvider`) — they are process singletons; bootstrap once in `cmd/api`. The `go.opentelemetry.io/otel/log/global` package is deprecated as of the stable Logs release (v1.47.0) and must not be used.
 - Propagators set once in `tracing`: W3C TraceContext + Baggage + b3 (single + multiple header).
 - Every provider returns a `telemetry.ShutdownFunc`; callers MUST invoke it on app exit to flush telemetry.
 - Dependency direction: sub-packages import the parent (Options/Resource/ShutdownFunc); the parent NEVER imports sub-packages.
