@@ -15,28 +15,19 @@ on:
                 type: string
 
 jobs:
-    analyze:
-        name: Analyze (${{ matrix.language }})
+    # Gosec Security Scanner Job (quick scan)
+    gosec:
+        name: Gosec Security Scan
         runs-on: "ubuntu-latest"
         permissions:
             security-events: write
             packages: read
             actions: read
             contents: read
-
         strategy:
-            fail-fast: false
             matrix:
                 go-version: ${{ fromJSON(inputs.go-versions) }}
-                include:
-                    - language: actions
-                      build-mode: none
-                    - language: go
-                      build-mode: autobuild
         steps:
-            - name: Checkout repository
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -55,6 +46,36 @@ jobs:
               uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
               with:
                   sarif_file: gosec-results.sarif
+
+    # CodeQL Analysis Jobs (thorough scan)
+    codeql:
+        name: CodeQL Analysis (${{ matrix.language }})
+        runs-on: "ubuntu-latest"
+        permissions:
+            security-events: write
+            packages: read
+            actions: read
+            contents: read
+
+        strategy:
+            fail-fast: false
+            matrix:
+                go-version: ${{ fromJSON(inputs.go-versions) }}
+                include:
+                    - language: actions
+                      build-mode: none
+                    - language: go
+                      build-mode: autobuild
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+            - name: Set up Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+              with:
+                  go-version: ${{ matrix.go-version }}
+                  cache: true
 
             - name: Initialize CodeQL
               uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
