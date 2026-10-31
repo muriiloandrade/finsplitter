@@ -8,7 +8,7 @@
 
 | Item | Status | Where |
 |------|--------|-------|
-| `conf` → `koanf` migration | Proposed — plan written | `docs/plans/conf-to-koanf-migration.md` |
+| `conf` → `koanf` migration | Done 2026-10-31 — executed | `docs/plans/conf-to-koanf-migration.md` |
 | DOX AGENTS.md migration | Done 2026-08-12 — validate as used | Root `AGENTS.md` + 15 child docs |
 
 ## Technical Debt / Bugs Found (2026-08-12 audit)

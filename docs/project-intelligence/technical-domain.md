@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: high | Version: 2.1 | Updated: 2026-08-13 -->
+<!-- Context: project-intelligence/technical | Priority: high | Version: 2.2 | Updated: 2026-10-31 -->
 
 # Technical Domain
 
@@ -23,7 +23,7 @@
 | Identity/Auth | Logto (OIDC) + jwx/v4 + jwkfetch | — | Self-hosted, JWT+JWKS + device grant |
 | Observability | OpenTelemetry + slog | — | Vendor-neutral traces/metrics/logs |
 | HTTP Client | resty v3 (via `pkg/httpclient`) | — | Retry, timeout, OTel hooks |
-| Config | ardanlabs/conf | v3 | Declarative env parsing (→ koanf proposed) |
+| Config | knadh/koanf/v2 | v2.3.7 | Env-based config via koanf (env provider + defaults; replaces ardanlabs/conf) |
 | IDs | stdlib `uuid` | — | UUIDs for entity IDs (first-party since Go 1.27) |
 | Money | shopspring/decimal | — | Precise monetary math |
 | Testing | testify + mockery + testcontainers-go | — | Mocks + real-Postgres integration tests |
@@ -54,7 +54,7 @@ finsplitter/
 │   ├── app/
 │   │   ├── ports/            # Repository interfaces (contracts)
 │   │   └── usecases/         # Business logic: auth, card-brand, profile
-│   ├── config/               # Env config (ardanlabs/conf)
+│   ├── config/               # Env config (knadh/koanf)
 │   ├── domain/               # Entities, domain errors, transactioner
 │   └── gateways/
 │       ├── http/             # Router, request ID middleware

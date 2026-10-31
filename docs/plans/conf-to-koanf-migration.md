@@ -1,7 +1,7 @@
 # Migration: `ardanlabs/conf/v3` → `knadh/koanf/v2`
 
-> **Status**: Proposed
-> **Dependencies**: `github.com/knadh/koanf/v2` (already an indirect dep, v2.3.5 — will become direct)
+> **Status**: Executed 2026-10-31
+> **Dependencies**: `github.com/knadh/koanf/v2` v2.3.7 (now direct) + `github.com/knadh/koanf/providers/env` v1.1.0
 > **Dependencies removed**: `github.com/ardanlabs/conf/v3`
 
 ## 1. Why

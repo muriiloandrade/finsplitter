@@ -3,7 +3,6 @@ module github.com/muriiloandrade/finsplitter
 go 1.27.0
 
 require (
-	github.com/ardanlabs/conf/v3 v3.13.0
 	github.com/danielgtaylor/huma/v2 v2.40.0
 	github.com/dusted-go/logging v1.3.0
 	github.com/exaring/otelpgx v0.13.0
@@ -13,6 +12,8 @@ require (
 	github.com/jackc/pgx-shopspring-decimal v0.0.0-20220624020537-1d36b5a1853e
 	github.com/jackc/pgx/v5 v5.12.0
 	github.com/jwx-go/jwkfetch/v4 v4.0.4
+	github.com/knadh/koanf/providers/env v1.1.0
+	github.com/knadh/koanf/v2 v2.3.7
 	github.com/lestrrat-go/jwx/v4 v4.6.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0
 	github.com/redis/go-redis/v9 v9.23.0
@@ -102,7 +103,6 @@ require (
 	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
 	github.com/knadh/koanf/providers/fs v1.0.1 // indirect
 	github.com/knadh/koanf/providers/rawbytes v1.0.1 // indirect
-	github.com/knadh/koanf/v2 v2.3.7 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.4.0 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
