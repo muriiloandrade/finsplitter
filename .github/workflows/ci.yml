@@ -63,7 +63,7 @@ jobs:
     docker-build:
         name: Docker Build
         if: github.event_name == 'pull_request'
-        needs: [quality, test, security, checks]
+        needs: [checks]
         uses: ./.github/workflows/docker-build.yml
         with:
             platforms: "linux/amd64"
