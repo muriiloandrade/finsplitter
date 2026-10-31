@@ -1,10 +1,10 @@
-<!-- Context: internal/config | Priority: high | Version: 1.1 | Updated: 2026-10-11 -->
+<!-- Context: internal/config | Priority: high | Version: 1.2 | Updated: 2026-10-31 -->
 
 # internal/config — Environment configuration
 
-**Purpose**: Loads all runtime configuration from environment variables using `ardanlabs/conf/v3` struct tags. Single source of truth for env var names, defaults, and required values. Consumed only by `cmd/api`.
+**Purpose**: Loads all runtime configuration from environment variables using `knadh/koanf/v2` struct tags. Single source of truth for env var names, defaults, and required values. Consumed only by `cmd/api`.
 
-> ⚠️ **Planned, not done**: a migration to `knadh/koanf/v2` is proposed in `docs/plans/conf-to-koanf-migration.md` (Status: Proposed). Keep `ardanlabs/conf` conventions until that plan is executed.
+> Migration executed (2026-10-31): configuration now loads via `knadh/koanf/v2` (env provider + defaults + `validate`); `ardanlabs/conf/v3` was removed. Keep `koanf` conventions.
 
 ## Ownership
 
@@ -15,24 +15,24 @@
 ## Local Contracts
 
 - Flat env var names, no prefix: `APP_PORT`, `PG_USER`, `LOGTO_OIDC_ENDPOINT`, `OTEL_ENABLED`, ...
-- Struct tags: `conf:"env:NAME,default:VALUE"`; required vars use `required` (`PG_USER`, `PG_PASS`, `PG_HOST`, `PG_DB`)
-- `LoadEnv(buildTag, buildCommit, buildTime)` returns `nil` on any parse failure → caller (`main`) panics
+- Struct tags: `koanf:"key"` (e.g. `koanf:"db.pool.max_conns"`); required vars are validated in `Config.validate` (`PG_USER`, `PG_PASS`, `PG_HOST`, `PG_DB`)
+- `LoadEnv(buildTag, buildCommit, buildTime)` returns `nil` when loading or validation fails → caller (`main`) panics
 - Build info (`BuildTag`/`BuildCommit`/`BuildTime`) set after parse from ldflags — not env-driven
 - Secrets (`PG_PASS`, `LOGTO_MGMT_CLIENT_SECRET`, `LOGTO_APP_CLIENT_SECRET`) must never be logged or printed
 - Sensible defaults for everything non-required (DB pool, OTel, Redis URL)
 
 ## Work Guidance
 
-Add a setting to the right section struct with a `conf` tag; add a default if optional:
+Add a setting to the right section struct with a `koanf` tag; add a default if optional:
 
 ```go
 type Database struct {
     // ...
-    MaxReplicas int32 `conf:"env:PG_MAX_REPLICAS,default:0"`
+    MaxReplicas int32 `koanf:"max_replicas"`
 }
 ```
 
-Required vars get the `required` keyword. Cover every new var in `config_test.go` (table-driven env → value assertions). If the koanf migration lands, switch tags to `koanf:"key"` and update the mapping table in the plan doc.
+Required vars are enforced via `Config.validate`. Cover every new var in `config_test.go` (table-driven env → value assertions). The koanf migration landed; keep `koanf:"key"` tags and the env → koanf mapping in `envKeyToKoanfKey` in sync with the plan doc's Appendix A.
 
 ## Verification
 
@@ -50,4 +50,4 @@ No child AGENTS.md files needed — flat package.
 
 - `internal/config/config.go`
 - `internal/config/config_test.go`
-- `docs/plans/conf-to-koanf-migration.md` — planned koanf migration
+- `docs/plans/conf-to-koanf-migration.md` — executed koanf migration (2026-10-31)

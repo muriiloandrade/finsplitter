@@ -42,7 +42,7 @@ Update parent docs when parent-level structure, ownership, workflow, or child in
 
 Finsplitter is a Go backend API for expense management and splitting, using Clean Architecture (Ports & Adapters) with Huma v2 and PostgreSQL.
 
-**Stack**: Go 1.27 · Huma v2.39.1 · PostgreSQL 18 (pgx v5) · sqlc · Valkey/go-redis v9 · Logto (OIDC) · jwx/v4 + jwkfetch · OpenTelemetry · resty v3 · ardanlabs/conf
+**Stack**: Go 1.27 · Huma v2.39.1 · PostgreSQL 18 (pgx v5) · sqlc · Valkey/go-redis v9 · Logto (OIDC) · jwx/v4 + jwkfetch · OpenTelemetry · resty v3 · knadh/koanf (env config)
 
 **Build note**: Go 1.27 stabilizes `encoding/json/v2` (the jwx v4 dependency), so no `GOEXPERIMENT` flag is needed — plain `go build`/`go test`/`go run` work.
 
@@ -88,7 +88,7 @@ make new-migration name=create_table_foo
 - Map DB errors via `pgerrcode.IsIntegrityConstraintViolation()`
 - Use `logctx.FromCtx(ctx)` for structured logging
 - Use sqlc for parameterized queries (SQL-injection safe)
-- Configuration via `ardanlabs/conf` with env vars
+- Configuration via `knadh/koanf/v2` with env vars
 - Test files `*_test.go` with table-driven tests, testify/mock
 - UUIDs for entity IDs (stdlib `uuid`), auto `last_modified_date` via trigger
 - Extract interfaces for testability
@@ -103,7 +103,7 @@ make new-migration name=create_table_foo
 
 - Validate all input via Huma schema tags
 - Parameterized queries (sqlc generates)
-- Environment-based secrets via `conf`
+- Environment-based secrets via `knadh/koanf/v2`
 - SSL/TLS for DB (`PG_SSL_MODE=require`)
 - No sensitive data in logs; don't leak internals in error messages
 - Token validation via two strategies:
@@ -149,7 +149,7 @@ See [`docs/project-intelligence/decisions-log.md`](docs/project-intelligence/dec
 | Path | Scope | Priority |
 |------|-------|----------|
 | `cmd/api/AGENTS.md` | Entry point, DI wiring | critical |
-| `internal/config/AGENTS.md` | Env config (ardanlabs/conf) | high |
+| `internal/config/AGENTS.md` | Env config (knadh/koanf) | high |
 | `internal/domain/AGENTS.md` | Entities, domain errors, transactioner | critical |
 | `internal/app/ports/AGENTS.md` | Repository interfaces (contracts) | critical |
 | `internal/app/usecases/auth/AGENTS.md` | Register, device flow, me, refresh, revoke | critical |
