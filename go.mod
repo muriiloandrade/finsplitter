@@ -13,7 +13,7 @@ require (
 	github.com/jackc/pgx/v5 v5.12.0
 	github.com/jwx-go/jwkfetch/v4 v4.0.4
 	github.com/knadh/koanf/providers/env v1.1.0
-	github.com/knadh/koanf/v2 v2.3.7
+	github.com/knadh/koanf/v2 v2.4.1
 	github.com/lestrrat-go/jwx/v4 v4.6.0
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0
 	github.com/redis/go-redis/v9 v9.23.0
