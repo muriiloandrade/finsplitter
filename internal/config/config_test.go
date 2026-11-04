@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"testing"
 	"time"
 )
@@ -12,10 +11,6 @@ func TestConfigDefaults(t *testing.T) {
 	t.Setenv("PG_PASS", "testpass")
 	t.Setenv("PG_HOST", "localhost")
 	t.Setenv("PG_DB", "testdb")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -83,13 +78,6 @@ func TestConfigFromEnvironment(t *testing.T) {
 	t.Setenv("APP_PORT", "8080")
 	t.Setenv("APP_NAME", "custom-app")
 	t.Setenv("ENV_NAME", "production")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
-	defer os.Unsetenv("APP_PORT")
-	defer os.Unsetenv("APP_NAME")
-	defer os.Unsetenv("ENV_NAME")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -121,13 +109,6 @@ func TestOpenTelemetryConfig(t *testing.T) {
 	t.Setenv("OTEL_ENABLED", "true")
 	t.Setenv("OTEL_SERVICE_NAME", "my-service")
 	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel:4318")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
-	defer os.Unsetenv("OTEL_ENABLED")
-	defer os.Unsetenv("OTEL_SERVICE_NAME")
-	defer os.Unsetenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -152,10 +133,6 @@ func TestBuildInfo(t *testing.T) {
 	t.Setenv("PG_PASS", "testpass")
 	t.Setenv("PG_HOST", "localhost")
 	t.Setenv("PG_DB", "testdb")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
 
 	cfg := LoadEnv("v1.0.0", "abc123def", "2024-06-15T10:30:00Z")
 
