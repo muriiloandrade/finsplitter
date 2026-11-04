@@ -758,3 +758,22 @@ func TestEnvRedisMapping(t *testing.T) {
 		t.Errorf("expected redis.url redis://redis:6379/1, got %s", cfg.Redis.URL)
 	}
 }
+
+func TestEnvUnmappedVarsIgnored(t *testing.T) {
+	t.Setenv("PG_USER", "testuser")
+	t.Setenv("PG_PASS", "testpass")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_DB", "testdb")
+	t.Setenv("UNMAPPED_TEST_VAR", "ignored")
+
+	cfg := LoadEnv("test", "abc123", "2024-01-01")
+
+	if cfg == nil {
+		t.Fatal("expected config to load, got nil")
+		return
+	}
+
+	if cfg.DB.User != "testuser" {
+		t.Errorf("expected user testuser, got %s", cfg.DB.User)
+	}
+}
