@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -163,6 +164,10 @@ func TestMissingRequiredEnvVars(t *testing.T) {
 
 	if cfg != nil {
 		t.Fatal("expected nil config when required env vars are missing, got non-nil")
+	}
+
+	if err := (&Config{}).validate(); !errors.Is(err, ErrMissingRequiredEnv) {
+		t.Errorf("expected ErrMissingRequiredEnv, got %v", err)
 	}
 }
 
