@@ -44,7 +44,7 @@
 | Change | Date | Detail |
 |--------|------|--------|
 | `gofrs/uuid/v5` → stdlib `uuid` | 2026-10-11 | Unblocked by mockery v3.8.0 (v3.7.3 could not parse go1.27 modules); `docs/plans/uuid-stdlib-migration.md` executed in full, including the `GOEXPERIMENT=jsonv2` removal |
-| `ardanlabs/conf/v3` → `knadh/koanf/v2` | 2026-10-31 | `docs/plans/conf-to-koanf-migration.md` executed in full; koanf v2.3.7 + `koanf/providers/env` direct, `ardanlabs/conf/v3` removed |
+| `ardanlabs/conf/v3` → `knadh/koanf/v2` | 2026-10-31 | `docs/plans/conf-to-koanf-migration.md` executed in full; koanf v2.4.1 + `koanf/providers/env/v2` direct, `ardanlabs/conf/v3` removed |
 
 ## 📂 Codebase References
 

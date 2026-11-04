@@ -23,7 +23,7 @@
 | Identity/Auth | Logto (OIDC) + jwx/v4 + jwkfetch | — | Self-hosted, JWT+JWKS + device grant |
 | Observability | OpenTelemetry + slog | — | Vendor-neutral traces/metrics/logs |
 | HTTP Client | resty v3 (via `pkg/httpclient`) | — | Retry, timeout, OTel hooks |
-| Config | knadh/koanf/v2 | v2.3.7 | Env-based config via koanf (env provider + defaults; replaces ardanlabs/conf) |
+| Config | knadh/koanf/v2 | v2.4.1 | Env-based config via koanf (env provider/v2 + defaults; replaces ardanlabs/conf) |
 | IDs | stdlib `uuid` | — | UUIDs for entity IDs (first-party since Go 1.27) |
 | Money | shopspring/decimal | — | Precise monetary math |
 | Testing | testify + mockery + testcontainers-go | — | Mocks + real-Postgres integration tests |
