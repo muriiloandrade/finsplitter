@@ -3,6 +3,7 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/knadh/koanf/providers/env/v2"
 	"github.com/knadh/koanf/v2"
+	"github.com/muriiloandrade/finsplitter/pkg/logctx"
 )
 
 // defaultAppPort is the fallback HTTP port used when APP_PORT is not set.
@@ -110,11 +112,14 @@ type OpenTelemetry struct {
 // provided via environment variables. It returns nil when the configuration
 // cannot be loaded or fails validation.
 func LoadEnv(buildTag, buildCommit, buildTime string) *Config {
+	ctx := context.Background()
+	logger := logctx.FromCtx(ctx)
+
 	k := koanf.New(".")
 
 	for key, value := range defaultConfig() {
 		if err := k.Set(key, value); err != nil {
-			slog.Default().Error("fail to set default configurations", slog.Any("error", err))
+			logger.ErrorContext(ctx, "fail to set default configurations", slog.Any("error", err))
 			return nil
 		}
 	}
@@ -128,13 +133,13 @@ func LoadEnv(buildTag, buildCommit, buildTime string) *Config {
 			return koanfKey, value
 		},
 	}), nil); err != nil {
-		slog.Default().Error("fail to load environment configurations", slog.Any("error", err))
+		logger.ErrorContext(ctx, "fail to load environment configurations", slog.Any("error", err))
 		return nil
 	}
 
 	var cfg Config
 	if err := k.Unmarshal("", &cfg); err != nil {
-		slog.Default().Error("fail to unmarshal configurations", slog.Any("error", err))
+		logger.ErrorContext(ctx, "fail to unmarshal configurations", slog.Any("error", err))
 		return nil
 	}
 
@@ -143,7 +148,7 @@ func LoadEnv(buildTag, buildCommit, buildTime string) *Config {
 	cfg.App.BuildTime = buildTime
 
 	if err := cfg.validate(); err != nil {
-		slog.Default().Error("fail to validate configurations", slog.Any("error", err))
+		logger.ErrorContext(ctx, "fail to validate configurations", slog.Any("error", err))
 		return nil
 	}
 
