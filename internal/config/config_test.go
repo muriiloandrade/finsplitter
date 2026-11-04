@@ -1,7 +1,7 @@
 package config
 
 import (
-	"os"
+	"errors"
 	"testing"
 	"time"
 )
@@ -12,10 +12,6 @@ func TestConfigDefaults(t *testing.T) {
 	t.Setenv("PG_PASS", "testpass")
 	t.Setenv("PG_HOST", "localhost")
 	t.Setenv("PG_DB", "testdb")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -83,13 +79,6 @@ func TestConfigFromEnvironment(t *testing.T) {
 	t.Setenv("APP_PORT", "8080")
 	t.Setenv("APP_NAME", "custom-app")
 	t.Setenv("ENV_NAME", "production")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
-	defer os.Unsetenv("APP_PORT")
-	defer os.Unsetenv("APP_NAME")
-	defer os.Unsetenv("ENV_NAME")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -121,13 +110,6 @@ func TestOpenTelemetryConfig(t *testing.T) {
 	t.Setenv("OTEL_ENABLED", "true")
 	t.Setenv("OTEL_SERVICE_NAME", "my-service")
 	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel:4318")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
-	defer os.Unsetenv("OTEL_ENABLED")
-	defer os.Unsetenv("OTEL_SERVICE_NAME")
-	defer os.Unsetenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 
 	cfg := LoadEnv("test", "abc123", "2024-01-01")
 
@@ -152,10 +134,6 @@ func TestBuildInfo(t *testing.T) {
 	t.Setenv("PG_PASS", "testpass")
 	t.Setenv("PG_HOST", "localhost")
 	t.Setenv("PG_DB", "testdb")
-	defer os.Unsetenv("PG_USER")
-	defer os.Unsetenv("PG_PASS")
-	defer os.Unsetenv("PG_HOST")
-	defer os.Unsetenv("PG_DB")
 
 	cfg := LoadEnv("v1.0.0", "abc123def", "2024-06-15T10:30:00Z")
 
@@ -186,6 +164,10 @@ func TestMissingRequiredEnvVars(t *testing.T) {
 
 	if cfg != nil {
 		t.Fatal("expected nil config when required env vars are missing, got non-nil")
+	}
+
+	if err := (&Config{}).validate(); !errors.Is(err, ErrMissingRequiredEnv) {
+		t.Errorf("expected ErrMissingRequiredEnv, got %v", err)
 	}
 }
 
@@ -779,5 +761,24 @@ func TestEnvRedisMapping(t *testing.T) {
 
 	if cfg.Redis.URL != "redis://redis:6379/1" {
 		t.Errorf("expected redis.url redis://redis:6379/1, got %s", cfg.Redis.URL)
+	}
+}
+
+func TestEnvUnmappedVarsIgnored(t *testing.T) {
+	t.Setenv("PG_USER", "testuser")
+	t.Setenv("PG_PASS", "testpass")
+	t.Setenv("PG_HOST", "localhost")
+	t.Setenv("PG_DB", "testdb")
+	t.Setenv("UNMAPPED_TEST_VAR", "ignored")
+
+	cfg := LoadEnv("test", "abc123", "2024-01-01")
+
+	if cfg == nil {
+		t.Fatal("expected config to load, got nil")
+		return
+	}
+
+	if cfg.DB.User != "testuser" {
+		t.Errorf("expected user testuser, got %s", cfg.DB.User)
 	}
 }

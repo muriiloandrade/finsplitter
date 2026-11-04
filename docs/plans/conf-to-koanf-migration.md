@@ -1,7 +1,7 @@
 # Migration: `ardanlabs/conf/v3` → `knadh/koanf/v2`
 
 > **Status**: Executed 2026-10-31
-> **Dependencies**: `github.com/knadh/koanf/v2` v2.3.7 (now direct) + `github.com/knadh/koanf/providers/env` v1.1.0
+> **Dependencies**: `github.com/knadh/koanf/v2` v2.4.1 (now direct) + `github.com/knadh/koanf/providers/env/v2` v2.0.2
 > **Dependencies removed**: `github.com/ardanlabs/conf/v3`
 
 ## 1. Why
@@ -81,7 +81,7 @@ import (
     "strings"
 
     "github.com/knadh/koanf/parsers/rawbytes" // not needed for env-only
-    "github.com/knadh/koanf/providers/env"
+    "github.com/knadh/koanf/providers/env/v2"
     "github.com/knadh/koanf/v2"
 )
 
