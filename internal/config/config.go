@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/env/v2"
 	"github.com/knadh/koanf/v2"
 )
 
@@ -119,7 +119,15 @@ func LoadEnv(buildTag, buildCommit, buildTime string) *Config {
 		}
 	}
 
-	if err := k.Load(env.Provider("", ".", envKeyToKoanfKey), nil); err != nil {
+	if err := k.Load(env.Provider(".", env.Opt{
+		TransformFunc: func(envKey, value string) (string, any) {
+			koanfKey := envKeyToKoanfKey(envKey)
+			if koanfKey == "" {
+				return "", nil
+			}
+			return koanfKey, value
+		},
+	}), nil); err != nil {
 		slog.Default().Error("fail to load environment configurations", slog.Any("error", err))
 		return nil
 	}
